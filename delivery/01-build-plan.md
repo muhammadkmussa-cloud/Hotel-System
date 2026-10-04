@@ -1,6 +1,6 @@
 # Step-by-step build plan and agent handoff
 
-Updated 4 October 2026. **Build preparation has started; application code has not been created yet.** This file expands the existing M0–M9 milestones into 320 small first-release steps and 15 separately tracked optional steps. Writing this plan does not complete any application step or authorize implementation/deployment by itself. This is a checklist for later authorized build work, not a time estimate or a guarantee against errors.
+Updated 4 October 2026. **Baseline preparation is reviewed; local Laravel scaffolding has started.** This file expands the existing M0–M9 milestones into 320 small first-release steps and 15 separately tracked optional steps. Writing this plan does not complete any application step or authorize implementation/deployment by itself. This is a checklist for later authorized build work, not a time estimate or a guarantee against errors.
 
 Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdmin** (C19–C21/C23/C25). Follow the [decision register](../product/01-decisions.md), [requirements](../product/02-requirements.md), [technology fact file](../TECHNOLOGY-FACT-FILE.md), and [DirectAdmin layout](../architecture/05-directadmin-layout.md). Proposed defaults keep their existing D references; this plan does not promote them to confirmed requirements.
 
@@ -8,20 +8,20 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **1 / 320** |
+| First-release steps complete | **18 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **0 / 32** |
-| Current phase | P00 — Establish the working baseline |
-| Active task / owner | P00.02 / primary agent; scope/version review pending |
-| Last completed implementation task | P00.01 — repository baseline (preparation only) |
-| Next task | **P00.02 — Review confirmed decisions and proposed defaults** |
-| Next action | Obtain independent review of P00.02 scope/version alignment before marking complete |
-| Current blocker | No blocker to baseline inspection; host, provider, hardware, and hotel evidence remain validation gates |
-| Working branch/revision | `main` at `6ec78901b6c7f468cf06ee53905ddbcca2fd7835` |
-| Uncommitted changes | Pre-existing unstaged edits in README.md and this plan; no staged changes or untracked files at session start. Current task adds status/evidence to those same two files. |
-| Application verification | Not run; no application exists yet |
-| Latest step review | P00.01 Approved by baseline_reviewer on 4 October 2026; no phase approval |
-| Latest phase review | Not requested; no phase is complete |
+| Phase gates complete | **1 / 32** |
+| Current phase | P01 — Create the smallest PHP application |
+| Active task / owner | P01.09 / primary agent |
+| Last completed implementation task | P01.08 |
+| Next task | **P01.09 — Reproduce documented local startup and verification from the recorded prerequisites** |
+| Next action | Reproduce documented local startup and verification from the recorded prerequisites |
+| Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
+| Working branch/revision | `main` at `52c56ad92e0f003b59c0abf1ff05a1278a941066`; starting baseline was 6ec78901b6c7f468cf06ee53905ddbcca2fd7835 |
+| Uncommitted changes | Documentation updates plus hotel-app/ scaffold; see git status for exact inventory. No commit/push. |
+| Application verification | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
+| Latest step review | P01.08 approved by js_review and code_review; P01 phase incomplete |
+| Latest phase review | baseline_reviewer approved cumulative P00 on 4 October 2026 |
 
 ## How to work in very small steps
 
@@ -43,7 +43,7 @@ Phase order is the suggested reading/build order. The dependency line on each ph
 
 Missing provider credentials or physical printers must not stop unrelated local code/prototype work. Use labelled simulators where the task permits them and leave the dependent verification checkbox unchecked. Record the blocked task, O-decision, evidence needed, and an independent next task. Never use this exception to bypass financial guards, test isolation, private-file access, or a live release gate.
 
-P00 records feasibility findings and missing inputs; it does not claim O01–O13 resolved. Before selecting dependencies in P01, establish a compatible PHP/MySQL development target. Validate host-specific runtime assumptions under O13 before relying on them. P22/P25 provider-dependent steps wait for the required provider evidence; P17/P29 physical steps wait for equipment. P31 requires real operational approvals. A missing or failed reviewer approval is not an external-gate exception: stop progression on that work until the independent review passes. Prepared plans and local evidence do not authorize external actions.
+P00 records feasibility findings and missing inputs; it does not claim O01–O13 resolved. C26 confirms no current hosting account or fixed domain: account-specific checks belong to each installation under O13/P29.02 and do not block unrelated local development. Before selecting dependencies in P01, establish a compatible PHP/MySQL development target. Validate host-specific runtime assumptions under O13 before relying on them. P22/P25 provider-dependent steps wait for the required provider evidence; P17/P29 physical steps wait for equipment. P31 requires real operational approvals. A missing or failed reviewer approval is not an external-gate exception: stop progression on that work until the independent review passes. Prepared plans and local evidence do not authorize external actions.
 
 ## Existing milestone map
 
@@ -104,15 +104,15 @@ All steps below are initially unchecked. Source links identify the relevant cont
 **Read:** [decisions](../product/01-decisions.md), [fact file](../TECHNOLOGY-FACT-FILE.md), [open decisions](05-risks-decisions.md).
 
 - [x] **P00.01** Record the starting branch/revision and existing edits in the handoff; verify that no previous agent work is overwritten.
-- [ ] **P00.02** Read the confirmed decisions and list applicable proposed defaults; record unresolved choices without inventing approval.
-- [ ] **P00.03** Record the intended domain and actual DirectAdmin account capabilities available for inspection; unknown values remain explicitly unknown.
-- [ ] **P00.04** Check the host's database product/version; record whether actual MySQL is available and flag any MariaDB substitution.
-- [ ] **P00.05** Record available PHP web/CLI versions and extensions; identify a compatible development target or the exact missing evidence.
-- [ ] **P00.06** Inventory tablet, kiosk, display, and printer models; mark missing hardware evidence against O04.
-- [ ] **P00.07** Inventory approved recipes and image rights; identify a content owner or record the missing hotel input under O03.
-- [ ] **P00.08** Record merchant and fiscal onboarding status separately; link O01/O02 blockers without putting credentials in documentation.
-- [ ] **P00.09** Record decisions needed for sharing, custody, collection, reservations, languages, and recovery under O05–O10.
-- [ ] **P00.10** Review the baseline evidence and choose the next unblocked task; preparation findings do not mean production readiness.
+- [x] **P00.02** Read the confirmed decisions and list applicable proposed defaults; record unresolved choices without inventing approval.
+- [x] **P00.03** Record the intended domain and actual DirectAdmin account capabilities available for inspection; unknown values remain explicitly unknown.
+- [x] **P00.04** Record available host database evidence or, when no account exists (C26), explicitly defer actual engine/version verification to each installation under O13/P29.02; keep MySQL as the development target and reject silent MariaDB substitution.
+- [x] **P00.05** Record available PHP web/CLI versions and extensions; identify a compatible development target or the exact missing evidence.
+- [x] **P00.06** Inventory tablet, kiosk, display, and printer models; mark missing hardware evidence against O04.
+- [x] **P00.07** Inventory approved recipes and image rights; identify a content owner or record the missing hotel input under O03.
+- [x] **P00.08** Record merchant and fiscal onboarding status separately; link O01/O02 blockers without putting credentials in documentation.
+- [x] **P00.09** Record decisions needed for sharing, custody, collection, reservations, languages, and recovery under O05–O10.
+- [x] **P00.10** Review the baseline evidence and choose the next unblocked task; preparation findings do not mean production readiness.
 
 <a id="p01"></a>
 
@@ -124,14 +124,14 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [DirectAdmin layout](../architecture/05-directadmin-layout.md), [backend blueprint](../backend/03-file-blueprint.md).
 
-- [ ] **P01.01** Create the minimal Laravel hotel-app skeleton with its private root and public-directory mapping for DirectAdmin; avoid empty feature modules.
-- [ ] **P01.02** Define Laravel/PHP dependency/platform constraints using the checked stable target; resolve and save a compatible Composer lockfile.
-- [ ] **P01.03** Configure Laravel private environment/settings loading; missing required settings must fail with a safe diagnostic.
-- [ ] **P01.04** Connect the Laravel public entry and private bootstrap; verify one plain HTML response locally.
-- [ ] **P01.05** Serve one CSS file and one native JavaScript module; verify the browser loads both without a framework.
-- [ ] **P01.06** Add development ignore rules; verify credentials, generated logs, and private runtime files are not tracked.
-- [ ] **P01.07** Add the first PHP test setup and smoke check; prove it runs against the chosen PHP version.
-- [ ] **P01.08** Add JavaScript browser-test tooling as development-only dependencies; save its lockfile and one page smoke result.
+- [x] **P01.01** Create the minimal Laravel hotel-app skeleton with its private root and public-directory mapping for DirectAdmin; avoid empty feature modules.
+- [x] **P01.02** Define Laravel/PHP dependency/platform constraints using the checked stable target; resolve and save a compatible Composer lockfile.
+- [x] **P01.03** Configure Laravel private environment/settings loading; missing required settings must fail with a safe diagnostic.
+- [x] **P01.04** Connect the Laravel public entry and private bootstrap; verify one plain HTML response locally.
+- [x] **P01.05** Serve one CSS file and one native JavaScript module; verify the browser loads both without a framework.
+- [x] **P01.06** Add development ignore rules; verify credentials, generated logs, and private runtime files are not tracked.
+- [x] **P01.07** Add the first PHP test setup and smoke check; prove it runs against the chosen PHP version.
+- [x] **P01.08** Add JavaScript browser-test tooling as development-only dependencies; save its lockfile and one page smoke result.
 - [ ] **P01.09** Document the exact local startup and verification commands; reproduce them from the recorded prerequisites.
 - [ ] **P01.10** Check the public/private upload mapping against DirectAdmin rules; mark this as local scaffold evidence only.
 
@@ -881,10 +881,163 @@ Scope review on 4 October 2026: C01–C23 preserve one isolated hotel, independe
 | D14 former React/Fastify/PostgreSQL stack | Superseded by C19–C21 |
 | D16/D17 supporting tooling and hosted design | Laravel now confirmed C25; remaining package choices, polling/cron quotas and print transport require validation |
 | O10/O12/O13 | Recovery/hosting/support/commercial terms and actual host capability evidence remain unresolved |
+| O11 whole-table/mixed-method and charges/tips | Unresolved; guest-by-guest, one full-amount method per checkout remains the first-release default. E02 stays optional pending an explicit scope decision; service-charge/tip expansion is not silently included. |
 
 Version evidence is recorded with official sources in the technology fact file: Laravel 13.34.0 (PHP 8.3+), MySQL GA 26.7.0 with artifact-specific security updates. Local CLI observations: PHP 8.3.30; Composer 2.10.2; PDO MySQL, cURL, fileinfo, GD, mbstring, OpenSSL and session extensions available. No MySQL executable was found on PATH during preliminary inspection; a local server has not yet been inspected or provisioned. None of this proves the DirectAdmin host versions.
 
-The user supplied a latest-version preference, not domain/account/server-version evidence. P00.03–P00.05 remain unchecked; no unavailable hosting fact is guessed. Updated Laravel-specific blueprint/task wording preserves all 335 task IDs and their completion state. Application endpoint semantics and financial invariants are unchanged; later implementation still needs generated contracts and real tests.
+During this step, HEAD independently advanced to 52c56ad92e0f003b59c0abf1ff05a1278a941066 (Laravel documentation update). The primary agent did not commit or push; the original baseline remains historical evidence and the current handoff follows the observed new revision.
+
+At the P00.02 review, the user had supplied a latest-version preference, not domain/account/server-version evidence. P00.03–P00.05 were still unchecked; no unavailable hosting fact is guessed. Updated Laravel-specific blueprint/task wording preserves all 335 task IDs and their completion state. Application endpoint semantics and financial invariants are unchanged; later implementation still needs generated contracts and real tests.
+
+## P00.03 hosting capability evidence
+
+Inspected on 4 October 2026: the conversation, setup worksheet, DirectAdmin layout, and O13 register. These contain a hosting choice and a proposed layout, not an account capability report. No authenticated hosting session or provider report is available in this task. No external account was accessed or modified.
+
+| Item | Evidence / status |
+|---|---|
+| Hosting control panel | DirectAdmin, confirmed by user (C23) |
+| Intended domain, provider and plan/tier | C26 update: no domain/account set up; every installer chooses their own domain/provider/plan. `DOMAIN` is a placeholder. |
+| HTTP/HTTPS document roots and web server | Unknown; private Laravel/public separation is the required design, actual mapping not verified |
+| PHP web/CLI versions, extensions and open_basedir | Host values unknown; local PHP observations are separate P00.05 evidence |
+| Database product, version, privileges and quotas | Host values unknown; no account exists (C26). MySQL target C21/C25 does not prove availability; verify each installation under O13/P29.02. |
+| SSH/Terminal, Composer, cron frequency/runtime and outbound HTTPS | Unknown; do not assume these are enabled by the panel name |
+| HTTPS issuance/renewal, upload/memory/CPU/request limits | Unknown |
+| Backup export/restore, retention and recovery capabilities | Unknown; O10/O13 remain open |
+| Evidence owner / follow-up | Each installer/provider supplies a redacted capability report before deployment; no credentials belong in this repository |
+
+P00.03 records available evidence and unknowns only. Host deployment, runtime compatibility and private-path acceptance remain unverified. Following C26, continue local development independently; each deployment still requires actual host evidence. No host-dependent implementation or deployment is approved by this record.
+
+## P00.05 local runtime evidence
+
+Read-only local checks on 4 October 2026: `php -v`, `php -m`, `composer --version`, `PDO::getAvailableDrivers()` and `gd_info()`.
+
+- Local PHP CLI: 8.3.30; Composer: 2.10.2. PHP 8.3 is the selected development baseline, compatible with the documented Laravel 13 PHP constraint. Dependency resolution and actual application tests remain P01 work.
+- Present locally: bcmath, ctype, cURL, DOM, fileinfo, filter, hash, mbstring, OpenSSL, PCRE, PDO/pdo_mysql, session, tokenizer, XML and ZIP. GD reports JPEG, PNG and WebP support. PDO drivers: mysql, pgsql, sqlite; only MySQL is selected for application database work.
+- No local MySQL executable is available on PATH. A local server is not provisioned or verified by these checks; PDO availability alone is not a server connection test. MySQL 26.7 GA remains the documented database target, exact artifact/setup and real database checks pending.
+- PHP web handler and CLI on DirectAdmin: unknown. Hosting versions/extensions, paths, cron runtime and private-directory access require O13 provider/account evidence. Local CLI results cannot close that gate.
+- No application, HTTP handler or hosting runtime was exercised. This step records available local runtime and the exact missing host evidence only.
+
+## P00.06 hardware baseline
+
+Inspected the setup worksheet and printing/hardware specification on 4 October 2026. No actual hotel equipment inventory or physical test evidence has been supplied. The proposed four-tablet pilot is a test arrangement, not an inventory or purchase approval.
+
+| Equipment / evidence | Actual inventory status |
+|---|---|
+| Guest tablets; kiosk; cashier workstation | Models, quantities, OS/browser versions, screen sizes and managed-mode capability unknown |
+| Kitchen and collection displays | Models, quantities, placement and network connection unknown |
+| Kitchen and receipt printers | Models, transport/driver, paper width, cutter/QR support and physical test results unknown |
+| Hotel-side print bridge | Device, OS/runtime and printer compatibility unknown |
+| Network, internet and power backup | Router/AP models, coverage, connectivity and outage test evidence unknown |
+
+O04 remains open. User/hotel operations must nominate an equipment contact and supply the inventory; no individual owner is assigned yet. Physical printer work P17.08–P17.10 and installation acceptance P29 require real model/transport tests. Local catalogue/ordering design may proceed independently when its other prerequisites pass. This completes missing-evidence inventory only, not hardware validation or selection.
+
+## P00.04 reusable-installation database boundary
+
+On 4 October 2026 the user clarified that no domain/account is set up and each repository user will deploy an independent installation on their own domain. C26 supersedes the earlier assumption that this local build waits for a single current hosting account. P00.04's wording is revised accordingly; its ID and the 320-step denominator remain unchanged.
+
+No actual host database product/version can be inspected yet. MySQL remains required (C21/C25); MariaDB is not implicitly accepted. Each installer must record the real engine/version, InnoDB support, connection limits and database privileges under O13/P29.02 before deploying. This is a recorded per-installation gate, not a successful host compatibility check. The local MySQL target remains the fact file's stable GA target; exact artifact pinning and transaction tests are still P02 work.
+
+Domain/provider names are private installation choices; this repository contains placeholders only. Local development and phase preparation can proceed without a domain. Actual host, payment, hardware, food-content and production readiness stay unverified.
+
+## P00.07 content baseline
+
+Inspected the repository file list and `templates/asset-manifest.md` on 4 October 2026. The tracked project material is Markdown specifications; the manifest is a template. No chef-approved production recipe catalogue, meal/ingredient photographs, image rights/provenance records or publication approvals have been supplied.
+
+O03 remains open per installation. Each hotel must name its chef/recipe approver and content/image-rights owner; both roles are currently unassigned. Obtain base recipes including compound ingredients, fixed/removable rules, extras/prices, photographed servings, rights and approval dates using the asset handover template before live publication. No ingredient-removal option may claim allergy safety. Later local fixtures must be clearly labelled demo content and cannot serve as production approval evidence.
+
+This is a completed inventory of missing input only; food imagery and recipes are not approved or published. No stock imagery was downloaded and no content rights were assumed.
+
+## P00.08 merchant and fiscal baseline
+
+Reviewed payment/fiscal specifications and O01/O02 on 4 October 2026. No selected hotel's merchant or fiscal onboarding evidence has been supplied; C26 means every installation supplies its own configuration and credentials privately.
+
+| Gate | Recorded status / required owner and evidence |
+|---|---|
+| O01 payments | Daraja is proposed D04, not a confirmed merchant account or working integration. Provider/product, merchant onboarding, callback verification, amount precision, status/reconciliation and refund capabilities are unverified. Each hotel’s authorized merchant contact must supply provider/sandbox capability evidence before its real adapter work. No merchant contact is named yet. |
+| O02 fiscal | Verified eTIMS integrator is proposed D13, not selected/certified here. Tax setup, integrator, invoice/credit-note boundary, buyer fields, rounding and outage policy are unknown. Hotel accountant and approved integrator must supply the evidence before fiscal adapter/live work; individuals are not assigned. |
+
+Independent local simulator/contracts work may proceed only where the build plan permits it. Simulations never prove merchant onboarding or tax compliance. External card processing stays on the separate terminal and cashier-confirmed (C10); no terminal integration is selected. No provider account, credential, purchase, payment or external message was created by this inventory.
+
+## P00.09 operational policy baseline
+
+Reviewed decisions and O05–O10 on 4 October 2026; these remain per-hotel choices, not approvals inferred from C26. No named hotel decision makers have been provided.
+
+| Gate | Local design default / missing installation decision |
+|---|---|
+| O05 sharing/early checkout | D01/D02: initially charge ordering guest, proposed equal sharing with confirmation and individual checkout. Hotel manager must approve sharing authority and early-departure policy before live use. |
+| O06 cash custody | D03/D15: customer cash settlement independent of handover; independent cashier count and manager-controlled corrections proposed. Hotel management must define drawer roles, timing, exception authority and thresholds. |
+| O07 language | English initial authoring; Kiswahili E01 optional after human review. Hotel must choose enabled languages and a translation reviewer. |
+| O08 kiosk collection | D07 counter collection proposed; hotel must choose counter collection versus table delivery. |
+| O09 availability reservations | D12 basic portions proposed; reservation durations, limits and expiry/release policy unconfirmed. This means stock/portion reservations, not excluded room bookings. |
+| O10 recovery/support | DirectAdmin confirmed; off-account backups D17 proposed. Each installer must choose backup destination, retention, recovery objectives, incident owner and support/update process; restore must be tested. |
+
+Defaults may guide configurable local implementation under the existing plan. None authorizes live operation or an irreversible provider/hotel commitment. O11 whole-table/mixed payments/service charges/tips and O12 commercial terms stay separately unresolved; repository reuse does not imply a selected software licence or support contract.
+
+## P00.10 cumulative baseline review packet
+
+Scope: all P00.01–P00.09 records and C26 clarification, against historical baseline 6ec7890, independently observed documentation commit 52c56ad, and this session's pending documentation. The independently reviewed step records above preserve the earlier lack-of-host blocker as history; C26 now makes actual hosting validation a per-installation gate. Domain/account absence does not block local development.
+
+Local baseline: PHP 8.3.30, Composer 2.10.2, needed PHP extensions present; package registry metadata for Laravel 13.34.0 confirms PHP ^8.3. MySQL 26.7 GA is the selected development target, not an installed/tested server. No MySQL transaction claim is made; exact artifact and real server checks remain P02. Composer's default global-config lookup encountered a read-only home path; subsequent read-only package lookup succeeded using task-local COMPOSER_HOME/cache under /tmp after network access was granted. No user Composer settings were changed.
+
+Next independently ready task: P01.01 minimal private Laravel skeleton/public mapping, then P01.02 dependency resolution and lockfile. No domain, production account, merchant credentials, hardware or production recipes are needed for that local scaffold. All O01–O13 retain their applicable integration/installation/release gates. No application, deployment, print, payment, fiscal or recovery functionality is complete.
+
+Verification: stable 335 task IDs, nine baseline boxes checked before P00.10 approval, README counts match; document links and diff whitespace checked. Independent reviewer must explicitly approve both P00.10 and cumulative P00 before the phase checkbox or P01 begins.
+
+## P01.01–P01.02 foundation evidence
+
+Created `hotel-app/` with Laravel bootstrap and public/private CLI entries, empty routes, private runtime paths and ignore rules. No host root mapping was changed. PHP syntax checks passed on all five initial PHP files; the PHP and general code reviewers independently approved P01.01 before dependencies were added.
+
+P01.02 installed Laravel 13.34.0 and 73 dependencies, pinned in composer.lock (SHA-256 `0a4e9d7d0e3e8a1c63d6265b82425a4075985d8a440c52ece2dd479f70ee2d96`). Local PHP 8.3.30 satisfies actual platform checks; `php artisan --version` prints Laravel Framework 13.34.0. Plugins are disabled and no Composer scripts run. Vendor/runtime files are ignored and no .env was created. Composer validation passed with documented exact-pin and undecided-project-licence warnings. An offline install dry run showed no package changes but could not refresh the remote filter list; it was not treated as security evidence.
+
+A subsequent network-enabled `composer audit --locked --no-interaction --format=json` returned exit 0 with empty advisories, abandoned and filter arrays. The PHP reviewer also performed an independent successful network audit after their initial restricted-network attempt failed DNS. Both reviewers approved P01.02. No database, HTTP page, hotel feature or hosting readiness is inferred from CLI startup. See [local foundation instructions](../hotel-app/README.md) for reproducible commands and the next configuration step.
+
+## P01.03 configuration evidence
+
+Private config files and .env.example are present; actual .env and cached config remain ignored. `app:check-config` gives redacted CLI diagnostics and exit 1 when required values are absent; the HTTP guard returns generic no-store 503 responses. Configuration tests first failed before implementation, then all 16 scenarios passed, including independent domains, unsafe origins, invalid/missing key, cache refresh and key generation. Malformed parser input cannot echo secret values. Detailed errors stay disabled. Tests uncovered and fixed the scaffold's missing default exception-handler binding.
+
+PHP and code reviewers independently approved this step after rerunning the regression script. The PHP reviewer logged a non-blocking follow-up for P01.04: exercise malformed environment syntax through an actual HTTP server, because the parser-error test in P01.03 covers the CLI branch only. Host/proxy enforcement, authentication, database and future business-command guards remain separate work.
+
+## P01.04 first HTTP page evidence
+
+A read-only home route renders escaped Blade HTML with semantic main/heading/paragraphs and an explicit ordering-unavailable message. CSS and JavaScript remain P01.05. Real HTTP testing found an unused framework private-file route; local disk serving is now disabled, with only the home route registered.
+
+`php tests/http-smoke.php` passed five groups using an isolated temporary loopback server: HTML/escaping, missing/private-path rejection, missing configuration, malformed environment HTTP redaction and recovery. The first sandbox attempt could not bind a socket; rerunning with local socket permission passed. The original test expected 404 for every private path; the unused storage route returned 403 and was subsequently disabled. Denial tests accept 403/404 for private paths and require 404 for an unknown route. All 16 configuration tests were rerun after the filesystem change and passed; PHP syntax and whitespace checks passed.
+
+Playwright desktop and 390×844 mobile inspection confirmed the page title, main region and heading. An initial automatic favicon 404 was resolved with an empty favicon declaration; the final browser console had no errors. Local ignored screenshots are .playwright-mcp/p01-04-desktop.png and p01-04-mobile.png. Port 8000 was already in use and was left untouched; the temporary preview used loopback 8123 and was stopped after inspection. An ignored owner-only local .env and newly generated installation key were created for this preview without copying another installation's credentials. No existing configuration was overwritten.
+
+php_review and code_review independently approved P01.04. The malformed-environment HTTP test closes the P01.03 non-blocking reviewer follow-up. This is local foundation evidence only; no application phase, authentication, MySQL, provider, physical device, premium UI or DirectAdmin deployment acceptance is claimed.
+
+## P01.05 public asset evidence
+
+The starter page now loads one plain CSS file and one native JavaScript module from public/assets. No frontend dependencies, bundler, CDN or framework were added. JavaScript attaches a read-only reload handler before revealing “Check again”; content stays readable and the inactive button stays hidden without JavaScript. The local startup instructions and HTTP fixture now use Laravel's bundled static-file routing rather than routing asset requests through index.php.
+
+Six HTTP smoke groups passed, including exact asset contents/MIME types and previous private/configuration safeguards. JS/PHP syntax and whitespace checks passed. Playwright verified asset 200 responses, actual module execution, keyboard focus/Enter reload, no-JavaScript fallback and no browser errors. At desktop and 360px mobile widths the page was readable; at 200% text enlargement scroll width remained 360px. Measured body/button contrast was 6.53:1 / 10.15:1; focus outline 3px and default button height about 56px. Local screenshots are in ignored .playwright-mcp/p01-05-desktop.png, p01-05-mobile.png and p01-05-large-text.png. The temporary loopback preview was stopped after verification. This is not full product/accessibility acceptance.
+
+php_review and code_review independently reran the HTTP checks and approved their scopes. js_review approved the native JS/CSS/Blade scope after code/syntax/lint inspection; it relied on the supplied browser evidence. No required findings remained. P01 remains incomplete.
+
+## P01.06 ignore-rule evidence
+
+Root and application ignore rules now cover private environment variants, Composer auth files, vendor/node_modules, coverage/browser/PHP test output, all installation storage and public/media uploads. Safe example settings, lockfile, application assets, tests and runtime .gitignore placeholders remain includable. These rules do not change deployment access controls.
+
+Manual `git check-ignore --no-index` checks passed for 24 excluded candidate paths and 13 includable source/example/placeholder paths. `git ls-files --cached --ignored --exclude-standard` was empty, so no already-indexed ignored file needed removal. No secret values were read into the report. code_review independently sampled 10 exclusions and seven inclusions, checked the index and whitespace, and approved this non-code step. No cumulative P01 approval is claimed. Next is P01.07 PHP test setup; the existing isolated configuration/HTTP scripts remain available as foundation regression checks.
+
+## P01.07 PHP test setup evidence
+
+PHPUnit 12.5.37 and 25 development dependencies are locked; all 74 production package entries are unchanged. The suite wraps the existing isolated scripts in bounded subprocesses, without loading the real installation environment. Two tests/two assertions passed on PHP 8.3.30, covering 16 configuration scenarios and six HTTP groups. Composer validation/platform checks, syntax and whitespace checks passed; the fresh locked audit reported no advisories, abandoned packages or filter findings. Existing licence/framework-pin warnings remain documented. No business-test or coverage claim is made.
+
+php_review and code_review independently reran the full suite and approved P01.07 with no findings. P01 remains incomplete.
+
+## P01.08 browser tooling evidence
+
+Playwright 1.63.0 is pinned with its development-only npm lockfile. The isolated fixture generates its own settings/key, excludes installation storage/cache, uses the existing Composer dependencies and serves only public/ on loopback. An occupied server is not reused. Normal shutdown removes the fixture; forced termination may leave generated test data. No production domain, Node runtime or browser installation is required by the application.
+
+Two Chromium 153.0.8010.12 (revision 1243) tests passed on Node 24.18.0/npm 11.16.0 and PHP 8.3.30: asset/page delivery, keyboard refresh and browser errors; mobile no-JavaScript fallback and overflow. npm ci reproduced the lockfile and audited four packages with zero reported vulnerabilities. JS syntax, scoped ESLint, whitespace and 134 local document links passed. Dependencies and output are ignored; no temporary fixture remained after the implementing agent's run.
+
+code_review independently reran both browser tests and approved. js_review approved after timeout numeric separators were removed to accommodate its older linter; values were unchanged. It inspected code/lint and relied on recorded browser runs. No required findings remain. P01.09 startup reproduction and P01.10 local DirectAdmin mapping/cumulative phase review remain next; no P01 or deployment approval is claimed.
+
+## P01.09 fresh startup evidence
+
+A fresh temporary source copy excluded the working .env, vendor, node_modules and generated runtime; source runtime placeholders were retained. Both lockfile installs passed (99 PHP packages, three browser packages), and the matching installed Chromium was reused. PHP 8.3.30/Composer 2.10.2/Node 24.18.0/npm 11.16.0 reproduced configuration/key setup, cache/check/clear, the two PHPUnit tests and two browser tests. The documented Artisan server on loopback 8140 served HTML/CSS/JS with 200 and expected MIME types, then stopped. Browser tests used 8141. Composer's previously recorded licence/exact-pin warnings remain; no MySQL or hosting acceptance is claimed. The app README now gives an ordered fresh-checkout checklist. Browser installation exited 0 with an Ubuntu 25.10 unsupported-OS/fallback-build warning; this limitation is recorded and no OS certification is claimed. Independent P01.09 review pending.
 
 ## Agent handoff — update before stopping
 
@@ -892,44 +1045,61 @@ Maintain exactly one current handoff below and append concise historical notes t
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P00.02 scope/version alignment |
-| Agent / active task | Primary agent / P00.02; independent review pending |
-| Completed this session | P00.01 repository baseline inspected, independently reviewed, and completed; no application code |
-| Current phase / next task | P00 / P00.02 |
-| Task state | P00.01 complete; P00.02 scope/version evidence recorded, review pending |
-| Branch / revision | `main` / `6ec78901b6c7f468cf06ee53905ddbcca2fd7835`; no new commit made |
-| Files changed / pending edits | Prior README/plan edits preserved; Laravel alignment also changes decisions, fact file, architecture/layout, backend/frontend blueprints, installation/testing/review notes, and sources. Inspect current diff. |
-| Checks actually run | Repository status/revision/staged and unstaged change inspection, pre-step hashes, and preservation comparison; documentation validation before review; no application tests |
-| Evidence | P00.01 baseline and P00.02 scope/version evidence sections; official version references in fact file; no application test results |
-| Blocker / decision needed | No baseline-inspection blocker; O01–O13 remain applicable downstream gates |
-| Exact next action | Complete independent review of P00.02; then inspect/record intended domain and actual host evidence under P00.03 |
-| Known risks / unfinished work | All application, provider, hardware, deployment, and pilot steps are still unbuilt/unverified |
-| Step reviewer / result | baseline_reviewer approved P00.01; P00.02 review pending |
-| Phase reviewer / result | Not requested; no phase complete |
-| Open review findings | None recorded; this is not a review approval |
-| External authorization | User said “start” and selected latest Laravel/MySQL: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
+| Updated | 4 October 2026 — P01.08 |
+| Agent / active task | Primary agent / none |
+| Completed this session | Baseline P00 plus 8 foundation steps; no hotel business features |
+| Current phase / next task | P01 / P01.09 |
+| Task state | P00 approved; P01 8/10 steps approved |
+| Branch / revision | `main` / `52c56ad92e0f003b59c0abf1ff05a1278a941066`; commit appeared independently during work, not created by the primary agent |
+| Files changed / pending edits | Pending documentation, root .gitignore and hotel-app/ sources/tests; prior edits preserved. Dependencies and private runtime ignored. No commit/push. |
+| Checks actually run | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
+| Evidence | Completion log and hotel-app/README.md; Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
+| Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
+| Exact next action | P01.09: Reproduce documented local startup and verification from the recorded prerequisites |
+| Known risks / unfinished work | Styled starter page/native module and private settings only. Startup reproduction, local hosting-layout review, MySQL server, hotel business features and provider/hardware/deployment/pilot verification remain unfinished. |
+| Step reviewer / result | js_review and code_review approved P01.08 |
+| Phase reviewer / result | baseline_reviewer — Approved cumulative P00, local P01.01 unblocked |
+| Open review findings | No required findings outstanding; phase not approved |
+| External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
 
 When handing over an active task, replace these values with actual files, commands/results, partial changes, migration/environment notes, the reviewer status and unresolved findings, and the smallest next action. Give failed checks the same visibility as passing ones. Do not invent a commit hash or claim a push occurred. A task may be complete locally without a commit; record pending changes accurately and follow the user's commit/push instructions.
 
 ## Completion and blocker log
 
-Append one row per completed parent task (or a concise group only if every listed task has its own evidence). Record reopened tasks as new entries; keep prior evidence/history. P00.01 preparation is recorded below; no application feature is complete.
+Append one row per completed parent task (or a concise group only if every listed task has its own evidence). Record reopened tasks as new entries; keep prior evidence/history. P00 baseline preparation is recorded below; no application feature is complete.
 
 | Date | Task ID | State / change | Evidence and verification environment | Agent / revision or pending files | Reviewer / approval evidence | Next action |
 |---|---|---|---|---|---|---|
 | 4 October 2026 | Planning only | Checklist and README tracker prepared; zero app tasks complete | Markdown checks only | Documentation update; no application code | No implementation review claimed | P00.01 at implementation start |
-
 | 4 October 2026 | P00.01 | Complete: starting checkout and prior edits recorded/preserved | Baseline evidence section; git status/revision/index checks; 335 task definitions preserved; diff whitespace passed | Primary agent; main at 6ec78901b6c7f468cf06ee53905ddbcca2fd7835; README/plan pending edits | baseline_reviewer: Approved; compared current documents with captured pre-step contents; no findings | P00.02 |
+| 4 October 2026 | P00.02 | Complete: confirmed/default scope and latest stable Laravel/MySQL targets aligned | Scope/version evidence section; official release references; 335 IDs/states preserved before approval; 225 local links/fences and diff checks passed | Primary agent; observed HEAD 52c56ad created independently; post-review README/plan/frontend-blueprint edits pending | baseline_reviewer: Approved after O11, frontend-framework wording, and current-file inventory corrections; no application/phase approval | P00.03 |
+| 4 October 2026 | P00.03 | Complete: available hosting facts and unknowns recorded | P00.03 evidence; conversation/worksheet/layout/O13 inspected; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.03, no phase approval | P00.05 independently; P00.04 blocked |
+| 4 October 2026 | P00.04 | Blocked: actual host database product/version unavailable | O13; latest-version preference and local PDO do not identify the host service | User/provider redacted capability report needed | Not completed or approved | Independent P00.05 local inspection |
+| 4 October 2026 | P00.05 | Complete: baseline evidence recorded | P00.05 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.05; no phase approval | P00.06 |
+| 4 October 2026 | P00.06 | Complete: baseline evidence recorded | P00.06 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.06; no phase approval | P00.04 |
+| 4 October 2026 | P00.04 | Complete: baseline evidence recorded | P00.04 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.04; no phase approval | P00.07 |
+| 4 October 2026 | P00.07 | Complete: baseline evidence recorded | P00.07 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.07; no phase approval | P00.08 |
+| 4 October 2026 | P00.08 | Complete: baseline evidence recorded | P00.08 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.08; no phase approval | P00.09 |
+| 4 October 2026 | P00.09 | Complete: baseline evidence recorded | P00.09 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.09; no phase approval | P00.10 |
+| 4 October 2026 | P00.10 | Complete: baseline evidence recorded | P00.10 evidence section; local/document inspection; diff check passed | Primary agent; build plan pending against 52c56ad | baseline_reviewer: Approved P00.10 and cumulative P00 | P01.01 |
+| 4 October 2026 | P01.01 | Complete: local foundation step | Five PHP syntax checks, ignore/public-private inspection and diff checks passed; no runtime tested | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.01; no P01 phase approval | P01.02 |
+| 4 October 2026 | P01.02 | Complete: local foundation step | Composer validation/platform checks, CLI startup and current-lock advisory audit passed; no web or database tests | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.02; no P01 phase approval | P01.03 |
+| 4 October 2026 | P01.03 | Complete: local foundation step | 16 isolated configuration checks plus PHP syntax, redaction, cache recovery and ignore checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.03; no P01 phase approval | P01.04 |
+| 4 October 2026 | P01.04 | Complete: local foundation step | 16 configuration scenarios, 5 real HTTP groups, PHP syntax and desktop/mobile browser checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.04; no P01 phase approval | P01.05 |
+| 4 October 2026 | P01.05 | Complete: local foundation step | 6 HTTP groups, JS/PHP syntax and browser asset/reload/no-JS/reflow checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review, code_review and js_review: Approved P01.05; no P01 phase approval | P01.06 |
+| 4 October 2026 | P01.06 | Complete: local foundation step | 24 Git exclusions and 13 source inclusions verified; no ignored files indexed; prior 6 HTTP and browser asset checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | code_review: Approved P01.06; no P01 phase approval | P01.07 |
+| 4 October 2026 | P01.07 | Complete: local foundation step | PHPUnit 12.5.37 passed 2 tests covering 16 configuration scenarios and 6 HTTP groups; Composer platform and advisory checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.07; no P01 phase approval | P01.08 |
+| 4 October 2026 | P01.08 | Complete: local foundation step | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | js_review and code_review: Approved P01.08; no P01 phase approval | P01.09 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 
 ## Phase review record
 
-Append or update a row after each cumulative phase review. No phase has been reviewed or approved yet. Preserve previous approvals when reopening work so the reason for renewed review is clear.
+Append or update a row after each cumulative phase review. P00 baseline preparation is approved. Preserve previous approvals when reopening work so the reason for renewed review is clear.
 
 | Phase | Reviewed revision/diff boundary | Reviewer | Outcome/date | Findings and resolution evidence | Next phase permitted |
 |---|---|---|---|---|---|
-| None | No application changes yet | Not assigned | Not requested | No phase complete | No implementation progression recorded |
+| P00 | Baseline 6ec7890, intervening 52c56ad and current pending documentation; all P00 evidence | baseline_reviewer | Approved / 4 October 2026 | O13 timing, P29.02 references and completion-table formatting corrected and re-reviewed | P01 local scaffold only; actual host/provider/hardware gates remain |
 
 ## Keeping the README accurate
 

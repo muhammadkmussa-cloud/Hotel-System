@@ -1,0 +1,19 @@
+/.env
+/.env.*
+!/.env.example
+/vendor/
+
+# Local Composer credentials and development dependencies/output.
+/auth.json
+/node_modules/
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+/test-results/
+/playwright-report/
+
+# Every installation owns its runtime files and uploaded media.
+/storage/**
+!/storage/**/
+!/storage/**/.gitignore
+/public/media/

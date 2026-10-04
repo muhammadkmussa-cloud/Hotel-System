@@ -20,7 +20,7 @@ Checked 4 October 2026: [Laravel 13.34.0](https://github.com/laravel/framework/r
 
 The [MySQL general-availability download](https://dev.mysql.com/downloads/mysql/) currently lists 26.7.0; 26.10.0 is [early access](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-10-0.html) and is not selected. The 26.7.1 [security update is Docker-image-specific](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-7-1.html); use the appropriate patched artifact if Docker is selected for local tests. Choose/pin the exact installable artifact during database setup, never an unreviewed floating latest tag.
 
-Laravel 13.34.0 and MySQL 26.7 GA are selected targets, not installed project dependencies or a tested pair yet. P01.02 must resolve/pin the framework and dependency lockfile; P02 must prove real-MySQL behaviour. The actual DirectAdmin domain, PHP web/CLI versions, database engine/version, and quotas remain unknown under O13. The user's latest-version preference does not close that evidence gate or authorize upgrading the host.
+Laravel 13.34.0 is now installed locally with a Composer lockfile; platform checks and private CLI startup pass. MySQL 26.7 GA remains the selected target, not an installed/tested server or a tested Laravel/MySQL pair. P02 must prove real-MySQL behaviour. The actual DirectAdmin domain, PHP web/CLI versions, database engine/version, and quotas remain unknown under O13. The user's latest-version preference does not close that evidence gate or authorize upgrading the host.
 
 ## Recommended supporting tools
 
@@ -43,7 +43,7 @@ Laravel is confirmed in C25. The remaining supporting details in this section ar
 | Staff/device access | Server-managed sessions, secure cookies, CSRF protection, role checks | Preserve separate staff and guest privileges; use PHP password hashing APIs for staff passwords. |
 | Backups | Consistent MySQL and media backups to an encrypted off-account destination | Binary-log recovery depends on provider access. Rehearse restores and agree achievable recovery targets under O10/O13; panel backup availability alone is insufficient. |
 | Diagnostics | Private structured logs and staff-visible operational health | Track failed jobs, uncertain payments, printers, and backup age; redact personal data and secrets. |
-| Testing tools | PHPUnit for PHP; Playwright with JavaScript for browser journeys | Use real MySQL for database tests. Node.js/npm may be development/test tools for Playwright or contract generation; they are not the application backend. |
+| Testing tools | PHPUnit 12.5.37 installed for local foundation tests; Playwright 1.63.0 with JavaScript installed for local starter-page browser tests | Use real MySQL for database tests. Node.js/npm may be development/test tools for Playwright or contract generation; they are not the application backend. |
 | Version control and checks | Git, dependency lockfiles, automated documentation/contract/test checks | Keep release changes reviewable. Remote repository and CI hosting are not selected by this plan. |
 
 The supporting choices are engineering recommendations based on the existing requirements. Official references: [Composer](https://getcomposer.org/doc/00-intro.md), [PHP PDO](https://www.php.net/manual/en/book.pdo.php), [MySQL InnoDB](https://dev.mysql.com/doc/refman/8.4/en/innodb-introduction.html), [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), [PHP cURL](https://www.php.net/manual/en/book.curl.php), [PHP GD](https://www.php.net/manual/en/book.image.php), [MySQL recovery](https://dev.mysql.com/doc/refman/8.4/en/point-in-time-recovery.html), [PHPUnit](https://phpunit.de/documentation.html), and [Playwright](https://playwright.dev/docs/intro).
@@ -81,3 +81,7 @@ Deploy public files to the DirectAdmin domain web root and private application f
 5. **M9:** rehearse the physical installation and staff workflows; collect release evidence before live operation.
 
 The detailed [build plan](delivery/01-build-plan.md) remains authoritative for dependencies. Supporting tool approval/validation, provider onboarding, fiscal configuration, hardware, backup location, and operational policies remain visible in [open decisions](delivery/05-risks-decisions.md). This plan does not start implementation or authorize external purchases, accounts, or deployments.
+
+## Reusable installation boundary
+
+C26: no fixed domain or current hosting account. Every owner configures an independent domain, application origin, MySQL database and private credentials on DirectAdmin. Local development does not wait for a purchased domain. Actual host engine/version, PHP, private-path, cron and recovery validation remains mandatory per installation under O13 before deployment.

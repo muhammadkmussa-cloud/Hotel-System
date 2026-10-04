@@ -2,7 +2,7 @@
 
 Hotel System · documentation version 1.1 · 4 October 2026.
 
-Read [README](README.md) first. These are specifications, not executable application files.
+Read [README](README.md) first. This index lists specifications; initial executable scaffolding is tracked separately in the README/build plan.
 
 ## Project entry points
 

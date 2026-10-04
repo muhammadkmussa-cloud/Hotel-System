@@ -8,8 +8,8 @@ Each hotel has isolated domain/application files, database/user, media, credenti
 
 ## Setup sequence
 
-1. Record provider/account capabilities O13: actual MySQL/PHP versions, extensions, web server, routing, cron, quotas, private-path permissions, outbound HTTPS, and backup/restore access. Confirm that the chosen plan can support the expected load.
-2. Configure the domain and trusted HTTPS with renewal. Verify both public_html/private_html mappings. Neither may expose private application files; redirect HTTP to HTTPS.
+1. For each owner’s installation (C26), record provider/account capabilities O13: actual MySQL/PHP versions, extensions, web server, routing, cron, quotas, private-path permissions, outbound HTTPS, and backup/restore access. Confirm that the chosen plan can support the expected load.
+2. Configure the owner-selected domain and private APP_URL (no repository-wide production domain). Configure the domain and trusted HTTPS with renewal. Verify both public_html/private_html mappings. Neither may expose private application files; redirect HTTP to HTTPS.
 3. Prepare a release with locked PHP dependencies matching the host. Use Composer locally if host shell/Composer access is unavailable. Keep the Laravel hotel-app root private and map its public directory to the domain root per the deployment layout; verify .env, bootstrap/cache, and storage isolation. Exclude tests, Git metadata, secrets, SQL exports, and developer files from public upload.
 4. Create an isolated MySQL database/user through the permitted host tools, using actual prefixed names and least-privilege access. Store credentials in private configuration. Apply reviewed migrations through the controlled administrative process and disable setup access after bootstrap.
 5. Configure DirectAdmin cron with the verified PHP CLI path, absolute private Artisan command path, bounded runs, leases, and overlap protection. Check heartbeat/error reporting without leaking secrets in job output or email.

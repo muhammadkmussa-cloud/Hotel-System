@@ -4,7 +4,7 @@ Read [README](README.md), [decisions](product/01-decisions.md), [requirements](p
 
 Use [developer navigation](docs/CODEX-NAVIGATION-GUIDE.md) for ownership and future review packets.
 
-This is currently a documentation project. Do not claim the application has been built or tested. Keep proposed defaults visibly distinct from confirmed requirements. User instructions remain authoritative.
+Local scaffolding has started under hotel-app/. Report only verified implementation; the business application is not built yet. Keep proposed defaults visibly distinct from confirmed requirements. User instructions remain authoritative.
 
 ## Product constraints
 

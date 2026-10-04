@@ -2,6 +2,10 @@
 
 Status: DirectAdmin is confirmed C23. This is a planned layout, not created application files. Assume ordinary shared DirectAdmin hosting until O13 records the actual account capabilities.
 
+## Domain-independent installations
+
+C26: each owner supplies their own domain during installation. There is no project-wide production domain, central registration service or shared hotel database. Keep the application origin in private per-installation configuration (`APP_URL`), with same-origin relative browser paths. Do not hardcode an owner's hostname in source, assets or provider callback definitions. Each installer must verify trusted origin/host handling, HTTPS and the actual DirectAdmin capabilities before deployment; arbitrary request Host headers must not become trusted callback origins. Local development may use loopback without any purchased domain or hosting account.
+
 ## Account layout
 
 The account home below is illustrative; discover the actual home and domain document root during installation. `domains/DOMAIN/public_html` is the typical domain web root. Confirm the HTTP and HTTPS roots, including any subdomain override. `private_html` may serve HTTPS content or link to `public_html`; despite its name it is not private application storage. Keep the standard Laravel project under `hotel-app/`; map only its `public/` directory to the actual domain document root. The frontend blueprint uses `public_html/` to describe deployed public paths, not a second source tree.

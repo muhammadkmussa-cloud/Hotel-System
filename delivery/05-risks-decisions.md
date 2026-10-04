@@ -16,7 +16,7 @@ This list keeps progress possible without falsely claiming everything has been a
 | O10 | Hosting provider/location, backup retention, recovery targets, support/update model | DirectAdmin C23; independent off-account backups, D17 | Before operational release |
 | O11 | Whole-table payer, mixed-method UI, service charges/tips | Guest-by-guest settlement first | Before expanding M6 scope |
 | O12 | Sale/licence/support terms for installations elsewhere | No SaaS assumptions | Separate business decision |
-| O13 | Actual DirectAdmin tier, web server/routing, PHP/MySQL versions/extensions, cron limits, private paths, quotas, Composer/SSH, restore capability | Shared-host-compatible D16/D17; verify MySQL, not an assumed MariaDB substitute | M1 before implementation/deployment commitments |
+| O13 | Actual DirectAdmin tier, web server/routing, PHP/MySQL versions/extensions, cron limits, private paths, quotas, Composer/SSH, restore capability | Shared-host-compatible D16/D17; verify MySQL, not an assumed MariaDB substitute | Local targets established in M1; C26 requires actual provider/account verification per installation before deployment or reliance on a specific host capability (P29.02) |
 
 ## Key risks
 

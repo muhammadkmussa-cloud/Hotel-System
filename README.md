@@ -4,11 +4,11 @@
 
 A restaurant ordering and POS system for **one hotel per installation**, designed to be installed separately at other hotels. The customer experience combines portable table tablets, a walk-in kiosk, and a photographic meal customiser with ingredient circles.
 
-This project currently contains **Markdown specifications and a build plan**. It does not contain a working application, live payment integration, installed hardware, production food photography, or a certified tax integration. Source-file blueprints describe what developers should create next; their paths are not claims that those source files already exist.
+This project contains **Markdown specifications, a build plan, and the initial [Laravel scaffold](hotel-app/README.md)**. It does not contain a working application, live payment integration, installed hardware, production food photography, or a certified tax integration. Source-file blueprints describe the full intended system; consult the tracker for the subset actually created.
 
 ## Build progress
 
-**Build preparation started. Application code has not been created yet.** No working feature, live integration, or deployment is claimed yet.
+**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented.** No working feature, live integration, or deployment is claimed yet.
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
@@ -16,24 +16,24 @@ This project currently contains **Markdown specifications and a build plan**. It
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 1 / 320 steps complete · 0 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 18 / 320 steps complete · 1 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P00 — Establish the working baseline |
-| Active task | P00.02 — Laravel/version choices and scope review; reviewer approval pending |
-| Last completed build task | P00.01 — repository baseline; no app feature built |
-| Next task | **P00.02 — Review confirmed decisions and proposed defaults** |
-| Blockers | None for baseline inspection; provider, host, hardware, and hotel decisions remain downstream gates |
-| Review gate | P00.01 approved; P00.02 scope/version review pending; P00 phase incomplete |
-| Last verified update | 4 October 2026 — repository baseline inspected; no application tests |
+| Current phase | P01 — Create the smallest PHP application |
+| Active task | P01.09 — fresh local startup reproduction |
+| Last completed build task | P01.08 — local foundation |
+| Next task | **P01.09 — Reproduce documented local startup and verification from the recorded prerequisites** |
+| Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
+| Review gate | P00 approved; 8 P01 steps independently reviewed; latest browser tooling approved by JS and code reviewers |
+| Last verified update | 4 October 2026 — Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
 
 ### Feature and phase checklist
 
 Check a phase only when all its required steps, verification checks, and independent phase review pass. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
-- [ ] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 1/10 steps
-- [ ] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 0/10 steps
+- [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
+- [ ] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 8/10 steps
 - [ ] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 0/10 steps
 - [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 0/10 steps
 - [ ] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 0/10 steps

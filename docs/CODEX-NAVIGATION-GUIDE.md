@@ -1,6 +1,6 @@
 # Developer navigation guide
 
-Start at [README](../README.md), [technology fact file](../TECHNOLOGY-FACT-FILE.md), [decision register](../product/01-decisions.md), and [build plan](../delivery/01-build-plan.md). This is a documentation-first project; planned code paths are described in the frontend/backend blueprints and are not existing source files.
+Start at [README](../README.md), [technology fact file](../TECHNOLOGY-FACT-FILE.md), [decision register](../product/01-decisions.md), and [build plan](../delivery/01-build-plan.md). This is a documentation-first project with initial scaffolding under hotel-app/. Read the build tracker for verified scope; blueprint paths beyond the scaffold are planned, not existing features.
 
 ## Surface ownership
 

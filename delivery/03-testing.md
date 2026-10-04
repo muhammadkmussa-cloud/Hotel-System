@@ -1,12 +1,12 @@
 # Test strategy
 
-No application tests have been run in this documentation-only project. The scenarios below specify future evidence.
+Local foundation checks now run through the PHPUnit suite described in [the application README](../hotel-app/README.md#php-test-suite): private configuration, safe error handling, plain-page/static-asset delivery and HTTP boundaries. The T01–T36 scenarios below remain future business/integration/release evidence; no MySQL, provider or physical-hardware readiness is claimed.
 
 ## Test layers
 
 Domain tests: money allocation, rounding, state transitions, recipe composition, pricing snapshots, and permission predicates. Database integration tests: actual MySQL/InnoDB constraints/locking, idempotency, outbox/inbox and rollback. Contract tests: eventual OpenAPI request/response schemas and example fixtures. UI/component tests: accessible ingredient state, cart isolation, error rendering. End-to-end tests: multiple independent browser contexts against a real PHP/MySQL backend in an isolated test environment. Hardware/provider tests: actual printers, selected merchant sandbox, fiscal integrator sandbox, and controlled live pilot.
 
-Proposed tools: PHPUnit with Laravel HTTP/testing facilities for PHP domain/integration tests and Playwright with JavaScript for DOM and browser journeys. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
+PHPUnit 12.5.37 is installed as a development dependency for the foundation suite. Playwright 1.63.0 runs two isolated starter-page Chromium tests; see the [browser suite commands](../hotel-app/README.md#browser-test-suite). Laravel domain/integration tests and complete browser journeys remain future work. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
 
 ## Mandatory cases
 

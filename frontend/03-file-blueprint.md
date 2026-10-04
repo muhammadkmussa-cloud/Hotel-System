@@ -1,6 +1,6 @@
 # Frontend source-file blueprint
 
-**Planned files only.** HTML, CSS, and plain JavaScript are confirmed C20. Paths follow the [DirectAdmin layout](../architecture/05-directadmin-layout.md); no framework, TypeScript build, or frontend bundler is required by this plan.
+**Planned files only.** HTML, CSS, and plain JavaScript are confirmed C20. Paths follow the [DirectAdmin layout](../architecture/05-directadmin-layout.md); no frontend framework, TypeScript build, or frontend bundler is required by this plan.
 
 ```text
 public_html/

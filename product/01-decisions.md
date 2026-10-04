@@ -31,6 +31,7 @@ Reviewed against the conversation through 4 October 2026. This file prevents rec
 | C23 | Deploy using DirectAdmin and organise the architecture and file layout for that hosting environment | User clarified DirectAdmin after initially naming cPanel on 4 October 2026 |
 | C24 | Begin local build work in small verified steps, with independent step and phase reviews | User requested the reviewer workflow and then said “start” on 4 October 2026; C22 planning prerequisite is fulfilled |
 | C25 | Use the latest stable Laravel and MySQL releases as the implementation targets | User chose latest Laravel/MySQL on 4 October 2026; this is a version preference, not evidence of installed hosting versions |
+| C26 | Build reusable software for separate installations on each owner's domain; no fixed domain or current hosting account is required for local development. DirectAdmin remains the deployment target. | User clarification on 4 October 2026: people copy the repository and configure their own installation; no domain/account has been set up |
 
 ## Proposed defaults
 
