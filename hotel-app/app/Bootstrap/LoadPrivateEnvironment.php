@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Bootstrap;
 
+use App\Http\ApiResponse;
+use Illuminate\Http\Request;
 use Dotenv\Exception\InvalidFileException;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +18,11 @@ final class LoadPrivateEnvironment extends LoadEnvironmentVariables
         if (PHP_SAPI === 'cli') {
             fwrite(STDERR, "Private environment file is invalid. Correct its syntax and retry.\n");
         } else {
+            $request = app('request');
+            if ($request instanceof Request && ApiResponse::isApi($request)) {
+                ApiResponse::error($request, 503)->send();
+                exit(1);
+            }
             (new Response('The application is not configured. Please contact the operator.', 503, [
                 'Content-Type' => 'text/plain; charset=UTF-8',
                 'Cache-Control' => 'no-store',

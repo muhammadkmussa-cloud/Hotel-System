@@ -76,7 +76,7 @@ try {
         $connection = $app['db']->connection('mysql');
         $failure = new RuntimeException('Intentional fixture failure');
         try {
-            $connection->transaction(function () use ($failure): void {
+            App\Support\DatabaseTransaction::run($connection, function () use ($failure): void {
                 $record = App\Models\HotelSettings::sole();
                 $record->update(['name' => 'Must not persist']);
                 $record->delete();
@@ -91,7 +91,7 @@ try {
     } elseif ($action === 'rollback-constraint') {
         $connection = $app['db']->connection('mysql');
         try {
-            $connection->transaction(function (): void {
+            App\Support\DatabaseTransaction::run($connection, function (): void {
                 App\Models\HotelSettings::sole()->update(['name' => 'Must not persist either']);
                 App\Models\HotelSettings::create(['name' => 'Duplicate identity', 'timezone' => 'UTC']);
             });
@@ -117,7 +117,73 @@ try {
             'row' => $connection->table('hotel_settings')->sole(),
             'timezone' => $connection->selectOne('SELECT @@session.time_zone AS zone')->zone,
         ]);
+    } elseif ($action === 'retry-setup') {
+        $schema->create('retry_probe', function (Illuminate\Database\Schema\Blueprint $table): void {
+            $table->unsignedInteger('id')->primary();
+            $table->unsignedInteger('value');
+        });
+        $app['db']->table('retry_probe')->insert([['id' => 1, 'value' => 0], ['id' => 2, 'value' => 0]]);
+        echo json_encode(['ready' => true]);
+    } elseif ($action === 'deadlock-worker') {
+        $worker = $argv[2];
+        if (! in_array($worker, ['a', 'b'], true)) throw new RuntimeException;
+        $connection = $app['db']->connection('mysql');
+        $connection->statement('SET SESSION innodb_lock_wait_timeout = 5');
+        $attempts = 0;
+        $result = App\Support\DatabaseTransaction::run($connection, function () use ($connection, $worker, &$attempts): string {
+            $attempts++;
+            $first = $worker === 'a' ? 1 : 2;
+            $connection->table('retry_probe')->where('id', $first)->increment('value');
+            if ($attempts === 1) {
+                file_put_contents(__DIR__ . '/locked-' . $worker, 'ready');
+                $other = $worker === 'a' ? 'b' : 'a';
+                $deadline = microtime(true) + 10;
+                while (! is_file(__DIR__ . '/locked-' . $other)) {
+                    if (microtime(true) >= $deadline) throw new RuntimeException;
+                    usleep(10000);
+                }
+            }
+            $connection->table('retry_probe')->where('id', 3 - $first)->increment('value');
+            return 'committed';
+        });
+        echo json_encode(['result' => $result, 'attempts' => $attempts, 'level' => $connection->transactionLevel()]);
+    } elseif ($action === 'retry-inspect') {
+        echo json_encode(['values' => $app['db']->table('retry_probe')->orderBy('id')->pluck('value')->all()]);
+    } elseif (in_array($action, ['retry-exhaust', 'retry-timeout'], true)) {
+        $connection = $app['db']->connection('mysql');
+        $attempts = 0;
+        try {
+            App\Support\DatabaseTransaction::run($connection, function () use ($connection, $action, &$attempts): void {
+                $attempts++;
+                $connection->table('retry_probe')->where('id', 1)->increment('value');
+                // Inject exact server diagnostics to deterministically test the retry limit/classifier.
+                $sql = $action === 'retry-exhaust'
+                    ? "SIGNAL SQLSTATE '40001' SET MYSQL_ERRNO = 1213, MESSAGE_TEXT = 'fixture deadlock'"
+                    : "SIGNAL SQLSTATE 'HY000' SET MYSQL_ERRNO = 1205, MESSAGE_TEXT = 'fixture timeout'";
+                $connection->statement($sql);
+            });
+            throw new LogicException('Expected failure');
+        } catch (Illuminate\Database\QueryException $error) {
+            $expected = $action === 'retry-exhaust' ? 1213 : 1205;
+            if (($error->errorInfo[1] ?? null) !== $expected) throw $error;
+        }
+        echo json_encode(['attempts' => $attempts, 'level' => $connection->transactionLevel()]);
+    } elseif ($action === 'retry-nested') {
+        $connection = $app['db']->connection('mysql');
+        $called = false;
+        $connection->beginTransaction();
+        try {
+            try {
+                App\Support\DatabaseTransaction::run($connection, function () use (&$called): void { $called = true; });
+                throw new RuntimeException('Nested execution accepted');
+            } catch (LogicException) {
+                echo json_encode(['called' => $called, 'level' => $connection->transactionLevel()]);
+            }
+        } finally {
+            $connection->rollBack();
+        }
     } elseif ($action === 'cleanup') {
+        $schema->dropIfExists('retry_probe');
         $schema->dropIfExists('hotel_settings');
         $schema->dropIfExists('migrations');
         echo json_encode(['cleaned' => true]);

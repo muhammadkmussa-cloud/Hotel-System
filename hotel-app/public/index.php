@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Illuminate\Http\Request;
+use App\Http\ApplicationRequest;
 
 define('LARAVEL_START', microtime(true));
 
@@ -13,4 +13,4 @@ if (is_file($maintenance)) {
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 $app = require dirname(__DIR__) . '/bootstrap/app.php';
-$app->handleRequest(Request::capture());
+$app->handleRequest(ApplicationRequest::capture());

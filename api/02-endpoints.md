@@ -1,6 +1,6 @@
 # Endpoint catalogue
 
-All paths are relative to `/api/v1`. All commands follow [conventions](01-conventions.md). 'Own guest' means server-derived binding, not a supplied guest ID. Staff scope also includes visit/station assignment where applicable.
+Health and shared errors have an initial validated [OpenAPI design contract](openapi.json); runtime endpoints remain unimplemented. All paths are relative to `/api/v1`. All commands follow [conventions](01-conventions.md). 'Own guest' means server-derived binding, not a supplied guest ID. Staff scope also includes visit/station assignment where applicable.
 
 | Method | Path | Authorized caller | Behaviour |
 |---|---|---|---|

@@ -127,6 +127,35 @@ final class HotelSettingsTest extends TestCase
             $serialized = $run('inspect')['row'];
             self::assertSame('2026-10-04T12:30:00.000000Z', $serialized['created_at']);
             self::assertSame('2026-10-04T13:30:00.000000Z', $serialized['updated_at']);
+
+            self::assertTrue($run('retry-setup')['ready']);
+            $deadlockWorkers = [];
+            foreach (['a', 'b'] as $worker) {
+                $process = $makeProcess(['deadlock-worker', $worker]);
+                $process->start();
+                $workers[] = $process;
+                $deadlockWorkers[] = $process;
+            }
+            $attempts = [];
+            foreach ($deadlockWorkers as $process) {
+                $process->wait();
+                $result = $this->probeResult($process);
+                self::assertSame('committed', $result['result']);
+                self::assertSame(0, $result['level']);
+                $attempts[] = $result['attempts'];
+            }
+            sort($attempts);
+            self::assertSame([1, 2], $attempts, 'Exactly one deadlock victim must replay its whole transaction.');
+            self::assertSame([2, 2], $run('retry-inspect')['values']);
+            foreach (['retry-exhaust' => 3, 'retry-timeout' => 1] as $action => $expectedAttempts) {
+                $result = $run($action);
+                self::assertSame($expectedAttempts, $result['attempts']);
+                self::assertSame(0, $result['level']);
+                self::assertSame([2, 2], $run('retry-inspect')['values'], 'Failed attempts must leave no partial writes.');
+            }
+            $nested = $run('retry-nested');
+            self::assertFalse($nested['called']);
+            self::assertSame(1, $nested['level']);
         } finally {
             foreach ($workers as $process) {
                 if ($process->isRunning()) $process->stop(1);

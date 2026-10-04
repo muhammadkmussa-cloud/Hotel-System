@@ -8,7 +8,7 @@ This project contains **Markdown specifications, a build plan, and the initial [
 
 ## Build progress
 
-**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation rejects malformed and out-of-range inputs.** No working feature, live integration, or deployment is claimed yet.
+**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation, exact rounding and deterministic total-preserving allocation are implemented. Bounded transaction retries pass a real MySQL deadlock test. A guarded reset supports separately marked demo settings. The database/money phase and separate-installation isolation have passed cumulative review.** The initial [OpenAPI health/error design contract](api/README.md) is validated; health endpoints remain unimplemented, while the API prefix and safe JSON 404/405 responses are now in place. Bounded JSON parsing and declared-field validation reject malformed, oversized and unexpected inputs. The foundations also include safe response envelopes, access-control interfaces, browser CSRF, scoped request/login limits, durable command replay, and stale-edit protection. No working product feature, live integration, or deployment is claimed yet.
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 26 / 320 steps complete · 2 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 39 / 320 steps complete · 3 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P02 — Database foundation and exact money |
-| Active task | P02.07 — rounding and remainder allocation |
-| Last completed build task | P02.06 — exact integer money validation |
-| Next task | **P02.07 — Implement rounding and deterministic remainder allocation** |
+| Current phase | P03 — HTTP contracts and request safeguards |
+| Active task | None — stopped after completed P03.09 |
+| Last completed build task | P03.09 — Resource versions and stale-edit protection |
+| Next task | **P03.10 — Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00/P01 approved; P02.01–06 approved by independent PHP and code reviewers |
-| Last verified update | 4 October 2026 — foundation suite 41 tests/158 assertions; money subset 37 tests/49 assertions independently reviewed. MySQL evidence retained from P02.05 (3 tests/205 assertions). |
+| Review gate | P00/P01/P02 approved; P03.01–09 independently approved; P03 incomplete |
+| Last verified update | 4 October 2026 — Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace; both reviewers approved |
 
 ### Feature and phase checklist
 
@@ -34,8 +34,8 @@ Check a phase only when all its required steps, verification checks, and indepen
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
 - [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
-- [ ] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 6/10 steps
-- [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 0/10 steps
+- [x] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 10/10 steps
+- [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 9/10 steps
 - [ ] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 0/10 steps
 - [ ] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 0/10 steps
 - [ ] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 0/10 steps

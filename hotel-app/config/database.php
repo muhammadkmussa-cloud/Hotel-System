@@ -9,6 +9,7 @@ return [
         'update_date_on_publish' => true,
     ],
     'connections' => [
+        'demo_reset' => (require __DIR__ . '/demo.php')['connection'],
         'mysql' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),

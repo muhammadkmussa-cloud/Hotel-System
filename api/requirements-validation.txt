@@ -1,0 +1,2 @@
+# Development-only offline contract checker; not a PHP/DirectAdmin dependency.
+jsonschema==4.19.2

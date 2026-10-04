@@ -8,20 +8,20 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **26 / 320** |
+| First-release steps complete | **39 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **2 / 32** |
-| Current phase | P02 — Database foundation and exact money |
-| Active task / owner | P02.07 / primary agent |
-| Last completed implementation task | P02.06 |
-| Next task | **P02.07 — Implement rounding and deterministic remainder allocation** |
-| Next action | Implement documented exact rounding and deterministic remainder allocation, proving allocated amounts sum to the source total |
+| Phase gates complete | **3 / 32** |
+| Current phase | P03 — HTTP contracts and request safeguards |
+| Active task / owner | None |
+| Last completed implementation task | P03.09 |
+| Next task | **P03.10 — Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase** |
+| Next action | Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
-| Working branch/revision | main at 17575f19cf6f71b201126f696ec4c0bbc2e4fa68; previously observed external commit, unchanged this step |
-| Uncommitted changes | Prior staged documentation and approved P02.01–05 edits preserved; P02.06 MinorAmount, focused tests and documentation pending. No commit/push by this agent. |
-| Application verification | Foundation suite passed 41 tests, 158 assertions; both reviewers independently passed money subset 37 tests, 49 assertions. MySQL 3 tests/205 assertions retained from P02.05; no database change or rerun this step. |
-| Latest step review | P02.06 approved by php_review and code_review; cumulative P02 remains incomplete |
-| Latest phase review | P01 approved by code_review; cumulative PHP/security approved by php_review |
+| Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
+| Uncommitted changes | Prior P02/P03 work preserved; P03.09 implementation/tests/docs pending. No staging/commit/push. |
+| Application verification | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace |
+| Latest step review | P03.09 approved by php_review and code_review; no required findings; cumulative P03 incomplete |
+| Latest phase review | Cumulative P02 approved by code_review; PHP/security scope approved by php_review; P03 may proceed |
 
 ## How to work in very small steps
 
@@ -151,10 +151,10 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P02.04** Set InnoDB and utf8mb4 conventions; verify transaction rollback and multilingual text against real MySQL.
 - [x] **P02.05** Add opaque identifier generation and UTC timestamps; keep public order numbers separate from access credentials.
 - [x] **P02.06** Implement integer minor-unit money validation; reject invalid values and never calculate money with binary floating point.
-- [ ] **P02.07** Implement documented rounding and deterministic remainder allocation; prove the allocated total equals the original amount.
-- [ ] **P02.08** Add a transaction wrapper with bounded deadlock retry; prove failed work leaves no partial records.
-- [ ] **P02.09** Create an isolated demo-data reset path; verify it refuses to run against a live installation.
-- [ ] **P02.10** Run database/money foundation checks and save evidence; include separate-installation isolation.
+- [x] **P02.07** Implement documented rounding and deterministic remainder allocation; prove the allocated total equals the original amount.
+- [x] **P02.08** Add a transaction wrapper with bounded deadlock retry; prove failed work leaves no partial records.
+- [x] **P02.09** Create an isolated demo-data reset path; verify it refuses to run against a live installation.
+- [x] **P02.10** Run database/money foundation checks and save evidence; include separate-installation isolation.
 
 <a id="p03"></a>
 
@@ -166,15 +166,15 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [API conventions](../api/01-conventions.md), [endpoints](../api/02-endpoints.md).
 
-- [ ] **P03.01** Create the first machine-readable OpenAPI contract for health and standard errors; validate its syntax.
-- [ ] **P03.02** Implement the API route prefix and safe unknown-route response; verify deep links do not return accidental HTML to API callers.
-- [ ] **P03.03** Add bounded JSON parsing and request validation; reject malformed input and unexpected identity/money fields.
-- [ ] **P03.04** Add standard success/error envelopes with request IDs; verify internal exceptions are redacted.
-- [ ] **P03.05** Add reusable authentication/authorization middleware interfaces; protected routes must reject missing principals before doing work.
-- [ ] **P03.06** Add CSRF checks for browser mutations; verify a missing/invalid token fails without a database write.
-- [ ] **P03.07** Add configurable request/login limits; verify shared hotel IP addresses do not alone lock out every guest.
-- [ ] **P03.08** Add idempotency storage and body-hash conflict handling; prove same-key retries and changed-body conflicts differ.
-- [ ] **P03.09** Add resource-version/If-Match support; stale edits must return the specified conflict response.
+- [x] **P03.01** Create the first machine-readable OpenAPI contract for health and standard errors; validate its syntax.
+- [x] **P03.02** Implement the API route prefix and safe unknown-route response; verify deep links do not return accidental HTML to API callers.
+- [x] **P03.03** Add bounded JSON parsing and request validation; reject malformed input and unexpected identity/money fields.
+- [x] **P03.04** Add standard success/error envelopes with request IDs; verify internal exceptions are redacted.
+- [x] **P03.05** Add reusable authentication/authorization middleware interfaces; protected routes must reject missing principals before doing work.
+- [x] **P03.06** Add CSRF checks for browser mutations; verify a missing/invalid token fails without a database write.
+- [x] **P03.07** Add configurable request/login limits; verify shared hotel IP addresses do not alone lock out every guest.
+- [x] **P03.08** Add idempotency storage and body-hash conflict handling; prove same-key retries and changed-body conflicts differ.
+- [x] **P03.09** Add resource-version/If-Match support; stale edits must return the specified conflict response.
 - [ ] **P03.10** Generate the first browser-compatible JavaScript client contract and Fetch wrapper; run contract/error-path checks.
 
 <a id="p04"></a>
@@ -1077,7 +1077,27 @@ Added immutable App\Support\MinorAmount and its focused tests. Inputs are non-ne
 
 ## P02.07 exact rounding and allocation evidence
 
-MoneyAllocation adds explicit non-negative half-up integer division and equal splitting via quotient/remainder. Ascending bytewise canonical server recipient IDs decide extra minor units, independent of request/display order. No floating-point math, rate multiplication or workflow authorization is included; D01 and fiscal/provider gates remain unchanged. Tests-first failed for the absent helper; implementation passed focused 3 tests/234 assertions including PHP_INT_MAX, invalid input, stable order and 35 total/count combinations with exact sums and shares differing by at most one. PHP syntax passed. Full foundation suite passed 44 tests/392 assertions; whitespace checks passed. D18 records these as implementation conventions without changing D01 or fiscal/provider approval gates. Independent reviews pending.
+MoneyAllocation adds explicit non-negative half-up integer division and equal splitting via quotient/remainder. Ascending bytewise canonical server recipient IDs decide extra minor units, independent of request/display order. No floating-point math, rate multiplication or workflow authorization is included; D01 and fiscal/provider gates remain unchanged. Tests-first failed for the absent helper; implementation passed focused 3 tests/234 assertions including PHP_INT_MAX, invalid input, stable order and 35 total/count combinations with exact sums and shares differing by at most one. PHP syntax passed. Full foundation suite passed 44 tests/392 assertions; whitespace checks passed. D18 records these as implementation conventions without changing D01 or fiscal/provider approval gates. php_review and code_review approved P02.07 on 4 October 2026 with no required findings, each independently passing 3 tests/234 assertions. Review covered the complete new MoneyAllocation.php and MoneyAllocationTest.php and the associated convention/limitation documentation. No database changes or rerun were needed. Cumulative P02 remains incomplete.
+
+## P02.08 transaction retry evidence
+
+DatabaseTransaction wraps top-level MySQL callbacks with at most three attempts, retrying only 40001/1213 after rollback (10ms/20ms delays). Genuine opposing-row-lock workers prove one deadlock victim retries from scratch and no partial increment remains. SIGNAL injection covers exhaustion and timeout classification; wrapper application/constraint rollback, nested-use rejection and unit lost-connection/nonmatching-error propagation are checked. MySQL 26.7.1 passed 3 tests/247 assertions. Initial unit PDO mock caused a PHPUnit notice; using a stub fixed it, focused 1 test/12 assertions passed. Syntax checks pass. The clean full foundation rerun passed 45 tests/404 assertions; whitespace checks passed. php_review and code_review approved P02.08 on 4 October 2026 with no required findings, each independently passing the MySQL suite (3 tests/247 assertions) and retry unit test (1 test/12 assertions). Review covered DatabaseTransaction.php, DatabaseTransactionTest.php, settings test/probe changes against saved P02.07 copies, and callback/privacy/side-effect documentation. The disposable database and credentials were removed. No cumulative P02 approval is claimed.
+
+## P02.09 isolated demo reset evidence
+
+Added disabled-by-default dedicated demo configuration and app:demo-reset. Reset requires local/testing, explicit opt-in, separate database name/credentials, exact name confirmation, known InnoDB tables and a manually provisioned matching marker. It replaces only fictional settings transactionally, preserving migrations; future tables refuse until scope review. Database tests cover refusal, repeated resets, missing marker/unknown tables and constraint-induced rollback. Unit tests prove unsafe configuration never connects. The initial database check failed because Laravel lists schema-qualified names by default; selecting unqualified names for the demo schema corrected this. The trigger-based failure fixture could not be created by the test account; it was replaced with a temporary CHECK constraint to force insertion failure without trigger privileges. MySQL suite passed 4 tests/399 assertions. Focused preconnection guards passed 1 test/16 assertions, including refusal when the primary database name is missing. The full foundation suite passed 46 tests/420 assertions with loopback access; a sandboxed rerun initially failed to bind its HTTP test port and passed after permission correction. A documentation command initially used the app directory instead of the repository root and made no changes; the corrected update succeeded. php_review and code_review approved P02.09 on 4 October 2026 with no required findings. Both independently passed the 1-test/16-assertion configuration guards; php_review exclusively reran the full MySQL suite (4 tests/399 assertions), avoiding concurrent use of the empty-schema fixture. Review covered DemoReset, demo config/connection/CLI/example settings, both new tests and their probe, and provisioning/limitation documentation. The disposable database and credentials were removed. Cumulative P02 remains incomplete.
+
+## P02.10 cumulative verification evidence
+
+The new isolation test uses two separately scoped MySQL accounts/databases and temporary application copies, runs actual settings migrations, stores the same ID independently, and verifies both cross-schema reads and writes are denied. Foundation 46 tests/420 assertions and MySQL 5 tests/475 assertions passed. Syntax/whitespace checks passed. Composer strict validation returned only existing exact-pin/licence warnings; O12 remains open. HEAD independently advanced to 8672f0d; prior work is preserved. See [cumulative verification](07-database-foundation-verification.md) for the full P02 boundary and limits. code_review approved P02.10 and cumulative P02; php_review approved P02.10 and cumulative PHP/security scope on 4 October 2026. Both independently passed foundation 46/420; php_review exclusively passed MySQL 5/475. No required findings remain. Both disposable schemas/accounts and credentials were removed with the task-owned container. PHPStan/Psalm/Pint are not installed; no static-analysis/formatter pass is claimed.
+
+## P03.01 health/error contract evidence
+
+Added api/openapi.json with relative /api/v1 origin, public liveness, protected operations readiness and shared bounded error schemas/responses. Runtime routes are unchanged. Offline Python validation checks the checksum-pinned official OpenAPI structure, embedded Draft 2020-12 schemas, local references and 15 response examples. Twelve tests pass, including deliberate invalid documents and health security scope. An initial negative check showed the official schema permits absent operation responses; an explicit project rule now rejects them. D19 records proposed cookie/shape conventions; no auth implementation is claimed. Review found missing inline-schema/global-security validation and permissive trailing-newline patterns; fixes now validate inline media/header schemas and global security names, and use strict end-of-string patterns with regression checks. Public Python helpers have JSON/return annotations. Checker and all 12 tests pass. code_review approved final P03.01 files and python_review approved Python validation scope on 4 October 2026. Both independently passed 15 examples/12 tests; Python reviewer also passed Ruff, Mypy with missing imports ignored, and validation with sockets blocked. Missing dependency stubs remain unverified. Prior findings are resolved; no P03 phase approval or runtime API implementation is claimed.
+
+## P03.02 API routing evidence
+
+Registered the stateless /api/v1 route group and scoped 404/405 JSON exception rendering. No wildcard route shadows future endpoints. Safe constant messages, new server request IDs, no-store, preserved Allow and HEAD semantics are tested in the temporary loopback fixture, alongside six methods, encoded/deep routes, Accept variants and web-prefix separation. Health/business endpoints and full exception/envelope middleware remain pending; pre-routing configuration errors still use safe text/plain 503. Initial focused foundation 2 tests/2 assertions and PHP syntax checks passed; contract validation still passes 15 examples. Final foundation suite passed 46 tests/420 assertions; contract validator passed 15 examples and all 12 regression tests. php_review and code_review approved P03.02 on 4 October 2026 with no required findings. Each independently ran the two foundation smoke tests including the expanded real HTTP scenarios. Review covers new ApiRouteErrors/routes/api.php and bootstrap/http-smoke changes against saved P03.01 copies, plus documentation. Temporary HTTP fixtures cleaned up; no database was used. Cumulative P03 remains incomplete.
 
 ## Agent handoff — update before stopping
 
@@ -1085,21 +1105,21 @@ Maintain exactly one current handoff below and append concise historical notes t
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P02.06 |
-| Agent / active task | Primary agent / none |
-| Completed this session | P02.06 immutable integer minor-unit validation and malformed-input/overflow/immutability tests |
-| Current phase / next task | P02 / P02.07 |
-| Task state | P00/P01 approved; P02 6/10 steps complete |
-| Branch / revision | main / 17575f19cf6f71b201126f696ec4c0bbc2e4fa68; not committed by this agent |
-| Files changed / pending edits | Prior staged README/plan and P02.01–05 changes preserved. P02.06 adds app/Support/MinorAmount.php and tests/Feature/MinorAmountTest.php; updates app README, architecture/data, technology facts, testing, review log and trackers. No commit/push. |
-| Checks actually run | Tests-first failed for missing class, then focused 37 tests/49 assertions and full foundation 41 tests/158 assertions passed. One full-suite command used the wrong working directory and did not start; corrected run passed. PHP syntax/whitespace and both independent reviewer focused runs passed. |
-| Evidence | P02.06 evidence section and hotel-app/README.md; exact integer acceptance, rejection before cast, immutable value, constant diagnostics |
+| Updated | 4 October 2026 — P03.09 |
+| Agent / active task | Primary agent / none; stopped after completed P03.09 at user request |
+| Completed this session | P03.09: Resource versions and stale-edit protection |
+| Current phase / next task | P03 / P03.10 |
+| Task state | P00/P01/P02 approved; P03 9/10 steps complete |
+| Branch / revision | main / 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; external commit observed, not created by this agent |
+| Files changed / pending edits | Prior edits preserved. See P03.09 review packet in delivery/06-document-review.md for exact source/test/docs scope. No staging/commit/push. |
+| Checks actually run | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace |
+| Evidence | P03.09 review packet, testing record and hotel-app/README.md |
 | Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
-| Exact next action | P02.07: implement exact rounding and deterministic remainder allocation with total-preservation tests. No database fixture is running; if needed later, cached MySQL image ID is sha256:ace9cda65ac8a1aa24838c081b635cee7c08eb439255ea459ebe59ca192b18e1 (registry pin in app README). |
-| Known risks / unfinished work | Installation settings schema enforces at most one row; owner setup, input validation and authorization remain future work. MySQL DDL is not atomic and migrations require a single operator. Remaining business schema, financial logic, remote TLS and DirectAdmin acceptance are pending. |
-| Step reviewer / result | php_review and code_review approved P02.06 after each passed the 37-test/49-assertion money suite |
-| Phase reviewer / result | code_review approved cumulative P01; php_review approved PHP/security scope; prior js_review approval retained |
-| Open review findings | None required; no cumulative P02 approval |
+| Exact next action | On the next authorized continuation, start P03.10: generate browser client contracts and Fetch wrapper. Test and independently review that step, then obtain cumulative P03 approval before P04. No P03.10 code exists yet. |
+| Known risks / unfinished work | No product/health endpoints or verified sign-in implemented. P03.10 and cumulative P03 review remain. DirectAdmin single-host locking and stale rate-limit file maintenance require later validation. JSON-only inputs need explicit upload/webhook design. No test database or temporary credentials remain. |
+| Step reviewer / result | php_review and code_review approved final P03.09 |
+| Phase reviewer / result | code_review approved cumulative P02; php_review approved cumulative P02 PHP/security; P00/P01 approvals retained |
+| Open review findings | None required for P03.09; cumulative P03 and installation/release gates remain incomplete |
 | External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
 
 When handing over an active task, replace these values with actual files, commands/results, partial changes, migration/environment notes, the reviewer status and unresolved findings, and the smallest next action. Give failed checks the same visibility as passing ones. Do not invent a commit hash or claim a push occurred. A task may be complete locally without a commit; record pending changes accurately and follow the user's commit/push instructions.
@@ -1138,6 +1158,19 @@ Append one row per completed parent task (or a concise group only if every liste
 | 4 October 2026 | P02.04 | Complete: actual InnoDB/utf8mb4, multilingual persistence and failed-transaction rollback verified | MySQL 26.7.1 suite 3 tests/180 assertions; foundation 2 tests/2 assertions after allowing loopback; syntax/whitespace passed; disposable fixture removed | Primary agent; test/probe/docs extensions against saved P02.03 files at HEAD 17575f1; earlier edits preserved | php_review and code_review independently passed and approved; P02 phase incomplete | P02.05 |
 | 4 October 2026 | P02.05 | Complete: shared UUID identity and automatic UTC timestamps | MySQL 3 tests/205 assertions; foundation/conventions 4 tests/109 assertions; PHP syntax/whitespace passed; disposable fixture removed | Primary agent; Record base, model, tests/probe and docs against saved P02.04 copies at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.06 |
 | 4 October 2026 | P02.06 | Complete: exact non-negative integer minor-unit validation | Focused 37 tests/49 assertions; full foundation 41 tests/158 assertions; syntax/whitespace passed; no database changes | Primary agent; new MinorAmount/test/docs at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.07 |
+| 4 October 2026 | P02.07 | Complete: exact half-up division and deterministic remainder allocation | Focused 3 tests/234 assertions; full foundation 44 tests/392 assertions; syntax/whitespace passed; no database changes | Primary agent; new MoneyAllocation/test/docs and proposed D18 convention at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.08 |
+| 4 October 2026 | P02.08 | Complete: bounded deadlock retry with rollback evidence | MySQL 3 tests/247 assertions; foundation 45 tests/404 assertions; syntax/whitespace; real deadlock and injected failure checks; fixture removed | Primary agent; wrapper/unit/settings probe/tests/docs against saved P02.07 copies at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.09 |
+| 4 October 2026 | P02.09 | Complete: isolated demo reset and live-installation safeguards | MySQL 4 tests/399 assertions; foundation 46 tests/420 assertions; guards 1 test/16 assertions; syntax/whitespace; temporary fixture removed | Primary agent; demo service/config/command/tests/docs at HEAD 17575f1; earlier work preserved | php_review and code_review approved; PHP independently reran MySQL exclusively; P02 incomplete | P02.10 cumulative verification/review |
+| 4 October 2026 | P02.10 | Complete: two-installation isolation and cumulative P02 gate | Foundation 46/420; MySQL 5/475; syntax/whitespace; independent reruns; two-schema fixture removed | Primary agent; new isolation tests/report/docs at external HEAD 8672f0d, cumulative boundary17575f1 plus pending files | code_review approved P02.10 and P02; php_review approved P02.10 and cumulative PHP/security | P03.01 |
+| 4 October 2026 | P03.01 | Complete: validated OpenAPI health/error design contract | 15 examples; 12 tests; Ruff; Mypy ignoring missing imports; offline socket-blocked check; whitespace/links | Primary agent; contract/tooling/docs pending at8672f0d; prior P02 work preserved | code_review and python_review approved final corrections; P03 incomplete | P03.02 |
+| 4 October 2026 | P03.02 | Complete: API prefix and safe JSON 404/405 routing | Foundation46/420; contract15 examples/12 tests; syntax/whitespace; expanded realHTTP checks | Primary agent; renderer/routes/bootstrap/HTTPtest/docs against saved P03.01 copies at8672f0d; prior work preserved | php_review and code_review independently approved; P03 incomplete | P03.03 |
+| 4 October 2026 | P03.03 | Complete: bounded JSON and declared input fields | Foundation54/483; contract15 examples/12 tests; syntax/whitespace; independent input8/63 and HTTP2/2 | Primary agent; capture/parser/validator/tests/docs against saved P03.02 copies at8672f0d | code_review and php_review approved final fixes; P03 incomplete | P03.04 |
+| 4 October 2026 | P03.04 | Complete: shared envelopes and safe errors/logs | Foundation56/503; final focused4/22; contract15examples; whitespace | Primary agent; response/handler/bootstrap/config/HTTPtest/docs against /tmp/hotel-p0304-baseline | Both reviewers approved final reporting fix; P03 incomplete | P03.05 |
+| 4 October 2026 | P03.05 | Complete: Authentication and authorization interfaces | Foundation59/510; independent focused3/7 and HTTP/config5/9; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.06 |
+| 4 October 2026 | P03.06 | Complete: Session-bound browser CSRF checks | Foundation61/513; independent CSRF/HTTP4/5; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.07 |
+| 4 October 2026 | P03.07 | Complete: Scoped request and login limits | Foundation64/541; independent window3/28 and HTTP2/2; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.08 |
+| 4 October 2026 | P03.08 | Complete: Durable idempotency and changed-body conflicts | Foundation66/543; MySQL6/578 independently repeated; result tests2/2; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.09 |
+| 4 October 2026 | P03.09 | Complete: Resource versions and stale-edit protection | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.10 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 
@@ -1149,6 +1182,7 @@ Append or update a row after each cumulative phase review. P00 baseline preparat
 |---|---|---|---|---|---|
 | P00 | Baseline 6ec7890, intervening 52c56ad and current pending documentation; all P00 evidence | baseline_reviewer | Approved / 4 October 2026 | O13 timing, P29.02 references and completion-table formatting corrected and re-reviewed | P01 local scaffold only; actual host/provider/hardware gates remain |
 | P01 | Complete hotel-app foundation through external commit 17575f1 plus current mapping/startup docs and P01.01–10 evidence | code_review; php_review for cumulative PHP/security | Approved / 4 October 2026 | No required findings; both test suites and local mapping passed. Handoff revision/inventory refreshed; browser OS fallback recorded. | P02 preparation; database work requires real isolated MySQL |
+| P02 | P01 baseline17575f1 through external8672f0d and all pending P02 source/tests/docs; report07 inventory | code_review; php_review | Approved / 4 October 2026 | All step findings resolved; foundation46/420 and MySQL5/475 independently verified; no required findings; existing Composer warnings documented | P03 local contract/request foundations; production and business gates retained |
 
 ## Keeping the README accurate
 
@@ -1161,3 +1195,15 @@ If another specification changes scope, add/split tasks first, preserve existing
 ## Deferred scope
 
 Shared multi-hotel SaaS, subscriptions, room reservations, delivery marketplaces, loyalty/marketing, integrated card readers, and full ingredient purchasing/stock accounting are excluded. Service-charge/tip expansion remains O11. Any approved future scope needs its own small tasks, dependencies, evidence, and explicit denominator change before implementation.
+
+## P03.03 JSON input evidence
+
+API capture now defers eager JSON decoding; a bounded parser applies 65,536-byte/depth-32 limits, UTF-8 application/json, object roots and duplicate-key rejection. JsonInput recursively rejects undeclared members before endpoint validation and excludes query input. Nonempty unsupported media and malformed/oversized/invalid data return safe JSON errors. Shipped API routes remain empty; fixture-only routes verify wiring. Foundation54/483 and contract15 examples/12 tests pass. D20 documents proposed thresholds and host/PHP buffering limitations. Both reviewers approved the final P03.03 version. Review found query method overrides and a regex limit on large strings; these now have guards, a linear scanner and regression coverage. A final wildcard fix rejects literal star object keys. Eight focused tests/63 assertions and real HTTP checks were independently repeated. No cumulative P03 approval is claimed.
+
+## P03.04 response evidence
+
+ApiResponse/ApiExceptionResponse replace route-only rendering; ExceptionHandler prevents custom report methods from leaking API details. Setup errors use JSON on API paths. Foundation56/503, final focused4/22, contract15examples and whitespace passed. php_review and code_review independently approved final P03.04 after reproducing and verifying the reporting correction. No cumulative phase approval.
+
+## P03.09 completion and clean stopping point
+
+Foundation69/561, MySQL7/638, contract16 examples/13 tests and resource-version3/18 passed. code_review and php_review approved P03.09; python_review approved schema/test changes. Tests cover existing-row migration, concurrent stale edits, rollback, protected fields, header/status behavior and exact integer bounds. Disposable database resources and credentials were removed after reviews. User requested a wrap-up, so P03.10 is untouched. Source changes remain saved locally, uncommitted and unpushed; earlier pending work is preserved. Resume from this file, not conversation memory.

@@ -39,3 +39,17 @@ Publish a new immutable version and event. A submitted order retains old version
 ## Failure requirements
 
 Crash tests cover commit-before-event, provider-success-before-local-update, and printer-send-before-result. Use database constraints to enforce uniqueness even under simultaneous requests. Reconciliation jobs must find stranded inbox/outbox records. Do not claim universal exactly-once delivery; enforce at-most-once business application and durable recovery.
+
+## Implemented foundation wrapper
+
+P02.08 provides App\Support\DatabaseTransaction::run for top-level MySQL work. It retries the whole database-only callback at most three times only for confirmed 40001/1213 deadlock diagnostics after rollback, with 10ms/20ms delays. Nested transactions, manual transaction control and DDL are outside its callback contract. Re-read models within each attempt; commit durable outbox/idempotency records with the business writes in later workflows. External effects inside a retried callback are prohibited. Other errors and ambiguous commits propagate without replay; future API/CLI boundaries must redact private driver details. This foundation is tested locally, but the business transactions described above remain unimplemented.
+
+## P03.08 implemented durable command replay
+
+IdempotentCommand.run uses the existing top-level MySQL transaction wrapper. The caller must first authenticate and authorize the active principal/resource, then supply a server-derived principal scope and operation (including target identity), a validated Idempotency-Key, and the already bounded raw JSON bytes. Scope/operation are not accepted from client fields. A primary-key hash scopes the key to principal and operation; the separate body hash is byte-exact. Whitespace/key-order changes therefore conflict when a key is reused. Clients must retain the original body bytes for retries.
+
+A unique insert claims the identity; a concurrent caller waits for the transaction and reads the saved result under a row lock. Same identity/body returns stored domain data/status without rerunning work. Changed body raises 409. Work and result persist together; callback failures or oversized/unserializable results roll back both. A committed but damaged/incomplete result fails closed and never reruns work. Confirmed deadlocks follow the bounded P02.08 retry policy; ambiguous commit failures propagate, and clients recover using the same key.
+
+CommandResult contains only array/scalar JSON data and status200/201/202; each HTTP response adds its own fresh envelope/request ID. Do not store tokens, full request bodies or unrelated private data in a result. The callback is trusted internal database-only code using the supplied connection, with no DDL, manual transaction control or external effects. It must write future outbox records in this transaction. The helper cannot sandbox arbitrary callback code. No business route invokes it yet.
+
+Transport records have no automatic expiry/deletion. Permanent provider/financial uniqueness still needs its own domain constraints. Guarded demo reset explicitly clears idempotent_commands only in the separately marked demo schema, with the same transaction/rollback protections as settings. Existing demo schemas must receive the new migration before reset.

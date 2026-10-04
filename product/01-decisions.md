@@ -58,6 +58,8 @@ These guide the plan but are not additional confirmed user decisions.
 | D17 | DirectAdmin-compatible hosted application with private/public file separation, short polling, bounded PHP cron jobs, and hotel-side print bridge | Shared-host constraints are a planning assumption, not a confirmed hosting tier; validate O13 |
 | D18 | Exact non-negative ratio division offers explicitly named half-up rounding; equal splits assign remainder units by ascending bytewise canonical server recipient ID | P02.07 implementation convention under D01; not approval of sharing workflow, tax/provider policy or whole-shilling conversion |
 
+D19 (proposed implementation convention, P03.01): the initial OpenAPI 3.1.1 health/error contract uses the planned `hotel_session` staff cookie, bounded request IDs and field-error objects, minimal non-cacheable health responses, and explicit standard error variants. This does not implement sessions or select operations roles; those remain later authorization work.
+
 ## Explicitly superseded or excluded
 
 - Shared multi-hotel SaaS, central owner registration, and subscription management: removed after C01.
@@ -74,3 +76,9 @@ These guide the plan but are not additional confirmed user decisions.
 ## Remaining decisions
 
 See the [technology and integration fact file](../TECHNOLOGY-FACT-FILE.md) for the complete stack plan and [risk and decision gates](../delivery/05-risks-decisions.md) for validation. Unresolved items include supporting runtime/tool versions, payment merchant onboarding, actual recipes and photos, taxes/invoice boundaries, installed hardware, verified languages, commercial software terms, and local recovery requirements. C22 documentation preparation is complete and C24 starts the reviewed local build plan. Live deployment/account changes remain separately authorized actions.
+
+D20 (proposed foundation convention, P03.03): JSON requests use a 65,536-byte maximum and decode depth 32; only UTF-8 application/json objects are accepted. Endpoint rules allowlist every object member and bound collections/scalars. Duplicate keys and method overrides are rejected, values are not normalized automatically, and query values cannot enter validated body data. These local defaults are not measured host capacity or final upload/provider payload limits; revisit with endpoint contracts and pilot evidence.
+
+D21 (proposed P03.07 foundation defaults): 120 requests per 60 seconds per browser session and 10 login attempts per 60 seconds per normalized login identity/IP pair. Operators configure maximum/window values; these are starting limits, not measured capacity. No hotel-wide IP-only blocking bucket is used. File-locked windows target one DirectAdmin application host, not a distributed cluster. Device/principal-specific payment and authentication policies remain later work.
+
+D22 (proposed P03.08 contract convention): Idempotency-Key is 16–128 ASCII letters/digits/underscore/hyphen; key comparisons are case-sensitive through hashing. Principal scope and operation are server-derived and bounded to 255 bytes each. The request body hash covers exact original bytes, not semantic JSON normalization. Stored successful domain results are bounded to 65,536 serialized bytes and depth32; no automatic retention expiry is introduced. Clients must retain original key/body bytes for retries.

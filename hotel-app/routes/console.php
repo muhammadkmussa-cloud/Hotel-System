@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Support\DatabaseConnectionCheck;
+use App\Support\DemoReset;
 use App\Support\InstallationConfiguration;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\NullOutput;
@@ -65,3 +66,12 @@ Artisan::command('app:migrate {--force : Permit an explicitly authorized product
 
     return 0;
 })->purpose('Apply pending MySQL migrations with preflight checks and redacted output');
+
+Artisan::command('app:demo-reset {--confirm-database= : Exact isolated demo database name}', function (DemoReset $reset): int {
+    if (! $reset->reset($this->option('confirm-database'))) {
+        $this->error('Demo reset refused or failed. Verify isolated demo configuration and guard; private details withheld.');
+        return 1;
+    }
+    $this->info('Isolated demo settings reset. This is not a live hotel.');
+    return 0;
+})->purpose('Reset only a separately provisioned and marked demo database');

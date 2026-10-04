@@ -72,3 +72,37 @@ MinorAmountTest covers zero, canonical strings, native integer limits and the fi
 ### P02.07 rounding and allocation
 
 MoneyAllocationTest verifies integer half-up division, PHP_INT_MAX boundaries, deterministic recipient reordering and rejection of invalid divisors/recipient lists. Across 35 source-total/count combinations it checks exact sums, non-negative shares, correct recipient count and a maximum one-unit difference. Focused result: 3 tests/234 assertions. Authorization, weighted sharing, tax/provider policies and live bill mutation remain untested future workflows.
+
+### P02.08 retry and rollback evidence
+
+The isolated settings fixture adds two temporary InnoDB probe rows and opposing-lock workers to force a real deadlock. It expects attempt counts [1,2], committed values [2,2], and zero remaining transaction depth. Server SIGNAL injection tests three-attempt exhaustion and non-retried timeout with fresh-process no-partial-write checks; these are explicitly injected errors. Application/constraint rollback now runs through the wrapper, and nested use preserves the caller transaction. Unit mocks verify no replay for lost connection or unrelated errors. MySQL result: 3 tests/247 assertions; focused unit result: 1 test/12 assertions. No production retry/idempotency or external side-effect guarantee is claimed.
+
+### P02.09 isolated demo reset
+
+DemoResetTest requires an otherwise empty disposable schema and schema-write opt-in. It tests environment/opt-in/token/primary-name/confirmation refusal, repeated labelled settings reset, missing marker, unknown tables, preserved migration history, redacted output/no logs and constraint-induced rollback. DemoResetGuardTest verifies unsafe configuration opens no connection. Test initialization/cleanup is fixture-only and never reads the working .env. The reset scope is current settings data only; future tables require explicit scope review.
+
+### P02.10 separate-installation evidence
+
+MySqlIsolationTest requires two empty same-server databases and distinct scoped users through HOTEL_TEST_DB_* and HOTEL_TEST_ISOLATION_DB_* plus schema opt-in. Separate temporary application copies use the actual migration and the same fixture UUID with different records. Fully qualified reads/writes across schemas must fail both ways; updating A preserves B. Run database tests exclusively/serially, not in parallel against these schemas. Cumulative results and limits are in [P02 verification](07-database-foundation-verification.md).
+
+### P03.01 contract validation
+
+The offline checker validates api/openapi.json against the checksum-pinned official OpenAPI 3.1 structural schema, separately validates embedded Draft 2020-12 schemas and 15 examples, and resolves local references. Twelve positive/negative checks cover structural/reference/payload failures and intended health security scope. This is design-time validation only; API runtime, authorization and generated-client conformance remain later steps. See [API validation instructions](../api/README.md).
+
+### P03.02 HTTP route boundary
+
+The real loopback HTTP fixture verifies /api/v1 root/deep/encoded paths across six methods, content negotiation, HEAD, 404/405 envelopes, no-store, unique server request IDs and correct Allow. A fixture-only route proves the prefix and method handling; similar web prefixes, the starter page and assets remain unaffected. No health/business route or complete exception pipeline is claimed.
+
+P03.03 local evidence: 54 foundation tests/483 assertions passed. New input tests exercise exact byte boundary without Content-Length, duplicate/escaped/nested keys, invalid UTF-8, nesting, overflow exponents, big integers, unsupported content types, method overrides, nested undeclared identity/money fields, body/query separation, bounds and preserved whitespace. Expanded real HTTP fixture tests verify entry-point capture, parser/validator wiring, redacted 400/413/415/422 envelopes and no-store even with Accept: text/html. Temporary fixture-only routes remain outside shipped routes. OpenAPI 15 examples/12 tests still pass. No database or deployment evidence is added.
+
+P03.04 evidence: full foundation56/503 and 15 contract examples passed; after custom exception-reporting correction, focused response/config/HTTP4/22 passed. Responses and logs exclude secret markers with debug on/off, and unsafe custom render/report methods cannot bypass API safeguards. Unknown routes, early setup errors and request IDs retain real HTTP coverage. Independent final review is recorded in the review log.
+
+P03.05 foundation59/510 passed; independent checks3/7 and combined HTTP/config5/9. Default denial, submitted/stale identity rejection, fresh resolution after revocation, scoped capability denial/success and no handler-side work were verified. Both reviewers approved.
+
+P03.06 foundation61/513 passed, including real HTTP encrypted-cookie sessions, four mutation methods, missing/invalid/cross-session token denial, valid acceptance and handler sentinel absence on failure. Focused CSRF2/3 also verifies rotation. No database fixture is needed: rejected requests cannot reach the fixture handler representing business writes; normal session-file maintenance is not claimed absent.
+
+P03.07 foundation64/541 and focused3/28 passed. Eight concurrent PHP processes cannot exceed the window; contended/corrupt storage fails closed. Real HTTP checks exercise per-session and canonical identity/IP thresholds, cookie rotation, shared-IP isolation and Retry-After. No credentials are stored in bucket files. This is local single-host evidence, with stale-file maintenance and actual DirectAdmin locking acceptance outstanding.
+
+P03.08 foundation66/543 and real MySQL6/578 passed, with independent DB rerun. Scoped replay/conflicts, three concurrent claims, failed/oversized-result rollback, corrupted saved-result refusal and demo cleanup/rollback verified. Both reviewers approved.
+
+P03.09 foundation69/561 and real MySQL7/638 passed. PHP reviewer independently repeated MySQL7/638 and focused resource-version3/18 checks. Existing settings receive version1; two concurrent edits yield one success and one412, and caller rollback restores both values and version. HTTP checks verify428/400/412 and strong ETag. The contract validator passes16 examples/13 tests; Python reviewer independently passed those, Ruff and Mypy with missing imports ignored, including signed64-bit tag boundaries. No live editing endpoint or cumulative P03 approval is claimed.

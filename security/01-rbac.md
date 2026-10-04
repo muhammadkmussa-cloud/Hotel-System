@@ -52,3 +52,9 @@ No unrestricted shared PIN. Fast staff unlock can be supported on a trusted enro
 ## Required negative tests
 
 Waiter tries card confirmation; guest changes guestId/tableId; kitchen reads cashier reports; cashier edits provider credentials; menu editor publishes without review; deactivated staff reuses session; expired tablet polls bill events; cashier accepts their own handover; manager attempts to force unpaid visit closed. All must be denied without unintended side effects.
+
+## P03.05 implemented enforcement interfaces
+
+Principal identifies a server-verified subject. PrincipalResolver must verify credentials, expiry and revocation per request. CapabilityAuthorizer must check capability together with installation/resource ownership and lifecycle. AccessServiceProvider currently binds both interfaces to DenyAccess: no staff/device/service authentication is implemented yet.
+
+Routes may use principal for identity-only reads or capability:reports.view (and other named capabilities) for scoped actions. RequireCapability always invokes RequirePrincipal itself; it cannot succeed because a route forgot a separate authentication middleware. A fresh resolution replaces any existing principal attribute. Missing principals return safe 401; denied scope/capability returns 403 before the handler. Submitted IDs, roles and headers do not supply a principal. Verified principal adapters and role/resource policies belong to the later feature steps. Domain transactions still enforce state/balance invariants even after middleware approval.

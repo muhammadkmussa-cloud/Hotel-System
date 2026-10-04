@@ -271,4 +271,98 @@ MoneyAllocation::equally distributes the original total among a non-empty list o
 
 The bytewise canonical server ID order is the stable guest order for this helper; visible guest/table numbers and request order do not decide who gets remainder units. Callers must resolve actual authorized guests and supply canonical IDs; this helper validates only structural uniqueness and does not grant permission, look up guests or change bills. D01 remains a proposed sharing workflow. Whole-shilling/provider conversion, signed adjustments, weighted shares, tax rates and multiplication remain outside this step. Provider granularity must still be checked before payment.
 
-Tests-first failed for the absent helper, then focused checks passed 3 tests/234 assertions. Checks cover rounding below/at/above halves, PHP integer boundaries, deterministic reordering, invalid inputs and 35 total/recipient-count combinations including zero, fewer minor units than recipients and PHP_INT_MAX. Final foundation and independent review evidence is recorded in the build plan.
+Tests-first failed for the absent helper, then focused checks passed 3 tests/234 assertions. Checks cover rounding below/at/above halves, PHP integer boundaries, deterministic reordering, invalid inputs and 35 total/recipient-count combinations including zero, fewer minor units than recipients and PHP_INT_MAX. Full foundation passed 44 tests/392 assertions. php_review and code_review independently approved P02.07 after rerunning the focused suite. Proposed D18 records these implementation conventions; cumulative P02 is incomplete.
+
+## Bounded transaction retries — P02.08
+
+DatabaseTransaction::run accepts the MySQL connection and a database-only callback, returning its committed result. It requires a top-level transaction (including no raw PDO transaction) and attempts the whole callback at most three times. Each attempt delegates begin/commit/rollback to Laravel with its own retry count set to one. Only a PDO/MySQL diagnostic with SQLSTATE 40001 and error 1213 is retried, after rollback and verification that no transaction remains active. Delays are 10ms and 20ms. This bounds attempts, not query execution time; host timeouts still apply.
+
+Application errors, duplicate constraints, lock-wait timeouts, lost connections and unknown commit outcomes propagate without application replay. Exceptions may contain private driver details and must be caught/redacted by future request/command boundaries; the wrapper does not log them. Never manually commit, roll back, nest this wrapper or execute DDL inside the callback. Reload models within each attempt and keep the callback replay-safe. External effects must use durable outbox records committed in the same transaction; this wrapper does not yet implement outbox or request idempotency, and cannot prevent a caller from performing unsafe external effects.
+
+The isolated MySQL test creates two temporary probe rows and uses opposing row-lock order in two processes to force a genuine deadlock. One worker commits on attempt one and the other on attempt two; each row ends at two, proving the aborted first write did not survive. Separate SQL SIGNAL fault injection deterministically verifies three-attempt exhaustion and no retry for lock-wait timeout; fresh processes see unchanged rows. Existing application/constraint rollback checks now exercise this wrapper. Nested execution is rejected without consuming the outer transaction. A unit test verifies lost-connection and unrelated-error propagation with exactly one attempt. SIGNAL cases are injected diagnostics, not additional naturally occurring deadlocks.
+
+MySQL 26.7.1 passed 3 tests/247 assertions. The initial unit test used a PDO mock without expectations and produced a PHPUnit notice; replacing it with a stub resolved the notice (focused 1 test/12 assertions). The clean full foundation rerun passed 45 tests/404 assertions. php_review and code_review independently approved P02.08 after passing the MySQL and focused unit suites. The disposable fixture and credentials were removed. No business workflow, endpoint, host or provider acceptance is implied.
+
+## Isolated demo reset — P02.09
+
+`php artisan app:demo-reset --confirm-database=YOUR_DEMO_DATABASE` replaces the demo hotel_settings row with clearly labelled fictional settings and, since P03.08, clears demo idempotent_commands in the same transaction. It does not reset the installation database, migrations, staff, orders or payments. The reviewed reset scope is hotel_settings plus idempotent_commands; migrations and the guard are preserved. Additional tables require an explicit reviewed extension.
+
+Provision this only in a separate local/testing application copy and a dedicated disposable MySQL database with a user limited to that database. Never copy live records into it. Configure DEMO_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD (and TLS CA when needed) separately from DB_*; no credentials fall back to the primary connection. The primary DB_DATABASE must be set, and the demo and primary database names must differ even across hosts. Use APP_ENV=local or testing, DEMO_RESET_ENABLED=true and a private randomly generated 64-character lowercase hexadecimal DEMO_RESET_TOKEN. Keep these settings out of Git. The shipped example is disabled.
+
+For a fresh empty demo database, an authorized operator runs `php artisan migrate --database=demo_reset` to apply the current settings schema. Before enabling reset, provision its explicit marker using the demo database connection only:
+
+```sql
+CREATE TABLE demo_reset_guard (
+    id TINYINT UNSIGNED PRIMARY KEY,
+    purpose VARCHAR(32) NOT NULL,
+    token VARCHAR(64) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO demo_reset_guard (id, purpose, token)
+VALUES (1, 'isolated-demo', 'REPLACE_WITH_THE_PRIVATE_DEMO_RESET_TOKEN');
+```
+
+The literal placeholder is not a valid token; replace it privately with the same random value configured above. The reset command never creates this marker. Do not add it to a live installation. Clear cached configuration after changing private settings. Provisioning and reset require a single operator with no concurrent schema changes.
+
+Reset requires an exact database-name confirmation, non-production mode, explicit boolean opt-in, different primary/demo names, the exact known four-table schema, InnoDB storage and a single locked marker with matching purpose/token. Missing or mismatched settings refuse before deletion. Replacement happens in one transaction and failed inserts restore the old row. All command failures are constant and do not log connection details. This protects against accidental use; it cannot identify real data that an administrator deliberately moves into and marks as a demo database. Least-privilege separate credentials remain required.
+
+The MySQL test owns an otherwise empty disposable schema, supplies generated private settings and cleans up its tables. It checks production/staging, disabled mode, bad/missing token, primary-name collision, missing confirmation, missing marker and unexpected tables; repeated resets preserve migration history, and an injected insert failure proves rollback. Unit tests require unsafe configuration to refuse before database access. The first database run exposed Laravel's schema-qualified table listing; explicitly requesting unqualified names in the selected demo schema fixed the allowlist check. MySQL verification passed 4 tests/399 assertions; the focused preconnection guard checks passed 1 test/16 assertions. The full foundation suite passed 46 tests/420 assertions. php_review and code_review approved P02.09; PHP independently reran the MySQL suite and both reran the guards. Fixture and temporary credentials were removed. DemoResetTest needs an empty disposable schema; run database suites serially against it.
+
+## Database/money foundation gate — P02.10
+
+The real MySQL suite now requires two empty disposable schemas on the same server, with distinct users each granted access only to its own schema. Supply the existing HOTEL_TEST_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD plus HOTEL_TEST_ISOLATION_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD and HOTEL_TEST_DB_ALLOW_SCHEMA=1 privately. Do not use root/shared broadly privileged accounts: the test must observe access denied in both directions. No .env fallback is used and credentials are not printed.
+
+Run the database suite serially, exclusively, on those disposable schemas; DemoResetTest and MySqlIsolationTest use unprefixed tables only after asserting emptiness. The isolation test creates separate temporary app copies/keys/configuration, runs the actual settings migration in each, stores the same fixture ID with different names, updates A, and verifies fully qualified cross-schema reads/writes are denied both ways while both original records remain correctly scoped. Tests clean their tables and temporary copies; no real installation is contacted.
+
+P02.10 verification on PHP 8.3.30 / MySQL 26.7.1: foundation 46 tests/420 assertions; MySQL 5 tests/475 assertions. Composer strict validation found only the already documented exact framework pin and missing licence warnings (nonzero strict result); O12 licence choice remains open. Dependencies were not changed. Cumulative review and limitations are recorded in [P02 verification](../delivery/07-database-foundation-verification.md). Database-level separation is not evidence of future endpoint authorization, complete application functionality or DirectAdmin acceptance.
+
+## API route boundary — P03.02
+
+P03.02 initially loaded routes/api.php under /api/v1 with a stateless API group; P03.06 below adds browser sessions and CSRF by default. The file deliberately has no implemented health/business endpoints yet. A path-scoped exception renderer returns the reviewed NOT_FOUND and METHOD_NOT_ALLOWED JSON shapes for 404/405 errors within that exact prefix, regardless of Accept headers. Each response has a new server-generated requestId and Cache-Control: no-store; 405 preserves Allow. HEAD returns the corresponding headers/status with no body. No catch-all route is used, so future registered routes and method restrictions retain normal routing behavior.
+
+The starter page, static assets and ordinary web 404 behavior remain unchanged; /api/v10 is outside the API boundary. No unauthenticated health/readiness route has been added. Full request-ID middleware, success/error response handling, safe internal exception envelopes and authentication remain later P03 steps. Pre-routing installation configuration failures retain their existing safe text/plain 503 response, including malformed .env handling; the new renderer handles routing errors only.
+
+The isolated real HTTP fixture adds a test-only API endpoint to prove prefix application and 405 behavior. It checks API root/deep/encoded paths across GET/POST/PUT/PATCH/DELETE/OPTIONS, HTML/JSON/wildcard Accept headers, HEAD semantics, no-store, generated IDs instead of echoed input, absent health endpoints, and web-prefix separation. The test-only endpoint is never registered in the application source routes. No working .env or database is used. Foundation verification passed 46 tests/420 assertions; contract validation retained 15 examples/12 passing tests. php_review and code_review independently approved P03.02 after rerunning the focused HTTP/config checks. Temporary HTTP fixtures were removed.
+
+### P03.03 — bounded JSON and declared input fields
+
+ApplicationRequest defers API decoding until ParseJsonInput reads at most 65,537 bytes and enforces a 65,536-byte/depth-32 object limit. Malformed/duplicate JSON, unsupported media, oversized bodies and input-rule failures return redacted JSON errors. JsonInput checks declared members recursively, validates endpoint rules, and returns body-only validated data. No product route is introduced. See api/01-conventions.md for D20 defaults, future upload/webhook requirements and host-buffering limits.
+
+Verification: foundation suite 54 tests/483 assertions, including real HTTP valid/invalid input checks and eight focused parser/validation tests; OpenAPI 15 examples/12 regression tests passed. Initial focused run found only an assertion depending on associative-key order; the assertion was corrected to the validator's actual order. php_review and code_review approved the final P03.03 revision after query-override, long-string scanner and numeric-wildcard corrections.
+
+### P03.04 — response envelopes and redacted errors
+
+ApiResponse centralizes success/error JSON and matching body/header request IDs. ApiExceptionResponse covers internal, framework and custom-rendered exceptions independently of debug/Accept settings. Input errors reuse the response builder; the superseded ApiRouteErrors helper was removed. API setup failures now return JSON; web/CLI setup responses remain intact. Exception logs contain only a fixed message and request ID.
+
+Foundation56/503 and all 15 API examples passed, including debug on/off exceptions, unsafe custom renderers, setup errors, request IDs and header allowlisting. php_review and code_review approved final P03.04, including the custom-reporting correction.
+
+### P03.05 — authentication and authorization interfaces
+
+PrincipalResolver and CapabilityAuthorizer are bound to deny-by-default adapters. Registered principal/capability middleware rejects missing or unauthorized identities before handlers. Tests cover submitted identity spoofing, stale principal replacement, revocation, wrong scope/capability, valid scoped passage and real HTTP registration/denial. No real sign-in or role/session storage is implemented.
+
+### P03.06 — browser CSRF
+
+The API default is now browser-oriented: encrypted cookies, existing private file sessions and mandatory session-bound X-CSRF-TOKEN for mutations. No Sec-Fetch-Site or unit-test bypass exists. Future signed webhook/service routes require separately reviewed stateless configuration; none are exempt today. Production bootstrap/sign-in routes remain unimplemented.
+
+Foundation61/513 passed. Unit tests verify session-token rotation and rejection of query/body tokens. Real HTTP checks cover POST/PUT/PATCH/DELETE missing/wrong/unbound tokens, another session's token, valid success, cookie flags and a handler sentinel proving denied requests never perform business work. Session maintenance writes are expected; no application database is used in this step. Both reviewers approved after independent CSRF/HTTP4/5 checks.
+
+### P03.07 — scoped request and login limits
+
+RequestWindow uses private file-locked fixed windows across PHP processes. API requests are limited per session; the reusable login alias adds canonical identity/IP limits. Four environment defaults are documented in .env.example. Errors return safe 429/Retry-After or fail-closed 503 when storage/configuration is unusable. Shared-IP isolation and cookie-rotation resistance for login are verified; actual sign-in remains pending.
+
+Foundation64/541 passed; focused window tests3/28 include eight concurrent PHP processes, threshold/reset, permissions, contention and corrupt-state refusal. Real HTTP checks cover configurable limits, normalized login identities, Retry-After, another identity on the same IP and another browser on the same IP. Private stale-file cleanup and host-locking acceptance remain explicit P15/operations requirements; this is single-host application throttling, not DDoS protection. Both reviewers approved the final empty-counter correction.
+
+### P03.08 — durable command replay
+
+The idempotent_commands migration and IdempotentCommand/CommandResult service atomically save database work and a bounded result. Same principal/operation/key/body replays without rerunning; different body conflicts. Concurrent claims serialize in MySQL. Failure, oversized results and damaged saved results fail safely. Raw bodies and principal identifiers are hashed rather than stored. Callers must authorize first and restrict callbacks to the provided database connection; external side effects require future durable outbox records.
+
+The guarded demo reset now explicitly includes the idempotency table and its rollback coverage. Apply current migrations before using the reset. Transport records do not automatically expire. No product endpoint invokes this foundation yet; original body bytes must be retained for retries. See D22/API/transaction conventions for limits.
+
+### P03.09 — stale-edit protection
+
+ResourceVersion handles strict strong If-Match/ETag values; missing428, malformed400 and stale412 are shared safe API responses. VersionedUpdate compares and increments in one MySQL statement, preserving caller transaction rollback and rejecting protected columns. A migration initializes existing/new hotel settings to version1. Future controllers supply authorized row IDs and validated database-ready changes; this primitive does not run Eloquent events/mutators or replace authorization.
+
+OpenAPI now has reusable version-tag/header/parameter definitions and a428 error. The exact signed64-bit ceiling is covered by PHP and JSON-schema tests. Fixture HTTP routes demonstrate response statuses and ETag; no real settings editing endpoint is added.
+
+P03.09 verification: foundation69/561, real MySQL7/638, contract16 examples/13 tests passed. Independent PHP review repeated MySQL7/638 and version3/18; Python review confirmed schema boundaries and validation checks. The next planned step is P03.10 generated browser contracts/Fetch wrapper, followed by cumulative P03 review. No P03.10 implementation has started.
+
+P03.09 is approved by code_review and php_review; Python/schema review is also approved. Work stopped after this completed step at the user's request. The disposable database and credentials are removed. All changes are saved locally; no commit/push/deployment was performed.

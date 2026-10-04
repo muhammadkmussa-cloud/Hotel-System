@@ -1,0 +1,725 @@
+{
+  "openapi": "3.1.1",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Hotel System foundation API",
+    "version": "0.1.0",
+    "description": "Foundation API contract for independent installations. Runtime safeguards are implemented; health routes and business endpoints remain planned."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Same-origin installation API; production uses HTTPS."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Minimal liveness and protected operations readiness."
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "tags": [
+          "Health"
+        ],
+        "summary": "Process liveness",
+        "description": "Public process liveness only; no database/provider checks or private configuration.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process is running.",
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "description": "Do not cache health or error responses."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                },
+                "example": {
+                  "data": {
+                    "status": "ok"
+                  },
+                  "requestId": "req_demo_01"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "tags": [
+          "Health"
+        ],
+        "summary": "Operations readiness",
+        "description": "Requires an authenticated operations-authorized staff principal. Authenticate and authorize before dependency checks. Return no dependency names, versions, credentials or driver diagnostics. Session possession alone is insufficient.",
+        "security": [
+          {
+            "staffSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configured readiness checks passed.",
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                },
+                "description": "Do not cache health or error responses."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                },
+                "example": {
+                  "data": {
+                    "status": "ready"
+                  },
+                  "requestId": "req_demo_01"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "staffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "hotel_session",
+        "description": "Secure HttpOnly same-origin session cookie. Browser session/CSRF foundations exist; verified staff identity and operations authorization remain planned."
+      }
+    },
+    "schemas": {
+      "RequestId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9_-]+(?![\\s\\S])",
+        "description": "Server-generated opaque correlation ID. Not an access credential; never echo an unchecked incoming value."
+      },
+      "ErrorCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[A-Z][A-Z0-9_]*(?![\\s\\S])"
+      },
+      "FieldError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Field path only; never include its submitted value."
+          },
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 320
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error",
+          "requestId"
+        ],
+        "properties": {
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          },
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message",
+              "fields",
+              "retryable"
+            ],
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 320
+              },
+              "fields": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "$ref": "#/components/schemas/FieldError"
+                }
+              },
+              "retryable": {
+                "type": "boolean",
+                "description": "Advisory only; mutation retries must retain their original idempotency key."
+              }
+            }
+          }
+        }
+      },
+      "LivenessResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "requestId"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "ok"
+              }
+            }
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          }
+        }
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "requestId"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "ready"
+              }
+            }
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          }
+        }
+      },
+      "ResourceVersionTag": {
+        "type": "string",
+        "pattern": "^\"v(?:[1-9][0-9]{0,17}|[1-8][0-9]{18}|9[0-1][0-9]{17}|92[0-1][0-9]{16}|922[0-2][0-9]{15}|9223[0-2][0-9]{14}|92233[0-6][0-9]{13}|922337[0-1][0-9]{12}|92233720[0-2][0-9]{10}|922337203[0-5][0-9]{9}|9223372036[0-7][0-9]{8}|92233720368[0-4][0-9]{7}|922337203685[0-3][0-9]{6}|9223372036854[0-6][0-9]{5}|92233720368547[0-6][0-9]{4}|922337203685477[0-4][0-9]{3}|9223372036854775[0-7][0-9]{2}|922337203685477580[0-6]|9223372036854775807)\"(?![\\s\\S])",
+        "maxLength": 22,
+        "description": "One strong positive integer resource version; maximum PHP signed64-bit integer. Wildcards, weak tags and lists are unsupported."
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request could not be read.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "MALFORMED_REQUEST",
+                "message": "The request could not be read.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "Unauthenticated": {
+        "description": "Sign in to continue.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "UNAUTHENTICATED",
+                "message": "Sign in to continue.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "This action is not permitted.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "FORBIDDEN",
+                "message": "This action is not permitted.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "NOT_FOUND",
+                "message": "The requested resource was not found.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "This method is not supported.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          },
+          "Allow": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Comma-separated allowed methods for the matched path."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "METHOD_NOT_ALLOWED",
+                "message": "This method is not supported.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The resource has changed. Review it before continuing.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "STATE_CONFLICT",
+                "message": "The resource has changed. Review it before continuing.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "PreconditionFailed": {
+        "description": "Refresh the resource before trying again.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "VERSION_CONFLICT",
+                "message": "Refresh the resource before trying again.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The request is too large.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "PAYLOAD_TOO_LARGE",
+                "message": "The request is too large.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Use the supported request content type.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "UNSUPPORTED_MEDIA_TYPE",
+                "message": "Use the supported request content type.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "Check the submitted fields.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "VALIDATION_FAILED",
+                "message": "Check the submitted fields.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests. Try again later.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          },
+          "Retry-After": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+(?![\\s\\S])"
+            },
+            "description": "Non-negative delay in seconds; no guarantee of later success."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "RATE_LIMITED",
+                "message": "Too many requests. Try again later.",
+                "fields": [],
+                "retryable": true
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "The request could not be completed.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "INTERNAL_ERROR",
+                "message": "The request could not be completed.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "The service is temporarily unavailable.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "SERVICE_UNAVAILABLE",
+                "message": "The service is temporarily unavailable.",
+                "fields": [],
+                "retryable": true
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      },
+      "PreconditionRequired": {
+        "description": "Required resource version was not provided.",
+        "headers": {
+          "Cache-Control": {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "no-store"
+            },
+            "description": "Do not cache health or error responses."
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "PRECONDITION_REQUIRED",
+                "message": "A current resource version is required.",
+                "fields": [],
+                "retryable": false
+              },
+              "requestId": "req_demo_01"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ResourceVersionTag"
+        },
+        "description": "Required for versioned mutations; missing428, malformed400, stale412."
+      }
+    },
+    "headers": {
+      "ResourceETag": {
+        "description": "Current strong resource version.",
+        "schema": {
+          "$ref": "#/components/schemas/ResourceVersionTag"
+        }
+      }
+    }
+  }
+}
