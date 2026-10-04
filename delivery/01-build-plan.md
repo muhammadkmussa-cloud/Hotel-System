@@ -8,19 +8,19 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **18 / 320** |
+| First-release steps complete | **19 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
 | Phase gates complete | **1 / 32** |
 | Current phase | P01 — Create the smallest PHP application |
-| Active task / owner | P01.09 / primary agent |
-| Last completed implementation task | P01.08 |
-| Next task | **P01.09 — Reproduce documented local startup and verification from the recorded prerequisites** |
-| Next action | Reproduce documented local startup and verification from the recorded prerequisites |
+| Active task / owner | P01.10 / primary agent; local mapping review |
+| Last completed implementation task | P01.09 |
+| Next task | **P01.10 — Review the local public/private mapping for DirectAdmin** |
+| Next action | Review the local public/private mapping for DirectAdmin |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
 | Working branch/revision | `main` at `52c56ad92e0f003b59c0abf1ff05a1278a941066`; starting baseline was 6ec78901b6c7f468cf06ee53905ddbcca2fd7835 |
 | Uncommitted changes | Documentation updates plus hotel-app/ scaffold; see git status for exact inventory. No commit/push. |
-| Application verification | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
-| Latest step review | P01.08 approved by js_review and code_review; P01 phase incomplete |
+| Application verification | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
+| Latest step review | P01.09 approved by code_review; P01 phase incomplete |
 | Latest phase review | baseline_reviewer approved cumulative P00 on 4 October 2026 |
 
 ## How to work in very small steps
@@ -132,7 +132,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P01.06** Add development ignore rules; verify credentials, generated logs, and private runtime files are not tracked.
 - [x] **P01.07** Add the first PHP test setup and smoke check; prove it runs against the chosen PHP version.
 - [x] **P01.08** Add JavaScript browser-test tooling as development-only dependencies; save its lockfile and one page smoke result.
-- [ ] **P01.09** Document the exact local startup and verification commands; reproduce them from the recorded prerequisites.
+- [x] **P01.09** Document the exact local startup and verification commands; reproduce them from the recorded prerequisites.
 - [ ] **P01.10** Check the public/private upload mapping against DirectAdmin rules; mark this as local scaffold evidence only.
 
 <a id="p02"></a>
@@ -1037,7 +1037,7 @@ code_review independently reran both browser tests and approved. js_review appro
 
 ## P01.09 fresh startup evidence
 
-A fresh temporary source copy excluded the working .env, vendor, node_modules and generated runtime; source runtime placeholders were retained. Both lockfile installs passed (99 PHP packages, three browser packages), and the matching installed Chromium was reused. PHP 8.3.30/Composer 2.10.2/Node 24.18.0/npm 11.16.0 reproduced configuration/key setup, cache/check/clear, the two PHPUnit tests and two browser tests. The documented Artisan server on loopback 8140 served HTML/CSS/JS with 200 and expected MIME types, then stopped. Browser tests used 8141. Composer's previously recorded licence/exact-pin warnings remain; no MySQL or hosting acceptance is claimed. The app README now gives an ordered fresh-checkout checklist. Browser installation exited 0 with an Ubuntu 25.10 unsupported-OS/fallback-build warning; this limitation is recorded and no OS certification is claimed. Independent P01.09 review pending.
+A fresh temporary source copy excluded the working .env, vendor, node_modules and generated runtime; source runtime placeholders were retained. Both lockfile installs passed (99 PHP packages, three browser packages), and the matching installed Chromium was reused. PHP 8.3.30/Composer 2.10.2/Node 24.18.0/npm 11.16.0 reproduced configuration/key setup, cache/check/clear, the two PHPUnit tests and two browser tests. The documented Artisan server on loopback 8140 served HTML/CSS/JS with 200 and expected MIME types, then stopped. Browser tests used 8141. Composer's previously recorded licence/exact-pin warnings remain; no MySQL or hosting acceptance is claimed. The app README now gives an ordered fresh-checkout checklist. Browser installation exited 0 with an Ubuntu 25.10 unsupported-OS/fallback-build warning; this limitation is recorded and no OS certification is claimed. code_review approved P01.09 after verifying source/lock correspondence and evidence; no cumulative P01 approval.
 
 ## Agent handoff — update before stopping
 
@@ -1045,19 +1045,19 @@ Maintain exactly one current handoff below and append concise historical notes t
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P01.08 |
+| Updated | 4 October 2026 — P01.09 |
 | Agent / active task | Primary agent / none |
-| Completed this session | Baseline P00 plus 8 foundation steps; no hotel business features |
-| Current phase / next task | P01 / P01.09 |
-| Task state | P00 approved; P01 8/10 steps approved |
+| Completed this session | Baseline P00 plus 9 foundation steps; no hotel business features |
+| Current phase / next task | P01 / P01.10 |
+| Task state | P00 approved; P01 9/10 steps approved |
 | Branch / revision | `main` / `52c56ad92e0f003b59c0abf1ff05a1278a941066`; commit appeared independently during work, not created by the primary agent |
-| Files changed / pending edits | Pending documentation, root .gitignore and hotel-app/ sources/tests; prior edits preserved. Dependencies and private runtime ignored. No commit/push. |
-| Checks actually run | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
-| Evidence | Completion log and hotel-app/README.md; Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
+| Files changed / pending edits | Twelve documentation files plus new hotel-app/; pre-existing frontend wording preserved. No commit/push. |
+| Checks actually run | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
+| Evidence | Completion log and hotel-app/README.md; Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
 | Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
-| Exact next action | P01.09: Reproduce documented local startup and verification from the recorded prerequisites |
+| Exact next action | P01.10: Review the local public/private mapping for DirectAdmin |
 | Known risks / unfinished work | Styled starter page/native module and private settings only. Startup reproduction, local hosting-layout review, MySQL server, hotel business features and provider/hardware/deployment/pilot verification remain unfinished. |
-| Step reviewer / result | js_review and code_review approved P01.08 |
+| Step reviewer / result | code_review approved P01.09 |
 | Phase reviewer / result | baseline_reviewer — Approved cumulative P00, local P01.01 unblocked |
 | Open review findings | No required findings outstanding; phase not approved |
 | External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
@@ -1090,6 +1090,7 @@ Append one row per completed parent task (or a concise group only if every liste
 | 4 October 2026 | P01.06 | Complete: local foundation step | 24 Git exclusions and 13 source inclusions verified; no ignored files indexed; prior 6 HTTP and browser asset checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | code_review: Approved P01.06; no P01 phase approval | P01.07 |
 | 4 October 2026 | P01.07 | Complete: local foundation step | PHPUnit 12.5.37 passed 2 tests covering 16 configuration scenarios and 6 HTTP groups; Composer platform and advisory checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.07; no P01 phase approval | P01.08 |
 | 4 October 2026 | P01.08 | Complete: local foundation step | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | js_review and code_review: Approved P01.08; no P01 phase approval | P01.09 |
+| 4 October 2026 | P01.09 | Complete: local foundation step | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | code_review: Approved P01.09; no P01 phase approval | P01.10 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 

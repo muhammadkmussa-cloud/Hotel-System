@@ -16,24 +16,24 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 18 / 320 steps complete · 1 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 19 / 320 steps complete · 1 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
 | Current phase | P01 — Create the smallest PHP application |
-| Active task | P01.09 — fresh local startup reproduction |
-| Last completed build task | P01.08 — local foundation |
-| Next task | **P01.09 — Reproduce documented local startup and verification from the recorded prerequisites** |
+| Active task | P01.10 — local DirectAdmin mapping check |
+| Last completed build task | P01.09 — local foundation |
+| Next task | **P01.10 — Review the local public/private mapping for DirectAdmin** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00 approved; 8 P01 steps independently reviewed; latest browser tooling approved by JS and code reviewers |
-| Last verified update | 4 October 2026 — Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed |
+| Review gate | P00 approved; 9 P01 steps independently approved; cumulative P01 review pending |
+| Last verified update | 4 October 2026 — Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
 
 ### Feature and phase checklist
 
 Check a phase only when all its required steps, verification checks, and independent phase review pass. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
-- [ ] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 8/10 steps
+- [ ] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 9/10 steps
 - [ ] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 0/10 steps
 - [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 0/10 steps
 - [ ] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 0/10 steps
