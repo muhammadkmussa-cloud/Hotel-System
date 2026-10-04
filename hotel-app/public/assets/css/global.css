@@ -1,10 +1,10 @@
 :root {
     color-scheme: light;
-    --canvas: #f7f4ee;
-    --ink: #17241f;
-    --secondary-ink: #4c5b53;
-    --action: #164a37;
-    font-family: system-ui, sans-serif;
+    --canvas: var(--color-canvas);
+    --ink: var(--color-ink);
+    --secondary-ink: var(--color-ink-secondary);
+    --action: var(--color-action);
+    font-family: var(--font-body);
     font-size: 112.5%;
     line-height: 1.6;
     color: var(--ink);
@@ -30,7 +30,7 @@ h1 {
     margin: 0 0 1.5rem;
     padding-top: 1.5rem;
     border-top: 3px solid var(--action);
-    font-family: Georgia, serif;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 5vw, 3rem);
     line-height: 1.2;
 }
@@ -41,12 +41,12 @@ p {
 }
 
 button {
-    min-height: 48px;
+    min-height: var(--touch-target);
     max-width: 100%;
     margin-top: 1rem;
     padding: 0.65rem 1.25rem;
     border: 2px solid var(--action);
-    border-radius: 12px;
+    border-radius: var(--radius-control);
     font: inherit;
     font-weight: 600;
     color: #fff;
@@ -62,4 +62,157 @@ button:focus-visible {
 
 button:hover {
     text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+}
+
+.skip-link:focus-visible {
+    position: static;
+    left: auto;
+    display: inline-block;
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--ink);
+    color: #fff;
+}
+
+input, select {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-control);
+    font: inherit;
+    color: var(--ink);
+    background: var(--color-surface);
+}
+
+input:focus-visible, select:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+}
+
+label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-weight: 600;
+}
+
+.field-error {
+    margin-top: var(--space-1);
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.dialog, .drawer {
+    position: fixed;
+    z-index: 10;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.dialog {
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    max-width: min(32rem, 90vw);
+    padding: var(--space-6);
+}
+
+.drawer {
+    inset: 0 0 0 auto;
+    width: min(24rem, 90vw);
+    padding: var(--space-6);
+}
+
+.meal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    gap: var(--space-4);
+}
+
+.meal-card, .ticket {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+}
+
+.meal-image {
+    display: grid;
+    place-items: center;
+    min-height: 8rem;
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-control);
+    background: var(--color-canvas);
+    color: var(--color-ink-secondary);
+}
+
+.meal-price {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.cart-bar, .kiosk-review {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+}
+
+.ticket-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+    gap: var(--space-4);
+}
+
+.ticket-state { font-weight: 700; color: var(--color-action); }
+.ticket-exclusion { color: var(--color-warning); font-weight: 600; }
+.badge {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-size: var(--type-label);
+    font-weight: 600;
+}
+
+.method-blocks { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.collection-list { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.collection-number { font-weight: 700; margin-right: var(--space-3); }
+.kiosk-steps { display: grid; gap: var(--space-2); padding-left: var(--space-6); }
+
+.prototype-link {
+    color: var(--color-ink-secondary);
+    cursor: not-allowed;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
 }

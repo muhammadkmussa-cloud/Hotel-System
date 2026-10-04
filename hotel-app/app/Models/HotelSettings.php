@@ -12,12 +12,13 @@ final class HotelSettings extends Record
         'name',
         'timezone',
         'currency',
+        'test_mode',
         'business_day_cutoff',
         'fiscal_configuration_version',
     ];
 
     protected function casts(): array
     {
-        return ['fiscal_configuration_version' => 'integer'];
+        return ['fiscal_configuration_version' => 'integer', 'test_mode' => 'boolean'];
     }
 }

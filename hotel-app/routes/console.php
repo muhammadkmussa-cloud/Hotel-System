@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Support\DatabaseConnectionCheck;
 use App\Support\DemoReset;
 use App\Support\InstallationConfiguration;
+use App\Support\OwnerBootstrap;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -66,6 +67,30 @@ Artisan::command('app:migrate {--force : Permit an explicitly authorized product
 
     return 0;
 })->purpose('Apply pending MySQL migrations with preflight checks and redacted output');
+
+
+Artisan::command('app:bootstrap-owner {--email= : Owner email} {--name= : Owner display name}', function (OwnerBootstrap $bootstrap): int {
+    // Secrets are never accepted as command-line options (they would leak into
+    // process arguments). Automation may set the guarded environment values;
+    // otherwise the operator is prompted with hidden input.
+    $secret = (string) (env('OWNER_BOOTSTRAP_SECRET') ?: $this->secret('Installer secret'));
+    $password = (string) (env('OWNER_BOOTSTRAP_PASSWORD') ?: $this->secret('Owner password'));
+    $email = is_string($this->option('email')) && $this->option('email') !== '' ? $this->option('email') : (string) $this->ask('Owner email');
+    $name = is_string($this->option('name')) && $this->option('name') !== '' ? $this->option('name') : (string) $this->ask('Owner display name');
+
+    $result = $bootstrap->bootstrap($secret, $email, $name, $password);
+    $messages = [
+        'created' => 'One-time owner bootstrap completed. Remove the installer secret and disable setup access.',
+        'refused_unconfigured' => 'Bootstrap refused: no valid private installer secret is configured.',
+        'refused_secret' => 'Bootstrap refused: the installer secret did not match.',
+        'refused_exists' => 'Bootstrap refused: this installation already has an owner or staff records.',
+        'invalid_input' => 'Bootstrap refused: provide a valid email, a name, and a sufficiently long password.',
+        'failed' => 'Bootstrap failed. Private details withheld; inspect the private database and configuration.',
+    ];
+    $this->{$result === 'created' ? 'info' : 'error'}($messages[$result] ?? $messages['failed']);
+
+    return $result === 'created' ? 0 : 1;
+})->purpose('Create the single owner principal once, guarded by a private installer secret');
 
 Artisan::command('app:demo-reset {--confirm-database= : Exact isolated demo database name}', function (DemoReset $reset): int {
     if (! $reset->reset($this->option('confirm-database'))) {

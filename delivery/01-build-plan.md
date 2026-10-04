@@ -8,20 +8,24 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **39 / 320** |
+| First-release steps complete | **63 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **3 / 32** |
-| Current phase | P03 — HTTP contracts and request safeguards |
+| Phase gates complete | **6 / 32** |
+| Current phase | P06 — Staff administration and hotel settings |
 | Active task / owner | None |
-| Last completed implementation task | P03.09 |
-| Next task | **P03.10 — Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase** |
-| Next action | Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase |
+| Last completed implementation task | P06.03 |
+| Next task | **P06.04 — Staff list/edit/status screens with denied, empty, and error states** |
+| Next action | P06.03 approved; start P06.04 |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
 | Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
-| Uncommitted changes | Prior P02/P03 work preserved; P03.09 implementation/tests/docs pending. No staging/commit/push. |
-| Application verification | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace |
-| Latest step review | P03.09 approved by php_review and code_review; no required findings; cumulative P03 incomplete |
-| Latest phase review | Cumulative P02 approved by code_review; PHP/security scope approved by php_review; P03 may proceed |
+| Uncommitted changes | P05 migrations 000004–000007, app/Support + app/Security + controllers/routes/views, config, and tests/evidence pending. No staging/commit/push. |
+| Application verification | Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green |
+| Latest step review | P05.10 approved; cumulative P05 under review |
+| Latest phase review | Cumulative P04 approved by code_review after a required documentation fix; P05 may proceed |
+
+## Frontend/UX verification rule
+
+Any task that produces frontend or UX behaviour must add or extend a Playwright browser check under `hotel-app/tests/browser/` as part of completion evidence; manual inspection alone is insufficient. The spec must assert the actual behaviour for the step (landmarks/nav separation, keyboard flow, focus visibility/trap, ARIA roles or state announcements, offline/error banners, viewport reflow at 200% zoom and the documented device sizes). Each reviewer packet includes the exact Playwright command and passing output; visible-change steps keep screenshots. `npm run test:browser` stays green at every checkpoint; pure logic remains covered by `npm run test:js`.
 
 ## How to work in very small steps
 
@@ -175,7 +179,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P03.07** Add configurable request/login limits; verify shared hotel IP addresses do not alone lock out every guest.
 - [x] **P03.08** Add idempotency storage and body-hash conflict handling; prove same-key retries and changed-body conflicts differ.
 - [x] **P03.09** Add resource-version/If-Match support; stale edits must return the specified conflict response.
-- [ ] **P03.10** Generate the first browser-compatible JavaScript client contract and Fetch wrapper; run contract/error-path checks.
+- [x] **P03.10** Generate the first browser-compatible JavaScript client contract and Fetch wrapper; run contract/error-path checks.
 
 <a id="p04"></a>
 
@@ -187,16 +191,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [design](../design/01-premium-design.md), [components](../frontend/02-components.md), [accessibility](../design/04-accessibility.md).
 
-- [ ] **P04.01** Add semantic page shells and mode-specific navigation; verify customer navigation exposes no staff actions.
-- [ ] **P04.02** Create shared CSS colour, type, spacing, and focus tokens; compare them with the design specification.
-- [ ] **P04.03** Build accessible buttons, labelled inputs, and field errors; verify keyboard operation and focus visibility.
-- [ ] **P04.04** Build dialog and drawer primitives; verify focus trapping, dismissal, and return to the initiating control.
-- [ ] **P04.05** Build tabs, tables, badges, and status messages; verify labels and semantic reading order.
-- [ ] **P04.06** Build loading, empty, denied, and recoverable-error components; verify each has a usable next action.
-- [ ] **P04.07** Add the connection banner; distinguish inability to reach the app from a provider failure.
-- [ ] **P04.08** Add locale-aware KES/time formatting and English message keys; money display must not become pricing logic.
-- [ ] **P04.09** Create labelled demo layouts for tablet, kiosk, cashier, bill, and kitchen review; identify them as prototypes.
-- [ ] **P04.10** Review the shells on target viewport sizes with keyboard/zoom; record findings without claiming complete UI acceptance.
+- [x] **P04.01** Add semantic page shells and mode-specific navigation; verify customer navigation exposes no staff actions.
+- [x] **P04.02** Create shared CSS colour, type, spacing, and focus tokens; compare them with the design specification.
+- [x] **P04.03** Build accessible buttons, labelled inputs, and field errors; verify keyboard operation and focus visibility.
+- [x] **P04.04** Build dialog and drawer primitives; verify focus trapping, dismissal, and return to the initiating control.
+- [x] **P04.05** Build tabs, tables, badges, and status messages; verify labels and semantic reading order.
+- [x] **P04.06** Build loading, empty, denied, and recoverable-error components; verify each has a usable next action.
+- [x] **P04.07** Add the connection banner; distinguish inability to reach the app from a provider failure.
+- [x] **P04.08** Add locale-aware KES/time formatting and English message keys; money display must not become pricing logic.
+- [x] **P04.09** Create labelled demo layouts for tablet, kiosk, cashier, bill, and kitchen review; identify them as prototypes.
+- [x] **P04.10** Review the shells on target viewport sizes with keyboard/zoom; record findings without claiming complete UI acceptance.
 
 <a id="p05"></a>
 
@@ -208,16 +212,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [RBAC](../security/01-rbac.md), [security](../security/02-security-privacy.md).
 
-- [ ] **P05.01** Create staff, role, and session tables; enforce unique staff identities and preserve referenced history.
-- [ ] **P05.02** Implement one-time owner bootstrap guarded by a protected installer secret; prove it cannot run twice.
-- [ ] **P05.03** Build the setup screen for installation identity, currency, timezone, and test mode; validate inputs server-side.
-- [ ] **P05.04** Implement password hashing and verification using the selected PHP runtime; never store plaintext passwords.
-- [ ] **P05.05** Implement sign-in with session rotation and secure cookies; verify invalid credentials receive safe errors.
-- [ ] **P05.06** Build the sign-in screen with submitting and denied states; prevent duplicate login requests.
-- [ ] **P05.07** Implement logout and server-side session revocation; prove the old cookie cannot regain access.
-- [ ] **P05.08** Implement inactivity lock and authenticated unlock; verify customer mode cannot inherit staff privileges.
-- [ ] **P05.09** Apply login throttling and security audit events; confirm logs contain no passwords or session tokens.
-- [ ] **P05.10** Run bootstrap/login/logout/lock tests, including expired sessions; record S01/S02 evidence.
+- [x] **P05.01** Create staff, role, and session tables; enforce unique staff identities and preserve referenced history.
+- [x] **P05.02** Implement one-time owner bootstrap guarded by a protected installer secret; prove it cannot run twice.
+- [x] **P05.03** Build the setup screen for installation identity, currency, timezone, and test mode; validate inputs server-side.
+- [x] **P05.04** Implement password hashing and verification using the selected PHP runtime; never store plaintext passwords.
+- [x] **P05.05** Implement sign-in with session rotation and secure cookies; verify invalid credentials receive safe errors.
+- [x] **P05.06** Build the sign-in screen with submitting and denied states; prevent duplicate login requests.
+- [x] **P05.07** Implement logout and server-side session revocation; prove the old cookie cannot regain access.
+- [x] **P05.08** Implement inactivity lock and authenticated unlock; verify customer mode cannot inherit staff privileges.
+- [x] **P05.09** Apply login throttling and security audit events; confirm logs contain no passwords or session tokens.
+- [x] **P05.10** Run bootstrap/login/logout/lock tests, including expired sessions; record S01/S02 evidence.
 
 <a id="p06"></a>
 
@@ -229,9 +233,9 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [RBAC](../security/01-rbac.md), [setup worksheet](../templates/hotel-setup.md).
 
-- [ ] **P06.01** Implement scoped staff listing and creation; verify only authorized owners/managers can access it.
-- [ ] **P06.02** Implement role grants with no self-escalation or last-owner removal; add negative checks.
-- [ ] **P06.03** Implement staff deactivation; verify existing sessions lose access immediately.
+- [x] **P06.01** Implement scoped staff listing and creation; verify only authorized owners/managers can access it.
+- [x] **P06.02** Implement role grants with no self-escalation or last-owner removal; add negative checks.
+- [x] **P06.03** Implement staff deactivation; verify existing sessions lose access immediately.
 - [ ] **P06.04** Build staff list/edit/status screens with denied, empty, and error states.
 - [ ] **P06.05** Implement versioned hotel identity and business-day settings; verify stale updates fail.
 - [ ] **P06.06** Implement table configuration with unique active labels; prevent deletion of referenced/active tables.
@@ -1105,21 +1109,21 @@ Maintain exactly one current handoff below and append concise historical notes t
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P03.09 |
-| Agent / active task | Primary agent / none; stopped after completed P03.09 at user request |
-| Completed this session | P03.09: Resource versions and stale-edit protection |
-| Current phase / next task | P03 / P03.10 |
-| Task state | P00/P01/P02 approved; P03 9/10 steps complete |
+| Updated | 4 October 2026 — P05.10 |
+| Agent / active task | Primary agent / none; P05 steps complete, cumulative P05 under review |
+| Completed this session | P05.01–P05.10 staff/role/session schema, owner bootstrap, setup screen, password hashing, sign-in/out, session revocation, inactivity lock, audit events |
+| Current phase / next task | P06 / P06.01 |
+| Task state | P00–P05 approved |
 | Branch / revision | main / 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; external commit observed, not created by this agent |
-| Files changed / pending edits | Prior edits preserved. See P03.09 review packet in delivery/06-document-review.md for exact source/test/docs scope. No staging/commit/push. |
-| Checks actually run | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace |
-| Evidence | P03.09 review packet, testing record and hotel-app/README.md |
+| Files changed / pending edits | See P05 per-step review records in delivery/06-document-review.md. Untracked: P05 migrations, app/Support/*, app/Security/*, controllers, config, tests/{Database,Feature,Fixtures,browser,evidence/p05}/. No staging/commit/push. |
+| Checks actually run | browser76/76; test:js14/14; PHPUnit76/586; http-smoke15; contract16/13; eight real-MySQL database tests green |
+| Evidence | P05 review records; hotel-app/tests/evidence/p05/ S01/S02 screenshots; hotel-app/README.md |
 | Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
-| Exact next action | On the next authorized continuation, start P03.10: generate browser client contracts and Fetch wrapper. Test and independently review that step, then obtain cumulative P03 approval before P04. No P03.10 code exists yet. |
-| Known risks / unfinished work | No product/health endpoints or verified sign-in implemented. P03.10 and cumulative P03 review remain. DirectAdmin single-host locking and stale rate-limit file maintenance require later validation. JSON-only inputs need explicit upload/webhook design. No test database or temporary credentials remain. |
-| Step reviewer / result | php_review and code_review approved final P03.09 |
-| Phase reviewer / result | code_review approved cumulative P02; php_review approved cumulative P02 PHP/security; P00/P01 approvals retained |
-| Open review findings | None required for P03.09; cumulative P03 and installation/release gates remain incomplete |
+| Exact next action | P05 cumulative approved; start P06.01. |
+| Known risks / unfinished work | No product/health endpoints or verified sign-in implemented. DirectAdmin single-host locking and stale rate-limit file maintenance require later validation. JSON-only inputs need explicit upload/webhook design. No test database or temporary credentials remain. |
+| Step reviewer / result | code_review approved each P05 step after fixes (P05.03/04/05/06/07/08/09 changes requested then approved) |
+| Phase reviewer / result | Cumulative P05 approved by code_review |
+| Open review findings | P26 follow-ups recorded (audit fields, retention) |
 | External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
 
 When handing over an active task, replace these values with actual files, commands/results, partial changes, migration/environment notes, the reviewer status and unresolved findings, and the smallest next action. Give failed checks the same visibility as passing ones. Do not invent a commit hash or claim a push occurred. A task may be complete locally without a commit; record pending changes accurately and follow the user's commit/push instructions.
@@ -1171,6 +1175,9 @@ Append one row per completed parent task (or a concise group only if every liste
 | 4 October 2026 | P03.07 | Complete: Scoped request and login limits | Foundation64/541; independent window3/28 and HTTP2/2; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.08 |
 | 4 October 2026 | P03.08 | Complete: Durable idempotency and changed-body conflicts | Foundation66/543; MySQL6/578 independently repeated; result tests2/2; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.09 |
 | 4 October 2026 | P03.09 | Complete: Resource versions and stale-edit protection | Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace | Primary agent; pending scoped files in review packet | Both reviewers approved; P03 incomplete | P03.10 |
+| 4 October 2026 | P03.10 | Complete: browser client contracts and Fetch wrapper | test:js10/10; contract16/13; Foundation69/561; see delivery/06-document-review.md | Primary agent; new generator/lib/tests | code_review approved after two fix rounds | Cumulative P03 review |
+| 4 October 2026 | P04.01–P04.10 | Complete: semantic shells, tokens, accessible primitives, mode layouts, viewport review | browser63/63; Foundation69/561; contract16/13; see delivery/06-document-review.md | Primary agent; preview views/assets/tests | code_review approved each step (P04.04/05/07/09/10 after fixes); cumulative P04 approved | P05.01 |
+| 4 October 2026 | P05.01–P05.10 | Complete: staff schema, owner bootstrap, setup, hashing, sign-in/out, revocation, lock, audit | Foundation76/586; browser76/76; test:js14/14; http-smoke15; eight real-MySQL tests; StaffAuthenticatorTest119; see delivery/06-document-review.md | Primary agent; migrations/app/controllers/views/tests | code_review approved each step (P05.03–09 after fixes) | Cumulative P05 review; then P06.01 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 
@@ -1183,6 +1190,9 @@ Append or update a row after each cumulative phase review. P00 baseline preparat
 | P00 | Baseline 6ec7890, intervening 52c56ad and current pending documentation; all P00 evidence | baseline_reviewer | Approved / 4 October 2026 | O13 timing, P29.02 references and completion-table formatting corrected and re-reviewed | P01 local scaffold only; actual host/provider/hardware gates remain |
 | P01 | Complete hotel-app foundation through external commit 17575f1 plus current mapping/startup docs and P01.01–10 evidence | code_review; php_review for cumulative PHP/security | Approved / 4 October 2026 | No required findings; both test suites and local mapping passed. Handoff revision/inventory refreshed; browser OS fallback recorded. | P02 preparation; database work requires real isolated MySQL |
 | P02 | P01 baseline17575f1 through external8672f0d and all pending P02 source/tests/docs; report07 inventory | code_review; php_review | Approved / 4 October 2026 | All step findings resolved; foundation46/420 and MySQL5/475 independently verified; no required findings; existing Composer warnings documented | P03 local contract/request foundations; production and business gates retained |
+| P03 | P03.01–P03.10 changes through the current working tree; records in delivery/06-document-review.md | code_review; php_review; python_review | Approved / 4 October 2026 | One stale-status correction in api/README.md; contracts, runtime safeguards and generated client agree | P04 frontend primitives |
+| P04 | P04.01–P04.10 frontend/preview changes; records in delivery/06-document-review.md | code_review | Approved / 4 October 2026 | Required documentation fix; P04.10 findings recorded (prototype nav, sticky bar) | P05 owner setup and staff sign-in |
+| P05 | P05.01–P05.10 auth/setup changes; records in delivery/06-document-review.md | code_review | Approved / 4 October 2026 | Documentation reconciled (handoff, phase record, completion log, evidence counts); all step findings resolved | P06 staff administration |
 
 ## Keeping the README accurate
 

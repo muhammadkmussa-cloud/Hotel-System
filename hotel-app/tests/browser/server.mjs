@@ -40,6 +40,8 @@ try {
     `APP_URL=${origin}`,
     `APP_KEY=base64:${randomBytes(32).toString('base64')}`,
     'APP_NAME="Browser Fixture Hotel"',
+    'INSTALLATION_SETUP_ENABLED=true',
+    'INSTALLER_SECRET=' + 'a1b2c3d4e5f6'.repeat(5) + 'a1b2c3d4',
     '',
   ].join('\n'), { mode: 0o600 });
   child = spawn('php', ['-S', address, '-t', join(fixture, 'public'),

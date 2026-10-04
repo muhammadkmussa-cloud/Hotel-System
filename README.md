@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 39 / 320 steps complete · 3 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 63 / 320 steps complete · 6 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P03 — HTTP contracts and request safeguards |
-| Active task | None — stopped after completed P03.09 |
-| Last completed build task | P03.09 — Resource versions and stale-edit protection |
-| Next task | **P03.10 — Generate browser client contracts and Fetch wrapper, then review the cumulative P03 phase** |
+| Current phase | P06 — Staff administration and hotel settings |
+| Active task | None — stopped after completed P05 phase |
+| Last completed build task | P06.03 — Staff deactivation with immediate session loss |
+| Next task | **P06.04 — Staff list/edit/status screens** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00/P01/P02 approved; P03.01–09 independently approved; P03 incomplete |
-| Last verified update | 4 October 2026 — Foundation69/561; MySQL7/638 independently repeated; contract16 examples/13 tests; version3/18; syntax/whitespace; both reviewers approved |
+| Review gate | P00–P05 approved |
+| Last verified update | 4 October 2026 — Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review |
 
 ### Feature and phase checklist
 
@@ -35,9 +35,9 @@ Check a phase only when all its required steps, verification checks, and indepen
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
 - [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
 - [x] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 10/10 steps
-- [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 9/10 steps
-- [ ] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 0/10 steps
-- [ ] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 0/10 steps
+- [x] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 10/10 steps
+- [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
+- [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
 - [ ] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 0/10 steps
 - [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 0/10 steps
 - [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 0/10 steps

@@ -22,7 +22,15 @@ final class LimitRequests
         if (! in_array($policy, ['requests', 'login'], true) || ! $request->hasSession()) throw new ServiceUnavailableHttpException;
         $subject = $request->session()->getId();
         if ($policy === 'login') {
-            $identity = $request->json($identityField);
+            // Prefer a server-owned session value (e.g. staff_user_id for unlock) so a
+            // caller cannot move the throttle bucket by spoofing the field in the body.
+            $identity = $request->session()->get($identityField);
+            if (! is_string($identity) || trim($identity) === '') {
+                // Otherwise read JSON APIs as JSON and normal form posts from the body.
+                $identity = $request->isJson()
+                    ? $request->json($identityField)
+                    : $request->request->get($identityField);
+            }
             // Invalid/missing credentials share the current session bucket, never a hotel-wide IP bucket.
             if (is_string($identity) && strlen($identity) <= 254 && trim($identity) !== '') {
                 $subject = mb_strtolower(trim($identity), 'UTF-8') . "\0" . ($request->ip() ?? 'unknown');

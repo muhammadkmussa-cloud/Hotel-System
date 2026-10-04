@@ -51,6 +51,7 @@ try {
     }
     // Fixture-only endpoint proves that the API group applies the configured prefix.
     file_put_contents($fixture . '/routes/api.php', "\n\\Illuminate\\Support\\Facades\\Route::get('/route-probe', fn () => response()->json(['fixture' => true]));\n", FILE_APPEND);
+    file_put_contents($fixture . '/routes/web.php', "\n\\Illuminate\\Support\\Facades\\Route::post('/form-login-limit-probe', fn () => response('ok'))->middleware('limit:login,email');\n", FILE_APPEND);
     file_put_contents($fixture . '/routes/api.php', <<<'PHP'
 
 \Illuminate\Support\Facades\Route::post('/input-probe', function (\Illuminate\Http\Request $request, \App\Http\Requests\JsonInput $input) {
@@ -170,6 +171,20 @@ PHP, FILE_APPEND);
         assertHttp(in_array($status, $path === '/missing' ? [404] : [403, 404], true) && ! str_contains($body, $key), "Missing/private path $path returned unexpected status $status.");
     }
     echo "PASS missing routes and private-file HTTP boundaries\n";
+    [$status] = requestHttp($origin, '/setup');
+    assertHttp($status === 404, 'Setup screen must be unavailable unless explicitly enabled.');
+    echo "PASS first-install setup screen is disabled by default\n";
+    [$status, , $signInBody] = requestHttp($origin, '/staff/sign-in');
+    assertHttp($status === 200 && str_contains($signInBody, 'Staff sign in'), 'Sign-in screen did not render.');
+    [$status] = requestHttp($origin, '/staff/sign-in', 'POST', ['Content-Type: application/x-www-form-urlencoded'], 'email=a@b.test&password=x');
+    assertHttp($status === 419, 'Sign-in POST must require a CSRF token.');
+    [$status] = requestHttp($origin, '/staff/sign-out', 'POST', ['Content-Type: application/x-www-form-urlencoded'], '');
+    assertHttp($status === 419, 'Sign-out POST must require a CSRF token.');
+    [$status, $lockHeaders] = requestHttp($origin, '/staff/lock');
+    assertHttp($status === 302 && stripos($lockHeaders, '/staff/sign-in') !== false, 'Anonymous lock screen must redirect to sign in.');
+    [$status] = requestHttp($origin, '/staff/unlock', 'POST', ['Content-Type: application/x-www-form-urlencoded'], 'password=x');
+    assertHttp($status === 419, 'Unlock POST must require a CSRF token.');
+    echo "PASS staff sign-in screen renders and rejects CSRF-less POST\n";
     $requestIds = [];
     foreach (['/api/v1', '/api/v1/', '/api/v1/missing/deep/path', '/api/v1/missing/%3Cscript%3E', '/api/v1/health/live', '/api/v1/health/ready'] as $path) {
         foreach (['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as $method) {
@@ -264,6 +279,15 @@ PHP, FILE_APPEND);
     $freshBrowser = ['Cookie: '.$freshCookie[1], 'X-CSRF-TOKEN: '.json_decode($freshBody, true)['data']['csrfToken']];
     [$status] = requestHttp($origin, '/api/v1/login-limit-probe', 'POST', [...$freshBrowser, 'Content-Type: application/json'], '{"email":"fixture@example.test"}');
     assertHttp($status === 429, 'New session bypassed login account/IP limit.');
+    // Normal form posts must key the throttle by email+IP too, not just the session.
+    foreach ([0, 1, 2] as $index) {
+        [$status] = requestHttp($origin, '/form-login-limit-probe', 'POST', [...$browserHeaders, 'Content-Type: application/x-www-form-urlencoded'], 'email=form%40example.test');
+        assertHttp($status === ($index < 2 ? 200 : 429), 'Form login throttle did not key by email+IP.');
+    }
+    [$status] = requestHttp($origin, '/form-login-limit-probe', 'POST', [...$browserHeaders, 'Content-Type: application/x-www-form-urlencoded'], 'email=other%40example.test');
+    assertHttp($status === 200, 'Form throttle locked out a different identity.');
+    [$status] = requestHttp($origin, '/form-login-limit-probe', 'POST', [...$freshBrowser, 'Content-Type: application/x-www-form-urlencoded'], 'email=form%40example.test');
+    assertHttp($status === 429, 'New session bypassed the form login account/IP limit.');
     file_put_contents($fixture . '/.env', $environment."REQUEST_LIMIT_MAX=2\n");
     [$freshStatus, $freshHeaders] = requestHttp($origin, '/api/v1/csrf-probe');
     preg_match('/^Set-Cookie: (hotel_session=[^;]+)/mi', $freshHeaders, $freshCookie);

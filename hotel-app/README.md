@@ -48,7 +48,7 @@ The example uses local loopback, not a production domain. Each production instal
 
 Laravel loads `.env` privately; externally supplied environment settings can take precedence. Required APP_URL and APP_KEY are checked by `app:check-config` (exit 0/1) and before every application HTTP route. The private command identifies invalid setting names without printing values. Unconfigured HTTP requests receive a generic, non-cacheable 503 response. Malformed environment-file syntax is also redacted, including parser errors that could contain secret values. Detailed browser errors are always disabled in this foundation, even if APP_DEBUG=true is supplied. Local logs remain private.
 
-The URL used internally to bootstrap setup commands falls back to synthetic localhost for malformed/missing URLs; the guard still rejects the missing/invalid raw APP_URL, so this is never permission to serve an unconfigured installation. Origin configuration is not yet host-header/proxy enforcement; those request safeguards belong to P03. File sessions keep the first local page independent of a database. Production HTTPS sessions have secure, HTTP-only, same-site cookies. Staff authentication/session policy is still P05 work.
+The URL used internally to bootstrap setup commands falls back to synthetic localhost for malformed/missing URLs; the guard still rejects the missing/invalid raw APP_URL, so this is never permission to serve an unconfigured installation. Origin configuration is not yet host-header/proxy enforcement; those request safeguards belong to P03. File sessions keep the first local page independent of a database. Production HTTPS sessions have secure, HTTP-only, same-site cookies. Staff authentication and session policy are implemented through P05 (see below).
 
 Before caching configuration, run the private check. After changing settings, clear and rebuild the private cache so requests use the new values:
 
@@ -109,7 +109,7 @@ The default Foundation suite runs two PHPUnit tests: one executes all 16 isolate
 
 Local prerequisites include PHP CLI extensions declared by the lockfile, process creation, temporary-directory writes, symlink support and permission to bind a loopback socket. The HTTP test is tagged `http`; in an environment that forbids sockets, `php vendor/bin/phpunit --exclude-group http` runs only configuration checks and is explicitly a partial result, not a full pass. Do not silently skip the HTTP test in acceptance evidence.
 
-The XML configuration discovers only *Test.php classes under tests/Feature, bootstraps Composer's autoloader, stores PHPUnit cache privately in .phpunit.cache, and fails empty/risky/warning/deprecation runs. It does not bootstrap the real application or force an SQLite fallback. Existing standalone regression scripts stay available. Actual MySQL integration testing remains P02 work.
+The XML configuration discovers only *Test.php classes under tests/Feature, bootstraps Composer's autoloader, stores PHPUnit cache privately in .phpunit.cache, and fails empty/risky/warning/deprecation runs. It does not bootstrap the real application or force an SQLite fallback. Existing standalone regression scripts stay available. Actual MySQL integration testing is implemented through P02 and later database suites.
 
 Verified on PHP 8.3.30: PHPUnit 12.5.37 reported **2 tests, 2 assertions passed** (covering the underlying 16 configuration scenarios and six HTTP groups). All 74 production lock entries are unchanged; 25 dev entries were added. Composer validation and actual platform checks passed, with the previously documented licence/framework-pin warnings. A fresh locked-dependency advisory audit returned no advisories, abandoned packages or filter findings. For a production release use `composer install --no-dev --no-interaction --no-scripts --no-plugins --prefer-dist` in the release assembly directory and exclude tests/phpunit configuration from deployment; do not remove dev dependencies from a working test checkout while its tests are running.
 
@@ -363,6 +363,51 @@ ResourceVersion handles strict strong If-Match/ETag values; missing428, malforme
 
 OpenAPI now has reusable version-tag/header/parameter definitions and a428 error. The exact signed64-bit ceiling is covered by PHP and JSON-schema tests. Fixture HTTP routes demonstrate response statuses and ETag; no real settings editing endpoint is added.
 
-P03.09 verification: foundation69/561, real MySQL7/638, contract16 examples/13 tests passed. Independent PHP review repeated MySQL7/638 and version3/18; Python review confirmed schema boundaries and validation checks. The next planned step is P03.10 generated browser contracts/Fetch wrapper, followed by cumulative P03 review. No P03.10 implementation has started.
+P03.09 verification: foundation69/561, real MySQL7/638, contract16 examples/13 tests passed. Independent PHP review repeated MySQL7/638 and version3/18; Python review confirmed schema boundaries and validation checks. P03.10 generated the browser contract client and Fetch wrapper (10 client tests at that step). Cumulative P04 is approved; P05 awaits its cumulative review.
 
 P03.09 is approved by code_review and php_review; Python/schema review is also approved. Work stopped after this completed step at the user's request. The disposable database and credentials are removed. All changes are saved locally; no commit/push/deployment was performed.
+
+### P04 — basic frontend and design primitives
+
+P04.01–P04.10 add the labelled prototype frontend surface. Files: `resources/views/layout.blade.php` and `resources/views/preview/*.blade.php` (customer/tablet, kiosk, staff, kitchen, collection, cashier, bill, plus a components page), registered as `/preview/{mode}` review routes in `routes/web.php`.
+
+- P04.02 `public/assets/css/tokens.css` carries the design palette, spacing, radii, type and touch tokens from `design/01-premium-design.md`; `global.css` consumes them and adds accessible control/focus/skip-link styles.
+- P04.03–P04.08 primitives: `public/assets/js/components/ui/dialog.js` and `drawer.js` (focus trap, Escape, focus restore, re-entry guard, document-level handlers), `tabs.js` (roving tabindex, arrows/Home/End), status/state markup, `public/assets/js/lib/connection-banner.js` (offline vs unreachable vs provider states, abort passthrough, stale-probe guard), and `public/assets/js/lib/locale.js` (BigInt-exact KES `formatMoney`, `Africa/Nairobi` `formatDateTime`, display only). `public/locales/en.json` holds message keys.
+- P04.09 each mode composes representative demo primitives (meal cards + cart, kiosk grid + steps, kitchen tickets, cashier methods, bill totals, collection numbers) and is labelled as a prototype.
+- P04.10 target-viewport matrix (360×800, 768×1024, 1024×768, 1080×1920, 1440×900) plus 200% text zoom and keyboard focus checks live in `tests/browser/viewports.spec.js`; durable screenshots are under `tests/evidence/p04/`.
+
+Verification: `npm run test:browser` 63 passed, `npm run test:js` 14 passed, PHPUnit 69/561, contract 16 examples/13 tests. Recorded P04.10 findings (prototype nav footprint, sticky-bar occlusion) remain open for later design/UI acceptance. No business endpoints, pricing logic, or live data are added; all demo content is labelled prototype content.
+
+### P05 — owner setup and staff sign-in
+
+P05.01 created the `staff_users`, `roles`, `staff_role_grants`, and `staff_sessions` tables (migration `2026_10_04_000004`). Staff identity is unique (case-insensitive email) and referenced history is preserved: role grants and sessions use `RESTRICT` foreign keys, and deactivation sets `active`/`deactivated_at` instead of deleting. Only the `owner` role is seeded; the remaining roles from `security/01-rbac.md` are proposed and arrive with role management in P06.
+
+P05.06 adds the sign-in submitting/denied UX: `public/assets/js/lib/single-submit.js` disables the control, sets `aria-busy`, prevents a duplicate submit, and announces a pending status via a live region; the denied alert is focused on load and the email field carries an inline error. Verified by `tests/browser/staff-sign-in.spec.js`.
+
+P06.03 adds staff deactivation: a transactional deactivation that refuses self-deactivation and last-active-owner removal (row-locked, concurrency-tested), revokes all server-side sessions immediately, and records a staff_deactivated audit event. Evidence: StaffAdminTest 131 assertions on real MySQL.
+
+P06.02 adds role grant/revoke with guards: no self-escalation, only an owner can grant or revoke the owner role, and the last active owner cannot be stripped (transaction + row lock, concurrency-tested). `granted_by` is recorded. Evidence: `StaffAdminTest` 104 assertions on real MySQL.
+
+P06.01 adds scoped staff administration: `StaffAdmin` (list with roles, transactional create with hashed password and role grants) behind `capability:staff.manage` on `/admin/staff`, enforced by `StaffCapabilityAuthorizer` (owner/manager only). A controller guard prevents a manager from granting the owner role (no self-escalation). Baseline roles are seeded by migration 000008. Evidence: `StaffAdminTest` 65 assertions on real MySQL; browser anonymous-denial test.
+
+P05.10 ran the full battery (Foundation 76/586, browser 76, JS 14, contract 13, http-smoke 15, and eight real-MySQL database tests from clean schemas) and recorded S01/S02 evidence in `tests/evidence/p05/`.
+
+P05.09 adds security audit events (`audit_events`, `SecurityAudit`): login success/failure, logout, and unlock success/failure are recorded with actor, IP, UTC time, and bounded non-secret context; credential-like keys (`password`, `token`, `session`, `cookie`, `auth`, `credential`, `csrf` and variants) are filtered and unknown event names rejected. Failed-login auditing is bounded per IP, and login/unlock throttling keys on the submitted email (sign-in) or the server-side staff id (unlock) plus IP. Full audit-trail fields, retention, and operational health remain P26 follow-ups.
+
+P05.08 adds an inactivity lock and authenticated unlock: sessions idle beyond `STAFF_IDLE_MINUTES` (default 30) are denied by `SessionPrincipalResolver` until the staff member re-verifies their password at `/staff/lock` (`StaffUnlockController`), which rebinds the server session on success. A guest/customer session (`guest_id` only) resolves to no staff principal. Per-request activity touches `last_seen_at`; P05.09 owns login throttling refinement.
+
+P05.07 adds sign-out and server-side session revocation: each sign-in records a revocable `staff_sessions` row keyed by `sha256(session id)`; `SessionPrincipalResolver` requires that row (unrevoked, unexpired, cookie-matched) and an active staff account. `POST /staff/sign-out` revokes the row and invalidates the local session, so a replayed old cookie cannot regain access. The server-side row has an absolute lifetime (equal to the session lifetime); inactivity locking is P05.08.
+
+P05.05 adds staff sign-in (`/staff/sign-in`): credentials are verified against active accounts by `StaffAuthenticator` (case-insensitive email, non-specific errors, constant-cost dummy verify on unknown/inactive accounts to blunt timing enumeration, opportunistic rehash that never blocks a valid login). Successful sign-in rotates the session id and CSRF token (`session()->regenerate()`) before storing `staff_user_id`. `SessionPrincipalResolver` resolves the principal from the session and re-checks active state, failing closed on database errors; the web POST is throttled by `limit:login,email` keyed by email+IP for both JSON and form bodies. Session cookies are HttpOnly, SameSite=Lax, host-only, encrypted, and `secure` when `APP_URL` is HTTPS.
+
+P05.04 pins password hashing (`config/hashing.php`: bcrypt, rounds 12, verify off, limit 72) behind `App\Support\PasswordHasher`, which enforces a 12-character minimum, a 72-byte maximum, rejects NUL bytes, annotates plaintext as sensitive, verifies via constant-time `password_verify`, and supports rehash detection. `OwnerBootstrap` uses it; plaintext is never stored (`password_hash` is hidden and no longer mass-assignable). See `PasswordHasherTest`.
+
+P05.03 adds the first-install setup screen at `/setup` (enabled only when `INSTALLATION_SETUP_ENABLED=true`; default false). It validates hotel identity, an allow-listed timezone, a hard-forced KES currency, and test mode server-side, requires the same private `INSTALLER_SECRET` on the write, and creates the single installation identity transactionally. The setup screen is unauthenticated except for the installer secret, so enable it only during the install window and disable it afterwards; success redirects to the home page with that reminder.
+
+P05.02 adds the guarded one-time owner bootstrap:
+
+- `app:bootstrap-owner` creates the single owner principal using a private installer secret and a database singleton (`installation_bootstrap`, migration `2026_10_04_000005`). A second sequential or competing run is refused by the database unique slot.
+- The secret is never a default and is compared with `hash_equals`; it must be at least 32 characters (`INSTALLER_SECRET`, generate with `openssl rand -hex 32`). The secret and password are never passed as command-line options — automation sets `OWNER_BOOTSTRAP_SECRET`/`OWNER_BOOTSTRAP_PASSWORD`, otherwise the command prompts with hidden input. Remove `INSTALLER_SECRET` after bootstrap.
+- The password is hashed with the Laravel hasher (bcrypt by default) and never stored or echoed in plaintext; P05.04 formalizes verification.
+
+Evidence: `OwnerBootstrapTest` on real MySQL 26.7.1 — 60 assertions covering missing/short secret, wrong secret, invalid password, one-time creation with a verifiable hash, sequential refusal, and two competing processes resolving to exactly one owner. Foundation PHPUnit 70/568.

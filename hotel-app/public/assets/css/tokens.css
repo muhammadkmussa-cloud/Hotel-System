@@ -1,0 +1,28 @@
+:root {
+    --color-canvas: #F7F4EE;
+    --color-surface: #FFFFFF;
+    --color-ink: #17241F;
+    --color-ink-secondary: #4C5B53;
+    --color-action: #164A37;
+    --color-accent: #986B32;
+    --color-border: #D9DFD7;
+    --color-warning: #855000;
+    --color-danger: #A22B2B;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --radius-control: 12px;
+    --radius-panel: 20px;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+    --font-display: "Source Serif 4", Georgia, serif;
+    --type-body-tablet: 18px;
+    --type-body-kiosk: 20px;
+    --type-label: 16px;
+    --type-dish: 24px;
+    --touch-target: 48px;
+}

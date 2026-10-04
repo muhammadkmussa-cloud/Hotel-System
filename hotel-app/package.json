@@ -2,7 +2,14 @@
   "name": "hotel-system-browser-checks",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24 <25" },
-  "scripts": { "test:browser": "playwright test" },
-  "devDependencies": { "@playwright/test": "1.63.0" }
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "test:browser": "playwright test",
+    "test:js": "node --test tests/js/*.test.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
 }
