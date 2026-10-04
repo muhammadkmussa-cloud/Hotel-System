@@ -8,20 +8,20 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **19 / 320** |
+| First-release steps complete | **26 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **1 / 32** |
-| Current phase | P01 — Create the smallest PHP application |
-| Active task / owner | P01.10 / primary agent; local mapping review |
-| Last completed implementation task | P01.09 |
-| Next task | **P01.10 — Review the local public/private mapping for DirectAdmin** |
-| Next action | Review the local public/private mapping for DirectAdmin |
+| Phase gates complete | **2 / 32** |
+| Current phase | P02 — Database foundation and exact money |
+| Active task / owner | P02.07 / primary agent |
+| Last completed implementation task | P02.06 |
+| Next task | **P02.07 — Implement rounding and deterministic remainder allocation** |
+| Next action | Implement documented exact rounding and deterministic remainder allocation, proving allocated amounts sum to the source total |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
-| Working branch/revision | `main` at `52c56ad92e0f003b59c0abf1ff05a1278a941066`; starting baseline was 6ec78901b6c7f468cf06ee53905ddbcca2fd7835 |
-| Uncommitted changes | Documentation updates plus hotel-app/ scaffold; see git status for exact inventory. No commit/push. |
-| Application verification | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
-| Latest step review | P01.09 approved by code_review; P01 phase incomplete |
-| Latest phase review | baseline_reviewer approved cumulative P00 on 4 October 2026 |
+| Working branch/revision | main at 17575f19cf6f71b201126f696ec4c0bbc2e4fa68; previously observed external commit, unchanged this step |
+| Uncommitted changes | Prior staged documentation and approved P02.01–05 edits preserved; P02.06 MinorAmount, focused tests and documentation pending. No commit/push by this agent. |
+| Application verification | Foundation suite passed 41 tests, 158 assertions; both reviewers independently passed money subset 37 tests, 49 assertions. MySQL 3 tests/205 assertions retained from P02.05; no database change or rerun this step. |
+| Latest step review | P02.06 approved by php_review and code_review; cumulative P02 remains incomplete |
+| Latest phase review | P01 approved by code_review; cumulative PHP/security approved by php_review |
 
 ## How to work in very small steps
 
@@ -133,7 +133,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P01.07** Add the first PHP test setup and smoke check; prove it runs against the chosen PHP version.
 - [x] **P01.08** Add JavaScript browser-test tooling as development-only dependencies; save its lockfile and one page smoke result.
 - [x] **P01.09** Document the exact local startup and verification commands; reproduce them from the recorded prerequisites.
-- [ ] **P01.10** Check the public/private upload mapping against DirectAdmin rules; mark this as local scaffold evidence only.
+- [x] **P01.10** Check the public/private upload mapping against DirectAdmin rules; mark this as local scaffold evidence only.
 
 <a id="p02"></a>
 
@@ -145,12 +145,12 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [data model](../architecture/02-domain-data.md), [transactions](../backend/02-transactions.md).
 
-- [ ] **P02.01** Configure Laravel MySQL access through PDO; connection failure must not disclose credentials.
-- [ ] **P02.02** Use Laravel ordered migrations and migration history; re-running a completed migration must be safe.
-- [ ] **P02.03** Create the installation settings record; enforce one active installation identity in the isolated database.
-- [ ] **P02.04** Set InnoDB and utf8mb4 conventions; verify transaction rollback and multilingual text against real MySQL.
-- [ ] **P02.05** Add opaque identifier generation and UTC timestamps; keep public order numbers separate from access credentials.
-- [ ] **P02.06** Implement integer minor-unit money validation; reject invalid values and never calculate money with binary floating point.
+- [x] **P02.01** Configure Laravel MySQL access through PDO; connection failure must not disclose credentials.
+- [x] **P02.02** Use Laravel ordered migrations and migration history; re-running a completed migration must be safe.
+- [x] **P02.03** Create the installation settings record; enforce one active installation identity in the isolated database.
+- [x] **P02.04** Set InnoDB and utf8mb4 conventions; verify transaction rollback and multilingual text against real MySQL.
+- [x] **P02.05** Add opaque identifier generation and UTC timestamps; keep public order numbers separate from access credentials.
+- [x] **P02.06** Implement integer minor-unit money validation; reject invalid values and never calculate money with binary floating point.
 - [ ] **P02.07** Implement documented rounding and deterministic remainder allocation; prove the allocated total equals the original amount.
 - [ ] **P02.08** Add a transaction wrapper with bounded deadlock retry; prove failed work leaves no partial records.
 - [ ] **P02.09** Create an isolated demo-data reset path; verify it refuses to run against a live installation.
@@ -1039,27 +1039,67 @@ code_review independently reran both browser tests and approved. js_review appro
 
 A fresh temporary source copy excluded the working .env, vendor, node_modules and generated runtime; source runtime placeholders were retained. Both lockfile installs passed (99 PHP packages, three browser packages), and the matching installed Chromium was reused. PHP 8.3.30/Composer 2.10.2/Node 24.18.0/npm 11.16.0 reproduced configuration/key setup, cache/check/clear, the two PHPUnit tests and two browser tests. The documented Artisan server on loopback 8140 served HTML/CSS/JS with 200 and expected MIME types, then stopped. Browser tests used 8141. Composer's previously recorded licence/exact-pin warnings remain; no MySQL or hosting acceptance is claimed. The app README now gives an ordered fresh-checkout checklist. Browser installation exited 0 with an Ubuntu 25.10 unsupported-OS/fallback-build warning; this limitation is recorded and no OS certification is claimed. code_review approved P01.09 after verifying source/lock correspondence and evidence; no cumulative P01 approval.
 
+## P01.10 local mapping evidence
+
+The architecture mapping section now distinguishes existing source paths from planned deployment files. Public inventory: index.php, one CSS file, one JS module, no symlinks. Twelve private paths remain outside public/. Filesystem serving is disabled; uploads/media and production rewrite/copy adapters are unimplemented. A temporary public_html and private_html symlink mapping served the home/assets and denied six private paths for each mapping. Initial harness executable-path and short-timeout failures were corrected without application changes; the final checks passed and cleaned up. Official DirectAdmin and Laravel deployment references were rechecked. Actual host/TLS/open_basedir/routing and upload protection remain O13/P08/P29 gates. code_review approved P01.10 and cumulative P01; php_review independently approved the cumulative PHP/security scope after rerunning the PHP suite. No required findings remain.
+
+## P02.01 MySQL connection evidence
+
+Private Laravel/PDO MySQL configuration and app:check-database now validate settings and issue a read-only server probe with constant success/failure messages. The diagnostic explicitly uses mysql, closes its connection, and never reports/logs caught driver details. Default charset/strict/UTC/engine options are configuration only; schema and transaction proof remains later work. No tables or migrations are created.
+
+The isolated Oracle MySQL 26.7.1 Community fixture passed the explicit PHPUnit database suite: 1 test, 30 assertions on PHP 8.3.30/Laravel 13.34.0. Foundation 2/2 passed. An 8.4.11 supplementary run passed 29 assertions before success-output verification was strengthened. Absent test variables deliberately failed. The first integration attempt found an unavailable test filesystem helper; switching to Laravel's installed utility fixed it. Review findings about readonly dependencies, assertions exposing captured output and default-connection wording were corrected. php_review and code_review independently reran the final suite and approved P02.01 with no required findings.
+
+The slow official image transfer was replaced with ranged retrieval of the identical manifest/layers, each digest verified before importing; loaded rootfs/config matched and the server reported 26.7.1. Artifact manifest sha256:7adb05c11e2eeba9fe5eadff7638740e75da2477b07f144c85efc9aee55a3947 is recorded in the app README. Fixtures use generated credentials, private temporary settings, loopback ports and disposable storage; no existing service/data was modified. DirectAdmin/TLS/schema/financial acceptance remains pending.
+
+## P02.02 migration framework evidence
+
+Added explicit migration-history configuration and the private database/migrations source directory without a business migration. app:migrate preflights settings/MySQL, requires --force for production, delegates ordering/history to Laravel, and suppresses inner output/exception details. Operators must serialize migrations and inspect schema/history after failure; no automatic DDL rollback or retry is promised.
+
+On isolated MySQL 26.7.1, the combined database suite passed 2 tests/89 assertions; the foundation suite passed 2 tests/2 assertions. Temporary migrations prove filename order, batch-one history, unchanged history/data on rerun, later batch-two work, production refusal/force in a disposable fixture, safe preflight failure, and a failed migration remaining unrecorded with prior history intact. Migration tests require explicit schema-test opt-in, use unique table/history names, never load the working .env or run real application migrations, and clean up their own objects. Missing opt-in is a failure. The induced migration failure occurs before mutation and does not establish recovery from partial MySQL DDL. php_review and code_review each independently reran the database suite and approved P02.02. Zero test tables remained after cleanup; the dedicated fixture and generated credentials were removed after review. No required findings remain.
+
+## P02.03 installation settings evidence
+
+The first business migration creates hotel_settings and its UUID-backed Eloquent model. A stored generated slot fixed at 1 plus a unique index enforces a single row in the isolated database, including raw SQL/competing inserts. Name/timezone are required; currency is KES-only; business-day cutoff and fiscal configuration version stay null until explicitly supplied. No actual hotel row is seeded, no API is exposed, and the starter page remains unchanged. Full settings validation/authorization belongs to later setup/settings steps.
+
+MySQL 26.7.1 testing passed 3 tests/144 assertions; foundation testing passed 2 tests/2 assertions. The settings test runs the selected real migration in a temporary application/random table prefix, releases two workers together, observes one success/one duplicate, rejects an attempted generated-slot override and direct duplicate, updates settings without replacing the UUID, and preserves the row on rerun. It requires schema-write opt-in and removes its own tables/files. An initial test helper name collided with PHPUnit's reserved method; renaming it fixed the failure. php_review and code_review independently reran the 3-test/144-assertion database suite and approved P02.03 on 4 October 2026 with no required findings. Review covers the new HotelSettings model, settings migration, HotelSettingsTest, fixture probe and associated documentation; earlier P02.01–02 work remains separately approved. Zero probe tables remained; the disposable database and temporary credentials were removed. Cumulative P02 remains incomplete.
+
+## P02.04 storage and rollback evidence
+
+The existing connection configuration already specifies InnoDB, utf8mb4 and utf8mb4_unicode_ci. The settings test/probe now verifies actual table and connection metadata, a committed multilingual/emoji round trip, rollback across update/delete/insert after an intentional exception, and rollback of an update preceding a duplicate-key error. Fresh processes observe the complete prior row and UUID; transaction depth resets to zero. MySQL 26.7.1 suite passed 3 tests/180 assertions. The first foundation run lacked loopback permission; its rerun passed 2 tests/2 assertions. php_review and code_review independently reran the MySQL suite and approved P02.04 on 4 October 2026, with no required findings. Review compared HotelSettingsTest.php and hotel-settings-probe.php against their saved P02.03 contents and included the storage/transaction documentation. The disposable database and temporary credentials were removed after approval. This step changes test coverage and documentation only; DDL rollback, financial logic and deadlock retry remain outside scope.
+
+## P02.05 identifier and UTC evidence
+
+App\Models\Record centralizes existing Laravel UUIDv7 generation and explicitly UTC automatic timestamps; HotelSettings adopts it without a schema or identity migration. New convention tests cover UUID/string/nonincrementing identity, ID mass-assignment protection, numeric route-key rejection and a non-UTC process clock. The MySQL fixture checks creation/update UTC storage, UTC JSON serialization, unchanged created_at and stable ID with fixed Nairobi instants. Public display numbers remain separate future fields; neither UUIDs nor display numbers grant access. Explicit date imports require normalization at their boundaries. Foundation/convention suite passed 4 tests/109 assertions; MySQL 26.7.1 suite passed 3 tests/205 assertions; PHP syntax and whitespace checks passed. php_review and code_review approved P02.05 on 4 October 2026 with no required findings, each independently passing the 2-test/107-assertion convention subset and 3-test/205-assertion MySQL suite. Their boundary included new Record.php and RecordConventionsTest.php, changes to HotelSettings and its test/probe against saved P02.04 copies, and the convention documentation. The disposable fixture and credentials were removed. No cumulative P02 approval is claimed.
+
+## P02.06 integer money validation evidence
+
+Added immutable App\Support\MinorAmount and its focused tests. Inputs are non-negative PHP integers or canonical ASCII integer strings in KES minor units, bounded before conversion by PHP_INT_MAX. Invalid types/formats and overflow are rejected with a constant error; no float conversion or arithmetic occurs. Zero is allowed; signed adjustments and business/provider limits remain future contracts. Tests were run first and failed for the absent class, then passed after implementation. The final focused set passes 37 tests/49 assertions. Final foundation suite passed 41 tests/158 assertions; PHP syntax and whitespace checks passed. An initial full-suite invocation used the repository root instead of hotel-app and did not start; rerunning from hotel-app passed. php_review and code_review approved P02.06 on 4 October 2026 with no required findings, each independently passing 37 tests/49 assertions. Review covered the complete new MinorAmount.php, MinorAmountTest.php and associated documentation; all earlier uncommitted work remains separately approved. No database changes or database rerun were needed; P02.05 MySQL evidence remains historical. No cumulative P02 approval is claimed.
+
+## P02.07 exact rounding and allocation evidence
+
+MoneyAllocation adds explicit non-negative half-up integer division and equal splitting via quotient/remainder. Ascending bytewise canonical server recipient IDs decide extra minor units, independent of request/display order. No floating-point math, rate multiplication or workflow authorization is included; D01 and fiscal/provider gates remain unchanged. Tests-first failed for the absent helper; implementation passed focused 3 tests/234 assertions including PHP_INT_MAX, invalid input, stable order and 35 total/count combinations with exact sums and shares differing by at most one. PHP syntax passed. Full foundation suite passed 44 tests/392 assertions; whitespace checks passed. D18 records these as implementation conventions without changing D01 or fiscal/provider approval gates. Independent reviews pending.
+
 ## Agent handoff — update before stopping
 
 Maintain exactly one current handoff below and append concise historical notes to the completion log. The conversation is not the only record: another agent must be able to resume from these files and the checkout.
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P01.09 |
+| Updated | 4 October 2026 — P02.06 |
 | Agent / active task | Primary agent / none |
-| Completed this session | Baseline P00 plus 9 foundation steps; no hotel business features |
-| Current phase / next task | P01 / P01.10 |
-| Task state | P00 approved; P01 9/10 steps approved |
-| Branch / revision | `main` / `52c56ad92e0f003b59c0abf1ff05a1278a941066`; commit appeared independently during work, not created by the primary agent |
-| Files changed / pending edits | Twelve documentation files plus new hotel-app/; pre-existing frontend wording preserved. No commit/push. |
-| Checks actually run | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
-| Evidence | Completion log and hotel-app/README.md; Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
+| Completed this session | P02.06 immutable integer minor-unit validation and malformed-input/overflow/immutability tests |
+| Current phase / next task | P02 / P02.07 |
+| Task state | P00/P01 approved; P02 6/10 steps complete |
+| Branch / revision | main / 17575f19cf6f71b201126f696ec4c0bbc2e4fa68; not committed by this agent |
+| Files changed / pending edits | Prior staged README/plan and P02.01–05 changes preserved. P02.06 adds app/Support/MinorAmount.php and tests/Feature/MinorAmountTest.php; updates app README, architecture/data, technology facts, testing, review log and trackers. No commit/push. |
+| Checks actually run | Tests-first failed for missing class, then focused 37 tests/49 assertions and full foundation 41 tests/158 assertions passed. One full-suite command used the wrong working directory and did not start; corrected run passed. PHP syntax/whitespace and both independent reviewer focused runs passed. |
+| Evidence | P02.06 evidence section and hotel-app/README.md; exact integer acceptance, rejection before cast, immutable value, constant diagnostics |
 | Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
-| Exact next action | P01.10: Review the local public/private mapping for DirectAdmin |
-| Known risks / unfinished work | Styled starter page/native module and private settings only. Startup reproduction, local hosting-layout review, MySQL server, hotel business features and provider/hardware/deployment/pilot verification remain unfinished. |
-| Step reviewer / result | code_review approved P01.09 |
-| Phase reviewer / result | baseline_reviewer — Approved cumulative P00, local P01.01 unblocked |
-| Open review findings | No required findings outstanding; phase not approved |
+| Exact next action | P02.07: implement exact rounding and deterministic remainder allocation with total-preservation tests. No database fixture is running; if needed later, cached MySQL image ID is sha256:ace9cda65ac8a1aa24838c081b635cee7c08eb439255ea459ebe59ca192b18e1 (registry pin in app README). |
+| Known risks / unfinished work | Installation settings schema enforces at most one row; owner setup, input validation and authorization remain future work. MySQL DDL is not atomic and migrations require a single operator. Remaining business schema, financial logic, remote TLS and DirectAdmin acceptance are pending. |
+| Step reviewer / result | php_review and code_review approved P02.06 after each passed the 37-test/49-assertion money suite |
+| Phase reviewer / result | code_review approved cumulative P01; php_review approved PHP/security scope; prior js_review approval retained |
+| Open review findings | None required; no cumulative P02 approval |
 | External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
 
 When handing over an active task, replace these values with actual files, commands/results, partial changes, migration/environment notes, the reviewer status and unresolved findings, and the smallest next action. Give failed checks the same visibility as passing ones. Do not invent a commit hash or claim a push occurred. A task may be complete locally without a commit; record pending changes accurately and follow the user's commit/push instructions.
@@ -1091,6 +1131,13 @@ Append one row per completed parent task (or a concise group only if every liste
 | 4 October 2026 | P01.07 | Complete: local foundation step | PHPUnit 12.5.37 passed 2 tests covering 16 configuration scenarios and 6 HTTP groups; Composer platform and advisory checks passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | php_review and code_review: Approved P01.07; no P01 phase approval | P01.08 |
 | 4 October 2026 | P01.08 | Complete: local foundation step | Two Chromium browser tests passed; npm ci reproduced the lockfile with zero reported vulnerabilities; JS syntax, scoped lint and documentation links passed | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | js_review and code_review: Approved P01.08; no P01 phase approval | P01.09 |
 | 4 October 2026 | P01.09 | Complete: local foundation step | Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded | Primary agent; uncommitted hotel-app/ and docs against 52c56ad | code_review: Approved P01.09; no P01 phase approval | P01.10 |
+| 4 October 2026 | P01.10 | Complete: local foundation step | Fresh local install, 2 PHP tests, 2 browser tests and both simulated public-root mappings passed; cumulative P01 reviews approved | Primary agent; documentation pending on external commit 17575f1 | code_review: Approved P01.10 and cumulative P01; php_review: Approved cumulative PHP/security scope | P02.01 |
+| 4 October 2026 | P02.01 | Complete: private MySQL connectivity and safe diagnostics | MySQL 26.7.1; 1 test, 30 assertions; foundation 2 tests; syntax/whitespace passed. Temporary fixtures removed after verification. | Primary agent; source/tests/docs pending against 17575f1; prior staged edits preserved | php_review and code_review independently passed and approved; P02 phase incomplete | P02.02 |
+| 4 October 2026 | P02.02 | Complete: ordered migration runner/history and safe repeat runs | MySQL 26.7.1 database suite 2 tests/89 assertions; foundation 2 tests/2 assertions; syntax/whitespace; zero probe tables after cleanup. Fixture removed. | Primary agent; source/tests/docs pending against 17575f1; prior staged work preserved | php_review and code_review independently passed and approved; P02 phase incomplete | P02.03 |
+| 4 October 2026 | P02.03 | Complete: installation settings and database singleton | MySQL 26.7.1 suite 3 tests/144 assertions; foundation 2 tests/2 assertions; competing writes, direct SQL, stable UUID and migration rerun passed. Fixture removed. | Primary agent; model/migration/tests/docs pending against 17575f1; prior staged work preserved | php_review and code_review independently passed and approved; P02 phase incomplete | P02.04 |
+| 4 October 2026 | P02.04 | Complete: actual InnoDB/utf8mb4, multilingual persistence and failed-transaction rollback verified | MySQL 26.7.1 suite 3 tests/180 assertions; foundation 2 tests/2 assertions after allowing loopback; syntax/whitespace passed; disposable fixture removed | Primary agent; test/probe/docs extensions against saved P02.03 files at HEAD 17575f1; earlier edits preserved | php_review and code_review independently passed and approved; P02 phase incomplete | P02.05 |
+| 4 October 2026 | P02.05 | Complete: shared UUID identity and automatic UTC timestamps | MySQL 3 tests/205 assertions; foundation/conventions 4 tests/109 assertions; PHP syntax/whitespace passed; disposable fixture removed | Primary agent; Record base, model, tests/probe and docs against saved P02.04 copies at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.06 |
+| 4 October 2026 | P02.06 | Complete: exact non-negative integer minor-unit validation | Focused 37 tests/49 assertions; full foundation 41 tests/158 assertions; syntax/whitespace passed; no database changes | Primary agent; new MinorAmount/test/docs at HEAD 17575f1; prior edits preserved | php_review and code_review independently approved; P02 incomplete | P02.07 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 
@@ -1101,6 +1148,7 @@ Append or update a row after each cumulative phase review. P00 baseline preparat
 | Phase | Reviewed revision/diff boundary | Reviewer | Outcome/date | Findings and resolution evidence | Next phase permitted |
 |---|---|---|---|---|---|
 | P00 | Baseline 6ec7890, intervening 52c56ad and current pending documentation; all P00 evidence | baseline_reviewer | Approved / 4 October 2026 | O13 timing, P29.02 references and completion-table formatting corrected and re-reviewed | P01 local scaffold only; actual host/provider/hardware gates remain |
+| P01 | Complete hotel-app foundation through external commit 17575f1 plus current mapping/startup docs and P01.01–10 evidence | code_review; php_review for cumulative PHP/security | Approved / 4 October 2026 | No required findings; both test suites and local mapping passed. Handoff revision/inventory refreshed; browser OS fallback recorded. | P02 preparation; database work requires real isolated MySQL |
 
 ## Keeping the README accurate
 

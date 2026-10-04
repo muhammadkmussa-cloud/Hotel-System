@@ -56,6 +56,7 @@ These guide the plan but are not additional confirmed user decisions.
 | D15 | Manager approval for post-submission cancellations, discounts, and refunds | Authority and thresholds require hotel configuration |
 | D16 | Laravel modular application, Composer, MySQL InnoDB through Laravel database/PDO, native browser modules, and supporting tools in the fact file | The framework-free recommendation is superseded by C25; remaining supporting recommendations require compatibility validation |
 | D17 | DirectAdmin-compatible hosted application with private/public file separation, short polling, bounded PHP cron jobs, and hotel-side print bridge | Shared-host constraints are a planning assumption, not a confirmed hosting tier; validate O13 |
+| D18 | Exact non-negative ratio division offers explicitly named half-up rounding; equal splits assign remainder units by ascending bytewise canonical server recipient ID | P02.07 implementation convention under D01; not approval of sharing workflow, tax/provider policy or whole-shilling conversion |
 
 ## Explicitly superseded or excluded
 

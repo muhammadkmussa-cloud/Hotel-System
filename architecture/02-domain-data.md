@@ -1,6 +1,6 @@
 # Domain and database specification
 
-Status: logical schema for implementation. Tables/fields below are a design contract; migrations do not yet exist. All business records carry installation identity through the isolated database and audit context. Use opaque IDs; public order numbers are display references, not authorization credentials.
+Status: logical schema for implementation. Tables/fields below are the design contract. P02.03 implements only hotel_settings and its model; all other business tables remain planned. P02.02 provides the reviewed migration runner/history conventions. All business records carry installation identity through the isolated database and audit context. Use opaque IDs; public order numbers are display references, not authorization credentials.
 
 Use MySQL with InnoDB, utf8mb4, explicit transactions, foreign keys, and prepared PDO statements (C21/D16). Verify constraints and locking on the actual supported MySQL version.
 
@@ -45,6 +45,22 @@ Use MySQL with InnoDB, utf8mb4, explicit transactions, foreign keys, and prepare
 Store monetary values in integer KES minor units; 120000 means KSh 1,200. Never use binary floating point for money. Use a decimal-safe pricing/tax routine and documented rounding. Shared allocation uses deterministic remainder allocation by stable guest order, preserving the exact total.
 
 The default equal split may produce fractional shillings. Provider amount granularity is a launch gate: the M-PESA adapter must declare its accepted units. If a payable amount cannot be represented, block that method with an explanation and allow cashier-assisted allocation or another method. Do not silently round or overcharge. A whole-shilling allocation option may be enabled only after hotel approval and while preserving the original total.
+
+P02.06 implements App\Support\MinorAmount for non-negative integer KES minor units, accepting PHP integers or canonical ASCII integer strings up to PHP_INT_MAX. This is a technical representation limit, not a business limit. Zero is allowed; operation-specific positivity/limits remain future work. Decimals, floats, signs, whitespace, leading zeroes and overflow are rejected without rounding. Signed adjustments require a separate operation contract. Future browser/API contracts must preserve large amounts as exact strings; this validator is not yet an endpoint or money arithmetic implementation.
+
+P02.07 adds an explicitly named half-up division helper for non-negative integer minor-unit ratios (nearest unit, ties up). This does not select a fiscal/provider rounding policy. Equal allocation uses quotient/remainder directly, with extra minor units assigned by ascending bytewise canonical server recipient ID. This defines stable guest order independently of visible guest numbers or request order. It preserves the full total, permits zero shares and requires distinct recipients; the caller must enforce guest existence and authorization. D01 sharing remains proposed. No rate multiplication, weighted allocation or whole-shilling conversion is implemented.
+
+## Implemented installation record
+
+P02.03 creates hotel_settings with a UUID primary key, required name/timezone, KES-only currency, nullable business-day cutoff/fiscal configuration version and timestamps. A stored generated installation_slot equal to 1 has a unique index, enforcing at most one row even with competing inserts or raw SQL. There is no inactive/cross-hotel directory. This is an implementation of C01/R01, not a shared tenancy feature.
+
+No settings row is seeded and no application API writes these fields yet. Empty storage means unconfigured. Owner setup/settings validation must later enforce a nonblank name and valid IANA timezone; null cutoff/fiscal version means not supplied. P02.05 shares the UUIDv7 trait through App\Models\Record and explicitly generates automatic timestamps in UTC. No business-day policy or fiscal provider approval is inferred from schema defaults. Rollback drops the settings table and data and remains an explicitly controlled administrative operation.
+
+P02.04 verifies the configured InnoDB engine and utf8mb4_unicode_ci table/connection conventions on real MySQL. Multilingual text, including four-byte characters, survives a committed write and fresh connection. Exception and constraint-error transactions restore the full prior settings row. This is DML rollback evidence only; MySQL DDL, business transaction policies and deadlock retries are not covered.
+
+## Identifier and time conventions
+
+Business models extend App\Models\Record: UUIDv7 string keys, no auto-increment and UTC automatic timestamps. Preserve app UTC and database session +00:00; normalize explicit/imported dates at input boundaries. Current timestamps have second precision and serialize as ISO-8601 UTC. Hotel timezone is for local display/business-day decisions. UUIDs can reveal time and are not credentials. Public order/collection numbers must be separate display fields, never access tokens; future endpoints still require authorization. P02.05 verifies the shared settings implementation, not order numbering or authentication.
 
 ## Referential and concurrency rules
 

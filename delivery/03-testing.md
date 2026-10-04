@@ -1,12 +1,12 @@
 # Test strategy
 
-Local foundation checks now run through the PHPUnit suite described in [the application README](../hotel-app/README.md#php-test-suite): private configuration, safe error handling, plain-page/static-asset delivery and HTTP boundaries. The T01–T36 scenarios below remain future business/integration/release evidence; no MySQL, provider or physical-hardware readiness is claimed.
+Local foundation checks now run through the PHPUnit suite described in [the application README](../hotel-app/README.md#php-test-suite): private configuration, safe error handling, plain-page/static-asset delivery and HTTP boundaries. The T01–T36 scenarios below remain future business/integration/release evidence; P02.01 connection/redaction and P02.02 migration order/history/repeat-run checks pass on real MySQL; P02.03 additionally verifies the settings schema and singleton constraint, while other business schema, provider and physical-hardware readiness remain unverified.
 
 ## Test layers
 
 Domain tests: money allocation, rounding, state transitions, recipe composition, pricing snapshots, and permission predicates. Database integration tests: actual MySQL/InnoDB constraints/locking, idempotency, outbox/inbox and rollback. Contract tests: eventual OpenAPI request/response schemas and example fixtures. UI/component tests: accessible ingredient state, cart isolation, error rendering. End-to-end tests: multiple independent browser contexts against a real PHP/MySQL backend in an isolated test environment. Hardware/provider tests: actual printers, selected merchant sandbox, fiscal integrator sandbox, and controlled live pilot.
 
-PHPUnit 12.5.37 is installed as a development dependency for the foundation suite. Playwright 1.63.0 runs two isolated starter-page Chromium tests; see the [browser suite commands](../hotel-app/README.md#browser-test-suite). Laravel domain/integration tests and complete browser journeys remain future work. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
+PHPUnit 12.5.37 is installed as a development dependency for the foundation suite. Playwright 1.63.0 runs two isolated starter-page Chromium tests; see the [browser suite commands](../hotel-app/README.md#browser-test-suite). The explicit phpunit.mysql.xml.dist suite runs MySQL connection and migration checks with required HOTEL_TEST_DB_* settings. Migration tests additionally require HOTEL_TEST_DB_ALLOW_SCHEMA=1 for disposable-schema writes; missing settings/opt-in fail, and tests never load the working .env. The settings test runs its selected real migration with random prefixed tables and competing processes. Remaining database schema/domain tests and complete browser journeys remain future work. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
 
 ## Mandatory cases
 
@@ -56,3 +56,19 @@ Use R-quality targets as starting load assumptions: representative large image m
 ## Release evidence
 
 Store test results, redacted provider references, device/browser versions, physical printer outcomes, screenshots, accessibility findings, and unresolved issues. Financial/order/authorization tests must pass without exceptions. Do not hide flaky tests by repeating until green; investigate and record the cause.
+
+### P02.04 storage and rollback evidence
+
+HotelSettingsTest extends the isolated real settings-migration fixture with live table/connection metadata checks, committed multilingual/emoji round trips and fresh-process checks after application-exception and duplicate-key rollback. It verifies the complete prior row and zero transaction depth. MySQL 26.7.1: 3 tests/180 assertions. No financial workflow, DDL rollback, translation or deadlock-retry acceptance is implied.
+
+### P02.05 identifiers and timestamps
+
+RecordConventionsTest verifies UUIDv7 string/nonincrementing keys, protected mass-assigned IDs, numeric route-key rejection and automatic UTC time with a Nairobi clock. HotelSettingsTest checks actual UTC session/storage and serialization, stable created_at/ID and advanced updated_at through fresh processes. These are persistence checks, not authentication/authorization or public order-number acceptance.
+
+### P02.06 integer amount validation
+
+MinorAmountTest covers zero, canonical strings, native integer limits and the first overflowing value, values beyond browser safe integers on 64-bit PHP, readonly storage and rejection of negative/floating/decimal/scientific/malformed values. Constant error messages exclude input. No database, financial arithmetic, provider granularity or payment workflow acceptance is implied.
+
+### P02.07 rounding and allocation
+
+MoneyAllocationTest verifies integer half-up division, PHP_INT_MAX boundaries, deterministic recipient reordering and rejection of invalid divisors/recipient lists. Across 35 source-total/count combinations it checks exact sums, non-negative shares, correct recipient count and a maximum one-unit difference. Focused result: 3 tests/234 assertions. Authorization, weighted sharing, tax/provider policies and live bill mutation remain untested future workflows.

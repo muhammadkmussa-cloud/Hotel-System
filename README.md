@@ -8,7 +8,7 @@ This project contains **Markdown specifications, a build plan, and the initial [
 
 ## Build progress
 
-**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented.** No working feature, live integration, or deployment is claimed yet.
+**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation rejects malformed and out-of-range inputs.** No working feature, live integration, or deployment is claimed yet.
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
@@ -16,25 +16,25 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 19 / 320 steps complete · 1 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 26 / 320 steps complete · 2 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P01 — Create the smallest PHP application |
-| Active task | P01.10 — local DirectAdmin mapping check |
-| Last completed build task | P01.09 — local foundation |
-| Next task | **P01.10 — Review the local public/private mapping for DirectAdmin** |
+| Current phase | P02 — Database foundation and exact money |
+| Active task | P02.07 — rounding and remainder allocation |
+| Last completed build task | P02.06 — exact integer money validation |
+| Next task | **P02.07 — Implement rounding and deterministic remainder allocation** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00 approved; 9 P01 steps independently approved; cumulative P01 review pending |
-| Last verified update | 4 October 2026 — Fresh lockfile installs, configuration/cache checks, 2 PHP tests, 2 browser tests and Artisan HTML/CSS/JS startup passed; browser OS fallback warning recorded |
+| Review gate | P00/P01 approved; P02.01–06 approved by independent PHP and code reviewers |
+| Last verified update | 4 October 2026 — foundation suite 41 tests/158 assertions; money subset 37 tests/49 assertions independently reviewed. MySQL evidence retained from P02.05 (3 tests/205 assertions). |
 
 ### Feature and phase checklist
 
 Check a phase only when all its required steps, verification checks, and independent phase review pass. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
-- [ ] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 9/10 steps
-- [ ] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 0/10 steps
+- [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
+- [ ] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 6/10 steps
 - [ ] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 0/10 steps
 - [ ] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 0/10 steps
 - [ ] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 0/10 steps

@@ -101,3 +101,31 @@ P01.07 installs a pinned development-only PHPUnit runner and a Foundation suite 
 ### 4 October 2026 — browser test runner
 
 P01.08 installs development-only Playwright with a saved npm lockfile and two Chromium starter-page checks. A temporary loopback PHP fixture uses generated settings and normal shutdown cleanup. JS/code reviewers approved the step; full product/device/accessibility and DirectAdmin acceptance remain pending. No application behaviour changed.
+
+### 4 October 2026 — local foundation phase approved
+
+P01.09 reproduces dependency setup, private configuration/cache handling, both test suites and Artisan startup in a fresh temporary copy. P01.10 records the actual public/private inventory and successful local public_html/private_html mapping simulation. code_review approved both steps and cumulative P01; php_review approved cumulative PHP/security after rerunning the suite. No required findings remain. Browser OS fallback and real-host/database limitations remain explicit. External commit 17575f1 appeared during work; existing staged changes were preserved. P02 requires isolated real MySQL before database implementation.
+
+### 4 October 2026 — private MySQL connectivity
+
+P02.01 adds private PDO MySQL configuration, a CLI connectivity check with constant redacted output and an explicit isolated database suite. The selected Oracle MySQL 26.7.1 artifact passed 1 test with 30 assertions; both PHP/code reviewers independently repeated it and approved the step. Foundation checks passed. Test-assertion redaction, readonly dependencies, test filesystem utility and default-connection wording were corrected before approval. Dedicated fixtures/data/credentials were removed; the verified image remains cached for later local work. Schema, transactions and hosting acceptance remain pending.
+
+### 4 October 2026 — migration framework
+
+P02.02 adds the private app:migrate command, explicit migration-history settings and the source migration directory. Isolated tests verify order/history/batches, repeat-run safety, later incremental work, production refusal/force and redacted failure. The database suite passed 2 tests/89 assertions on MySQL 26.7.1; foundation tests passed. Both reviewers independently approved. Temporary probe tables and the database fixture were removed. No business migration ships yet; single-operator execution and non-atomic MySQL DDL limitations are documented.
+
+### 4 October 2026 — installation settings identity
+
+P02.03 adds the hotel_settings migration and HotelSettings model. A generated constant slot with a unique index enforces at most one row, including competing inserts and direct SQL. No hotel identity is seeded. Updates and migration reruns preserve the UUID; owner setup, validation and authorization remain later steps. The MySQL suite passed 3 tests/144 assertions and foundation checks passed 2 tests/2 assertions. An initial reserved test-helper naming clash was corrected. Both independent reviewers reran the database suite and approved the step with no required findings. Temporary tables, database fixture and credentials were removed. P02 remains incomplete.
+
+### 4 October 2026 — storage and transaction rollback
+
+P02.04 extends the isolated settings fixture to check actual InnoDB/utf8mb4 conventions, committed multilingual/emoji persistence and rollback after application exceptions and duplicate-key errors. Fresh processes confirm complete row preservation. No runtime change was needed. MySQL 26.7.1 passed 3 tests/180 assertions; the foundation suite passed 2 tests/2 assertions after the initial sandbox loopback restriction was resolved. Both independent reviewers approved. The disposable database and credentials were removed. DDL rollback, financial workflows, deadlock retry and DirectAdmin acceptance remain outside this evidence.
+
+### 4 October 2026 — record identity and UTC timestamps
+
+P02.05 adds the shared Record base and adopts it in HotelSettings without changing the schema or existing IDs. UUIDv7 string keys remain record references, not credentials. Automatic timestamps explicitly use UTC; tests verify Nairobi-clock conversion, raw MySQL UTC storage, UTC serialization and stable ID/created_at during updates. Foundation/conventions passed 4 tests/109 assertions; MySQL passed 3 tests/205 assertions. Both independent reviewers approved after their own convention and database checks. Temporary fixture/credentials were removed. Public order numbers, endpoint authorization and explicit imported-date normalization remain future work.
+
+### 4 October 2026 — exact minor-unit validation
+
+P02.06 adds immutable MinorAmount validation for actual integers or canonical ASCII integer strings in KES minor units. Zero is accepted; negative, floating, malformed and overflowing values are rejected before conversion. Technical bounds are distinguished from future business limits. Tests-first failure for the absent class was resolved; focused tests passed 37 tests/49 assertions and the full foundation suite passed 41 tests/158 assertions. Both independent reviewers approved. No database or endpoint changes were made; rounding, allocation, arithmetic and provider rules remain future work.
