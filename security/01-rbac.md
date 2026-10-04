@@ -41,12 +41,14 @@ Guest can browse published menu, edit own draft, submit own order, read own bill
 
 Kiosk can access only its current session. Kitchen devices receive no customer payment credentials. Collection devices see only the public queue projection. Guest IDs in request bodies do not expand scope.
 
+The hotel print bridge is a separate service principal, scoped to its installation and registered stations. It can claim assigned jobs, report leased-job outcomes, and send heartbeats only; it cannot submit customer orders, read general financial reports, or apply payments. Revoke/rotate its credentials independently of staff sessions.
+
 ## Enforcement
 
-Every route and worker command validates capability, resource scope, and lifecycle. Record both requester and approver for delegated actions. Authorization-denied responses do not expose the existence of private unrelated records. Revocation invalidates active streams and sessions promptly.
+Every route and worker command validates capability, resource scope, and lifecycle. Record both requester and approver for delegated actions. Authorization-denied responses do not expose the existence of private unrelated records. Revocation invalidates sessions promptly and is checked on every event-poll and service request.
 
 No unrestricted shared PIN. Fast staff unlock can be supported on a trusted enrolled terminal with a personal PIN, rate limiting, and a preceding authenticated enrolment, but sensitive actions require stronger recent authentication. Keep customer and staff sessions separate when a waiter hands over a tablet.
 
 ## Required negative tests
 
-Waiter tries card confirmation; guest changes guestId/tableId; kitchen reads cashier reports; cashier edits provider credentials; menu editor publishes without review; deactivated staff reuses session; expired tablet subscribes to bill events; cashier accepts their own handover; manager attempts to force unpaid visit closed. All must be denied without unintended side effects.
+Waiter tries card confirmation; guest changes guestId/tableId; kitchen reads cashier reports; cashier edits provider credentials; menu editor publishes without review; deactivated staff reuses session; expired tablet polls bill events; cashier accepts their own handover; manager attempts to force unpaid visit closed. All must be denied without unintended side effects.

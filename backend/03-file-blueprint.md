@@ -1,65 +1,66 @@
 # Backend source-file blueprint
 
-Planned implementation paths. The documentation delivery does not include executable source or migrations.
+Planned PHP implementation paths aligned with [DirectAdmin deployment](../architecture/05-directadmin-layout.md). No executable source, dependencies, or migrations are created by this documentation update.
 
 ```text
-apps/api/
-  package.json
-  tsconfig.json
-  src/server.ts                # process lifecycle, graceful shutdown
-  src/app.ts                   # Fastify composition and error mapping
-  src/config/schema.ts         # validated environment/runtime settings
-  src/plugins/database.ts
-  src/plugins/auth.ts
-  src/plugins/csrf.ts
-  src/plugins/rate-limit.ts
-  src/plugins/request-id.ts
-  src/modules/identity/
-  src/modules/catalogue/
-  src/modules/availability/
-  src/modules/visits/
-  src/modules/ordering/
-  src/modules/billing/
-  src/modules/payments/
-  src/modules/cash/
-  src/modules/fulfilment/
-  src/modules/printing/
-  src/modules/fiscal/
-  src/modules/reporting/
-  src/modules/audit/
-  src/modules/delivery/
-apps/worker/
-  src/main.ts                  # leases, retries, shutdown
-  src/jobs/                    # print, fiscal, event and reconciliation jobs
-apps/payment-relay/
-  src/main.ts                  # optional public callback intake, restricted surface
-  src/provider-verification.ts # provider-specific evidence handling
-  src/durable-inbox.ts         # persists callbacks before acknowledgment
-  src/hub-delivery.ts          # authenticated outbound-hub retrieval contract
-packages/contracts/
-  openapi.yaml                 # create and validate in milestone M1
-  schemas/                    # shared runtime schemas
-packages/domain/
-  money.ts                    # exact arithmetic and allocation policy
-  transitions.ts              # allowed states and guards
-  permissions.ts              # canonical capability IDs
-packages/database/
-  migrations/                 # ordered, reviewed schema changes
-  seeds/                      # demo-only fixtures, no live credentials
-packages/adapters/
-  mpesa/                      # selected provider implementation
-  fiscal/                     # chosen verified integrator
-  printers/                   # allowlisted physical printer transport
-infra/
-  compose.yaml                # pinned services for approved local deployment
-  proxy/                      # TLS and restricted routes
-  backup/                     # backup and restore tooling
-tests/
-  integration/
-  contract/
-  resilience/
+hotel-app/                      # upload outside the domain document root
+  composer.json
+  composer.lock
+  vendor/                       # locked production dependencies
+  bootstrap.php
+  config/                       # validated settings and private secret loading
+  src/
+    Http/
+      Router.php
+      Middleware/               # auth, CSRF, authorization, limits, request IDs
+    Modules/
+      Identity/
+      Catalogue/
+      Availability/
+      Visits/
+      Ordering/
+      Billing/
+      Payments/
+      Cash/
+      Fulfilment/
+      Printing/
+      Fiscal/
+      Reporting/
+      Audit/
+      Delivery/
+    Adapters/
+      Mpesa/
+      Fiscal/
+      Printing/                 # authenticated bridge job API
+    Support/
+      Money.php
+      Transitions.php
+      Permissions.php
+  views/                        # HTML; see frontend blueprint
+  contracts/
+    openapi.yaml                # create/validate during M1
+    schemas/
+  database/
+    migrations/
+    seeds/
+  bin/
+    run-jobs.php                # bounded cron batch, leases, retries
+    migrate.php                 # controlled administrative operation
+  storage/
+    originals/
+    logs/
+    sessions/
+    temporary/
+public_html/
+  index.php                     # pages, JSON API and provider callback routing
+  .htaccess                     # host-tested routes and access controls
+  assets/                       # see frontend blueprint
+  media/                        # published raster files; no script execution
+  service-worker.js
 ```
 
-Each domain module typically contains `routes.ts`, `schemas.ts`, `service.ts`, `repository.ts`, and meaningful tests; add files as the behaviour requires. Keep external provider payloads inside adapters. Do not let browser contracts depend on provider-specific internal objects.
+A domain module may contain `Routes.php`, `Validator.php`, `Service.php`, and `Repository.php`; add files as the behaviour requires. Repositories use PDO MySQL and prepared statements. Services own transactions and financial guards. Provider payloads stay inside adapters. Generated JavaScript contracts come from the validated API schema, not manually duplicated endpoint definitions.
 
-The optional relay needs its own isolation and lifecycle testing. It is an infrastructure component for a single installation, not a new multi-hotel business portal. A secure deployment may host separate instances on shared infrastructure, but hotel credentials and event stores must remain isolated.
+Development-only PHPUnit/Playwright tests, contract-generation tools, and deployment notes stay outside the public upload. Build Composer dependencies locally when hosting lacks Composer/SSH, using the verified host PHP platform and extensions. Use DirectAdmin cron for scheduled work; do not assume a resident worker, containers, root privileges, or a Node.js server. Callbacks route directly to the hosted PHP application; no separate relay is part of the baseline.
+
+The hotel-side printer bridge is separately installed on a supported local device and validated with real hardware. Its runtime/driver choice remains O04; it is not a second order or payment authority.

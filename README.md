@@ -1,6 +1,6 @@
 # Hotel System
 
-**Implementation documentation · Version 1.0 · 4 October 2026**
+**Implementation documentation · Version 1.1 · 4 October 2026**
 
 A restaurant ordering and POS system for **one hotel per installation**, designed to be installed separately at other hotels. The customer experience combines portable table tablets, a walk-in kiosk, and a photographic meal customiser with ingredient circles.
 
@@ -12,8 +12,10 @@ This project currently contains **Markdown specifications and a build plan**. It
 2. [Build plan](delivery/01-build-plan.md): implementation order and completion gates.
 3. [Premium frontend design](design/01-premium-design.md): visual direction and measurable design standards.
 4. [Screen map](product/04-screen-map.md): every principal customer and staff screen.
-5. [System architecture](architecture/01-system.md): frontend, backend, local installation, and external services.
+5. [System architecture](architecture/01-system.md): frontend, backend, DirectAdmin hosting, and external services.
 6. [Documentation index](DOCUMENTATION-INDEX.md): the full collection.
+
+For the agreed technologies and planned integrations, start with the [technology fact file](TECHNOLOGY-FACT-FILE.md).
 
 ## Non-negotiable product decisions
 
@@ -49,9 +51,11 @@ Engineering may implement proposed defaults behind configuration or adapters. Do
 | `research/` | Sources and limits of the previous research |
 | `templates/` | Hotel setup and asset handover forms |
 
-## Recommended implementation direction
+## Confirmed implementation stack
 
-React + TypeScript + Vite frontend; Fastify + TypeScript modular backend; PostgreSQL; one on-site authoritative installation with a restricted internet-facing payment relay where needed. This is a **proposed technical baseline**, not an already deployed or benchmarked solution. See [architecture](architecture/01-system.md).
+**PHP backend, basic HTML/CSS/JavaScript frontend, MySQL database, and DirectAdmin hosting** are confirmed decisions C19–C21/C23. The [technology fact file](TECHNOLOGY-FACT-FILE.md) consolidates the stack, supporting-tool recommendations, integrations, equipment, and planning sequence.
+
+The [DirectAdmin layout](architecture/05-directadmin-layout.md) separates public assets from private PHP logic/configuration and uses scheduled jobs and polling suitable for shared hosting. The prior on-site hub proposal D05 is retired; hosted ordering requires internet connectivity. Supporting tools remain recommendations, with versions and compatibility to be validated at implementation. See [architecture](architecture/01-system.md). The current instruction is to update documentation before creating code (C22).
 
 The first build milestone is a photographic, interactive prototype and a tested local vertical slice. Production integration and deployment follow the gates in the build plan.
 

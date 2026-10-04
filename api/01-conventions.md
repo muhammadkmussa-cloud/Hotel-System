@@ -6,7 +6,7 @@ Base path `/api/v1`. JSON keys use camelCase. IDs are opaque strings. UTC timest
 
 Same-origin browser sessions use secure HttpOnly cookies plus CSRF controls on mutation. Device sessions are enrolled and mode-scoped. Every object access checks installation context, principal role, resource ownership, and current lifecycle state. A guest URL cannot switch the authenticated guest.
 
-Relay/service integrations use separately scoped service credentials and the selected provider's verification method. Public liveness and redacted collection projections are the only deliberately public surfaces. Payment callbacks are external-facing but not trusted merely because they arrived.
+Print-bridge/service integrations use separately scoped service credentials and the selected provider's verification method. Public liveness and redacted collection projections are the only deliberately public surfaces. Payment callbacks are external-facing but not trusted merely because they arrived.
 
 ## Request semantics
 
@@ -36,4 +36,4 @@ Required domain codes include ITEM_UNAVAILABLE, PRICE_CHANGED, REMOVAL_NOT_ALLOW
 
 Bound string lengths, quantities, item counts, upload dimensions, and payload size in schemas. Rate-limit login by staff/device/IP and payment prompts by checkout/phone/device; avoid blocking a whole hotel solely because devices share an IP. Exact thresholds are load/pilot configuration, not hardcoded assumptions.
 
-Markdown endpoints below are a semantic contract. Create an OpenAPI document with all schemas/security/response variants in M1, lint it, generate client types, and run contract tests. Do not label the present Markdown collection as a validated OpenAPI implementation.
+Markdown endpoints below are a semantic contract. Create an OpenAPI document with all schemas/security/response variants in M1, lint it, generate browser-compatible JavaScript client contracts, and run contract tests. Do not label the present Markdown collection as a validated OpenAPI implementation.

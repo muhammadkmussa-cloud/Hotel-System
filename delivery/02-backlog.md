@@ -23,7 +23,7 @@ All items are planned/not started. P0 means needed for safe first service; P1 me
 | B17 | P0 | Allergy/preparation review and changes | R04, R17 | No unsupported removal; held review before kiosk pay |
 | B18 | P0 | Fiscal invoice/credit-note adapter | R18 | Approved sandbox scenarios and configuration |
 | B19 | P0 | Availability/portion reservation | R17 | Last-portion race and expired reservation handling |
-| B20 | P0 | Live events, reconnection, local ordering | R19, R20 | Internet versus local-disconnection test matrix |
+| B20 | P0 | Scoped event polling and hosted reconnection | R19, R20 | Internet, host, and per-device disconnection test matrix |
 | B21 | P0 | Reports, audit, cash/terminal/provider reconciliation | R21 | Known day totals reconcile across ledgers |
 | B22 | P0 | Deployment, backup/restore, staff training | R01, R19 | Rehearsed restore and trained service staff |
 | B23 | P0 | Accessibility, actual-device visual review | R22 | Critical tasks pass manual and automated checks |

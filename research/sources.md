@@ -21,11 +21,22 @@ Restaurant research reviewed 3 October 2026; technical references and KRA integr
 | [KRA eTIMS integration](https://www.kra.go.ke/business/etims-electronic-tax-invoice-management-system/learn-about-etims/etims-system-to-system-integration) | System integration and certification/integrator routes | Fiscal readiness gate, no self-declared compliance |
 | [Food Standards Agency](https://www.food.gov.uk/business-guidance/allergen-guidance-for-food-businesses?c=Linux) | Recipe/allergen records and cross-contact precautions | Safety-informed design; not a statement of Kenyan legal requirements |
 | [W3C target size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum) | Operable control size/spacing requirements | Minimum interaction geometry and alternative list |
-| [Vite guide](https://vite.dev/guide/) | Supported project setup and runtime constraints | Pin compatible frontend tooling at implementation |
-| [Fastify validation](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/) | Schema-based request/response handling | Contract-driven server boundary validation |
-| [PostgreSQL locking](https://www.postgresql.org/docs/current/explicit-locking.html) | Row locking and concurrency behaviour | Financial/availability transaction design |
 | [MDN service workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) | Service-worker caching and secure-context requirements | HTTPS and scoped caching on local devices |
+| [PHP PDO](https://www.php.net/manual/en/book.pdo.php) | PHP database interface with driver-specific access | PDO MySQL and backend-controlled transactions |
+| [Composer](https://getcomposer.org/doc/00-intro.md) | PHP dependency management | Locked dependencies and autoloading |
+| [MySQL InnoDB](https://dev.mysql.com/doc/refman/8.4/en/innodb-introduction.html) | Transactions, row locking, foreign keys | Financial and availability concurrency |
+| [MySQL recovery](https://dev.mysql.com/doc/refman/8.4/en/point-in-time-recovery.html) | Point-in-time recovery uses backup and binary logs | Confirm provider access before promising recovery targets |
+| [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) | Native module organisation | Plain JavaScript frontend without a required framework |
+| [PHP cURL](https://www.php.net/manual/en/book.curl.php) | HTTP transfer support | Server-side provider adapters |
+| [PHP GD](https://www.php.net/manual/en/book.image.php) | Image processing support | Proposed raster derivatives; validate host formats |
+| [PHPUnit](https://phpunit.de/documentation.html) | PHP test-tool documentation | Match test version to selected PHP platform |
+| [Playwright](https://playwright.dev/docs/intro) | Browser testing with JavaScript support | Multi-device journeys; development tooling only |
+| [DirectAdmin website locations](https://docs.directadmin.com/getting-started/first-steps/faq.html) | Per-domain website directory convention | Verify actual domain public root |
+| [DirectAdmin web configuration](https://docs.directadmin.com/webservices/apache/customizing.html) | Document-root overrides and PHP filesystem restrictions | Verify both HTTP/HTTPS roots and access to private application folders |
+| [DirectAdmin PHP selection](https://docs.directadmin.com/webservices/php/multiple-php.html) | Domain PHP version selection | Verify web and CLI compatibility on selected host |
+| [DirectAdmin configuration](https://docs.directadmin.com/directadmin/general-usage/all-directadmin-conf-values.html) | User cron configuration and PHP path controls | Bounded scheduled work; host capability gate |
+| [DirectAdmin backups](https://docs.directadmin.com/directadmin/backup-restore-migration/index.html) | Backup/restore scope and scheduling options | Check account-level access, data coverage, and restore rehearsal |
 
 ## Conclusions versus evidence
 
-The proposed stack, design palette, local hub, sharing default, counter collection, and build sequence are project recommendations, not claims that these vendors prescribe those choices. The ingredient orbit is a feature to validate, not a proven market novelty or a demonstrated usability improvement. Hotel sales growth, staffing savings, build cost, and delivery dates have not been estimated from evidence and are not promised.
+PHP, HTML/CSS/JavaScript, MySQL, and DirectAdmin are user-confirmed choices C19–C21/C23. Supporting tools, polling/cron design, design palette, sharing default, counter collection, and build sequence remain project recommendations, not vendor prescriptions. The previous on-site hub and framework stack have been superseded. The ingredient orbit is a feature to validate, not a proven market novelty or a demonstrated usability improvement. Hotel sales growth, staffing savings, build cost, and delivery dates have not been estimated from evidence and are not promised.

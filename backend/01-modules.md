@@ -1,6 +1,6 @@
 # Backend modules and ownership
 
-Use a modular monolith with explicit interfaces. Route handlers parse/authenticate and call use cases; use cases own domain transactions; repositories persist data; workers perform external side effects.
+Use a modular PHP application with explicit interfaces, PDO MySQL, and the [DirectAdmin layout](../architecture/05-directadmin-layout.md). Route handlers parse/authenticate and call use cases; use cases own domain transactions; repositories persist data; workers perform external side effects.
 
 | Module | Owns | Does not own |
 |---|---|---|
@@ -27,7 +27,7 @@ Never hold a database lock while waiting on a provider or printer. Commit intent
 
 ## Background operations
 
-Workers lease jobs with expiry, attempt counts, exponential backoff, jitter, and bounded retries. Exhausted attempts raise a staff-visible exception and remain recoverable. Job retry must retain the business/provider idempotency identity. Print jobs with unknown physical results require inspection or explicitly labelled copies, not endless automatic resend.
+DirectAdmin cron launches bounded PHP batches; no persistent daemon is assumed. Record heartbeat, prevent overlapping execution from duplicating work, and stop within host limits. Jobs are leased with expiry, attempt counts, exponential backoff, jitter, and bounded retries. Exhausted attempts raise a staff-visible exception and remain recoverable. Job retry must retain the business/provider idempotency identity. Print jobs with unknown physical results require inspection or explicitly labelled copies, not endless automatic resend.
 
 ## Diagnostics
 

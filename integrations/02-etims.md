@@ -8,6 +8,8 @@ KRA documents system-to-system eTIMS integration and a development/testing/certi
 
 Kitchen ticket: preparation instructions. Running bill: amount currently owed, not proof of payment. Payment receipt: record of received money. Fiscal invoice/credit note: required structured fiscal record with the approved integration's references. A single piece of paper may include multiple elements when supported, but the underlying records and states remain distinct.
 
+Implement the selected adapter in PHP on DirectAdmin, with MySQL outbox/inbox state and bounded scheduled retries. Validate host connectivity and scheduling against the chosen integrator; this is not evidence of a working integration.
+
 ## Required configuration
 
 Hotel taxpayer identity and approved establishment details; item tax categories; price-includes-tax policy; applicable service charges and their treatment; item identifiers; invoice numbering rules; credit-note rules; rounding; buyer information when required; outage/fiscal submission policy; retention; sandbox and production credentials.

@@ -1,33 +1,29 @@
-# Installation and configuration runbook
+# DirectAdmin installation and configuration runbook
 
-Status: planned process; no services are installed by this documentation project. Complete [setup form](../templates/hotel-setup.md) and [release acceptance](../delivery/04-acceptance.md) before live use.
+Status: planned process only; nothing is deployed. PHP, HTML/CSS/JavaScript, MySQL, and DirectAdmin are confirmed. Use the [deployment layout](../architecture/05-directadmin-layout.md), [setup form](../templates/hotel-setup.md), and [release acceptance](../delivery/04-acceptance.md).
 
 ## Per-hotel package
 
-Same versioned software, separate database/media/credentials/device enrolments/backups. Branding, recipes, table numbers, stations, taxes, and printer destinations are configuration. Do not copy one hotel's private data into another installation as a starting template.
+Each hotel has isolated domain/application files, database/user, media, credentials, devices, and backups; a separate DirectAdmin account is preferred. Same versioned software, hotel-specific configuration. Never copy another hotel's private records as setup data.
 
 ## Setup sequence
 
-1. Survey network coverage, electrical reliability, device mounting, printer positions, and cashier workflow.
-2. Validate hub specification under representative load. Configure power backup and secure OS accounts.
-3. Install pinned, supported application/database/proxy/worker releases. Use dedicated service accounts and restricted file permissions.
-4. Establish HTTPS/trusted certificates for local hostnames and enrolled tablets. Test certificate renewal before expiry.
-5. Initialize the database, installation ID, first owner through a one-time bootstrap secret, and backup destination. Remove bootstrap access.
-6. Configure hotel identity, KES, Africa/Nairobi, business-day cutoff, table labels, staff roles, station routing, and printers.
-7. Enrol devices; verify staff/customer mode isolation and revocation.
-8. Load chef-approved recipes, real photos, prices, translations, and availability. Preview customer presentation.
-9. Configure payment and fiscal integrations in sandbox only. Finish integration evidence before production credentials are enabled.
-10. Run rehearsal: table orders, kiosk orders, guest settlement, cash handover, invoice, refund, printer failure, and restore.
-11. Train staff; obtain operational sign-off and switch explicitly to live mode. Never silently mix sandbox results with real receipts.
+1. Record provider/account capabilities O13: actual MySQL/PHP versions, extensions, web server, routing, cron, quotas, private-path permissions, outbound HTTPS, and backup/restore access. Confirm that the chosen plan can support the expected load.
+2. Configure the domain and trusted HTTPS with renewal. Verify both public_html/private_html mappings. Neither may expose private application files; redirect HTTP to HTTPS.
+3. Prepare a release with locked PHP dependencies matching the host. Use Composer locally if host shell/Composer access is unavailable. Deploy hotel-app outside the public roots and only the public entry/assets to the domain root. Exclude tests, Git metadata, secrets, SQL exports, and developer files from public upload.
+4. Create an isolated MySQL database/user through the permitted host tools, using actual prefixed names and least-privilege access. Store credentials in private configuration. Apply reviewed migrations through the controlled administrative process and disable setup access after bootstrap.
+5. Configure DirectAdmin cron with the verified PHP CLI path, absolute private job-runner path, bounded runs, leases, and overlap protection. Check heartbeat/error reporting without leaking secrets in job output or email.
+6. Set installation identity, KES, Africa/Nairobi, business-day cutoff, table labels, roles, tax configuration, receipt settings, and session/storage paths. Validate database and media backup/restore to the approved independent destination.
+7. Install the tested print bridge on the hotel-side device. Enrol it with narrowly scoped credentials; verify outbound HTTPS and local printer allowlists. No printer port forwarding is required.
+8. Enrol tablets/kiosk/staff/displays; verify session isolation, internet/Wi-Fi coverage, disconnection handling, and revocation.
+9. Load chef-approved recipes, approved images, prices, and reviewed translations. Enable payment/fiscal adapters in sandbox only; validate direct hosted callbacks and all recovery cases before live credentials.
+10. Rehearse ordering, bills, kiosk payment, cash handover, printing, fiscal handling, internet/host/cron outages, and restore. Measure response/polling/print latency on the actual host.
+11. Train staff and obtain operational sign-off before enabling live mode. Deployment/account changes occur only with authorization; this document is not such an action.
 
-## Configuration categories
+## Configuration and updates
 
-Runtime settings: bind address, public/local origin, database connection, storage location, installation ID, TLS, timeouts, queue leases, logging, and backup scheduling. Provider secrets remain outside UI/source; UI shows only configured status and redacted identifiers.
+Runtime settings include application origin, actual private/public paths, database connection, PHP/cron versions, leases, provider timeouts, image limits, logging, and backups. Secrets stay outside source and public roots; administrative screens show redacted status only. Business settings and permissions remain versioned and audited.
 
-Business settings: meal prices, taxes, supported language, guest checkout policy, terminal reference rules, table list, staff assignments, print routing, receipt details, service charges, kiosk expiry policy, and review permissions. Version sensitive settings and record who changed them.
+Announce maintenance, protect active checkouts, take a verified backup, pause affected cron/bridge processing, apply reviewed migrations, and deploy a matched private/public release. Run smoke checks and resume work deliberately. Do not refresh tablets during payment; service-worker updates wait for an idle-safe moment.
 
-## Updates
-
-Announce maintenance to staff, complete/transfer active work, back up and test backup integrity, apply reviewed migrations, deploy pinned assets, run smoke tests, then resume. Do not refresh tablets mid-checkout. Service worker updates wait for an idle/reload-safe moment.
-
-Rollback must account for database compatibility. Never restore an older database over newer live payments without reconciliation. If a migration is incompatible, use the tested forward repair or controlled maintenance recovery plan.
+Rollback must preserve database compatibility and reconciliation. Never restore an older database over newer payments without accounting for external money/fiscal outcomes. Use controlled repair or the tested restore procedure.

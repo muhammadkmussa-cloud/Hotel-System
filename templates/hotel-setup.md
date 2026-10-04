@@ -6,6 +6,9 @@ Template for the future pilot hotel. Fill with authorised business information; 
 |---|---|
 | Hotel trading name and receipt identity | To be supplied |
 | Installation ID / release | Generated during setup |
+| DirectAdmin provider/account/domain and HTTP/HTTPS roots | C23/O13; no credentials here |
+| PHP/MySQL versions, extensions, cron and hosting quotas | O13 evidence |
+| Hotel-side print bridge device/runtime | O04 tested outbound HTTPS connection |
 | Operating contact / incident owner | To be assigned |
 | Currency / timezone | KES / Africa/Nairobi |
 | Business-day cutoff | Hotel decision |

@@ -14,7 +14,7 @@ Do not bake labels into photographs. Store name/alt text as editable content. Ph
 
 Generate responsive widths approximately 320/640/960/1440 for dishes and 96/192/384 for ingredient portraits. AVIF/WebP where supported, with JPEG/PNG fallback as appropriate. Preserve transparency for ingredient cutouts. Proposed budgets: card variants below 150 KB, hero below 350 KB, ingredient thumbnail below 35 KB; adjust when visual fidelity needs it and measure total screen load.
 
-Dimensions/aspect ratio are included in metadata to reserve layout space. Do not send full-size originals to every tablet. Lazy-load offscreen cards and preload only the primary visible meal image. Cache published asset versions on the local hub so catalogue photos do not depend on internet availability.
+Dimensions/aspect ratio are included in metadata to reserve layout space. Do not send full-size originals to every tablet. Lazy-load offscreen cards and preload only the primary visible meal image. Serve published asset versions from the DirectAdmin domain. Browser caching can retain previously loaded public images, but uncached images require connectivity and offline menus must be marked stale.
 
 ## Upload and publishing pipeline
 

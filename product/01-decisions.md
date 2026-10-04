@@ -24,6 +24,11 @@ Reviewed against the conversation through 4 October 2026. This file prevents rec
 | C16 | Central meal photo with surrounding ingredient pictures; customers remove permitted ingredients | Original request; feasibility refinements below remain defaults |
 | C17 | Premium, image-led frontend and comprehensive Markdown build documentation | Current request |
 | C18 | Save a project named Hotel System to Desktop; no zip | Current request supersedes the initial zip request |
+| C19 | Use PHP for the backend | Explicit technology choice on 4 October 2026 |
+| C20 | Use basic HTML, CSS, and JavaScript for the frontend | Explicit technology choice on 4 October 2026 |
+| C21 | Use MySQL for the database | Explicit technology choice on 4 October 2026 |
+| C22 | Plan the technologies and integrations and update the documentation before creating code | Explicit documentation-only instruction on 4 October 2026 |
+| C23 | Deploy using DirectAdmin and organise the architecture and file layout for that hosting environment | User clarified DirectAdmin after initially naming cPanel on 4 October 2026 |
 
 ## Proposed defaults
 
@@ -35,7 +40,7 @@ These guide the plan but are not additional confirmed user decisions.
 | D02 | Allow individual guest checkout while others keep ordering | Prevents one payment freezing the entire table |
 | D03 | Cash settles the customer bill immediately; separately track waiter-to-cashier handover | Protects both customer experience and cash accountability |
 | D04 | Direct Safaricom Daraja for first M-PESA adapter | Research recommendation; Paystack remains an alternative pending onboarding validation |
-| D05 | One authoritative on-site server and database, with secure external callback relay if needed | Supports local ordering during internet loss; requires an infrastructure trial |
+| D05 | Superseded by C23 and D17 | The on-site authoritative hub and optional relay recommendation is retired; hosted ordering requires connectivity |
 | D06 | Kiosk cash/card payments happen at cashier; pending kiosk orders cannot reach preparation | Consistent with independent card terminal |
 | D07 | Kiosk eat-in uses counter collection initially | Table delivery was discussed but not decided |
 | D08 | Kitchen screen plus separate printed tickets, optional bar routing | Paper is confirmed; screen and stations are recommended |
@@ -44,8 +49,10 @@ These guide the plan but are not additional confirmed user decisions.
 | D11 | English and Kiswahili interface; English initial authoring with reviewed translations | Languages were asked about, not answered |
 | D12 | Basic availability/portion limits first; full recipe inventory later | Keeps first release focused |
 | D13 | eTIMS via a verified integrator, after fiscal workflow validation | Provider and hotel tax configuration are not yet selected |
-| D14 | React/Vite, Fastify, PostgreSQL, TypeScript | Engineering recommendation, not a requested framework |
+| D14 | Superseded by C19–C21; see the technology fact file | The previous React/Vite, Fastify, PostgreSQL, TypeScript recommendation is retired |
 | D15 | Manager approval for post-submission cancellations, discounts, and refunds | Authority and thresholds require hotel configuration |
+| D16 | Modular PHP without a full framework initially; Composer, PDO, MySQL InnoDB, native browser modules, and supporting tools in the fact file | Supporting recommendations for C19–C21; versions and compatibility to be validated in M1 |
+| D17 | DirectAdmin-compatible hosted application with private/public file separation, short polling, bounded PHP cron jobs, and hotel-side print bridge | Shared-host constraints are a planning assumption, not a confirmed hosting tier; validate O13 |
 
 ## Explicitly superseded or excluded
 
@@ -56,7 +63,9 @@ These guide the plan but are not additional confirmed user decisions.
 - Freeze the whole table whenever any guest pays: replaced by proposed guest-level checkout D02.
 - Every ingredient always removable: infeasible as a blanket rule; D09 requires per-meal preparation constraints.
 - Downloadable zip: superseded by C18.
+- On-site server/default offline ordering D05 and the initial cPanel reference: superseded by DirectAdmin C23; no offline authoritative server is included.
+- Previous technical baseline D14: superseded by confirmed PHP, HTML/CSS/JavaScript, and MySQL choices C19–C21.
 
 ## Remaining decisions
 
-See [risk and decision gates](../delivery/05-risks-decisions.md). Unresolved items include payment merchant onboarding, actual recipes and photos, taxes/invoice boundaries, installed hardware, verified languages, commercial software terms, and local recovery requirements. Do not block the documentation or prototype on these; block only the dependent production feature.
+See the [technology and integration fact file](../TECHNOLOGY-FACT-FILE.md) for the complete stack plan and [risk and decision gates](../delivery/05-risks-decisions.md) for validation. Unresolved items include supporting runtime/tool versions, payment merchant onboarding, actual recipes and photos, taxes/invoice boundaries, installed hardware, verified languages, commercial software terms, and local recovery requirements. The current task is documentation only under C22; future implementation follows the build plan.

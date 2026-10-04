@@ -2,6 +2,8 @@
 
 Status: logical schema for implementation. Tables/fields below are a design contract; migrations do not yet exist. All business records carry installation identity through the isolated database and audit context. Use opaque IDs; public order numbers are display references, not authorization credentials.
 
+Use MySQL with InnoDB, utf8mb4, explicit transactions, foreign keys, and prepared PDO statements (C21/D16). Verify constraints and locking on the actual supported MySQL version.
+
 ## Core records
 
 | Record | Key fields / relationships | Important constraint |
@@ -10,7 +12,7 @@ Status: logical schema for implementation. Tables/fields below are a design cont
 | StaffUser / Role / Permission | identity, credential hash, active flag, role grants | Deactivation revokes sessions; no shared accounts |
 | Device / DeviceSession | enrolled ID, mode, token digest, expiry, last_seen | Revocable, mode-scoped access |
 | DiningTable | display_number, capacity, active | Unique active table label |
-| Visit | table_id, owner_waiter_id, status, opened_at, closed_at, version | Partial unique active visit per table |
+| Visit | table_id, owner_waiter_id, status, opened_at, closed_at, version | Unique active-table guard compatible with MySQL |
 | Guest | visit_id, display_label, optional name, status | Guest number unique within visit |
 | GuestBinding | device_session_id, guest_id, expires_at, revoked_at | Valid binding required for guest actions |
 | KioskSession | device_session_id, dining_option, collection_name, active/ended, expiry | Reset ends customer access but retains server order/payment records |
@@ -47,6 +49,8 @@ The default equal split may produce fractional shillings. Provider amount granul
 ## Referential and concurrency rules
 
 Foreign keys protect relationships. Archive menu/staff/table records instead of deleting referenced history. Use optimistic versions for editable resources and row locks for financial/availability mutations. Acquire multi-bill locks in sorted ID order to reduce deadlocks. Maintain unique constraints as the final guard against duplicate payment application.
+
+MySQL migrations must implement active-only uniqueness explicitly: for example, a nullable generated active-table key with a unique index, alongside locking the table row when opening/closing a visit. Do not copy a PostgreSQL partial-index declaration. Apply equivalent guards to overlapping checkouts and test concurrent insertion. Handle deadlocks with bounded retries of the complete idempotent transaction.
 
 Recipe approval references an exact draft/version digest. Changing ingredients, composition, or removability invalidates affected approval and requires review before publication. Ingredient-library edits create a new content version and identify impacted meals; they do not silently alter published recipes.
 

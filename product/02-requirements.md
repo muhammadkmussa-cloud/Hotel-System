@@ -24,7 +24,7 @@ Authority: [decision register](01-decisions.md). Status: implementation specific
 | R16 | Separate customer cash settlement from staff cash custody | C11, D03 | Cash handover changes custody only, never sales totals |
 | R17 | Staff controls for availability, changes, voids, refunds, and audit | C03, D12, D15 | Unauthorized actions fail at API and cannot disappear from audit |
 | R18 | Maintain eTIMS invoice/credit-note integration state | D13 | Sandbox evidence before production; tax status separate from payment |
-| R19 | Continue local ordering during internet loss, with honest connection status | D05 | Physical outage test; disconnected tablets cannot claim submission |
+| R19 | Operate through the DirectAdmin-hosted application; show honest disconnection and recover safely | C23, D17 | Internet/host outage stops confirmed electronic commands; drafts and original command keys recover without duplicate orders |
 | R20 | Keep private guest and staff information scoped to device/session | C05, D02 | One guest cannot read another's phone or confirm their payment |
 | R21 | Provide sales, payment, outstanding balance, and cash handover reports | C03 | Reconcile known fixture totals and real pilot closeout |
 | R22 | Deliver responsive, accessible, premium customer presentation | C17, D10–D11 | Design acceptance and keyboard/touch/device reviews |
@@ -50,6 +50,6 @@ Authority: [decision register](01-decisions.md). Status: implementation specific
 
 ## Proposed quality targets
 
-Targets are not measured results: 50 configured tables, 60 simultaneous active devices, 10 submissions/second sustained for a short load test, LAN submission acknowledgement p95 under 1 second, kitchen display update p95 under 2 seconds after commit. Validate against actual hub, wireless network, and image load; revise the sizing report rather than claiming unlimited capacity.
+Targets are not measured results: 50 configured tables, 60 simultaneous active devices, 10 submissions/second sustained for a short load test, hosted submission acknowledgement p95 under 2 seconds, kitchen display update p95 under 5 seconds after commit with polling. Validate against the actual hosting plan, internet connection, wireless network, and image load; revise the sizing report rather than claiming unlimited capacity.
 
-Initial performance budget: locally served menu usable within 2.5 seconds on pilot tablet after cold navigation, visible touch feedback within 100 ms, no layout shift from late image dimensions. External payment latency is reported separately.
+Initial performance budget: hosted menu usable within 2.5 seconds on pilot tablet after cold navigation, visible touch feedback within 100 ms, no layout shift from late image dimensions. External payment latency is reported separately.

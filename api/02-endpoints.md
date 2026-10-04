@@ -4,7 +4,7 @@ All paths are relative to `/api/v1`. All commands follow [conventions](01-conven
 
 | Method | Path | Authorized caller | Behaviour |
 |---|---|---|---|
-| POST | `/setup/bootstrap` | One-time local installer secret | Initialize owner/installation only while unconfigured; disable permanently afterward |
+| POST | `/setup/bootstrap` | One-time protected installer secret | Initialize owner/installation only while unconfigured; disable permanently afterward |
 | POST | `/auth/sessions` | Staff credentials | Create staff session; rate-limited |
 | DELETE | `/auth/sessions/current` | Current session | Revoke session and clear browser identity |
 | GET | `/session` | Any authenticated principal | Redacted identity/capabilities/binding |
@@ -73,15 +73,18 @@ All paths are relative to `/api/v1`. All commands follow [conventions](01-conven
 | GET | `/receipts/{id}` | Owner/scoped staff | Receipt projection, no editable payment state |
 | POST | `/print-jobs` | printing.request | Approved source/destination only |
 | POST | `/print-jobs/{id}/copies` | printing.request | Tracked COPY of original payload |
+| POST | `/print-bridge/claims` | Registered installation/station service | Lease a bounded batch of assigned jobs; idempotent claim, no arbitrary destination |
+| POST | `/print-bridge/jobs/{id}/results` | Service owning lease | Record sent/failed/unknown with lease identity; cannot alter order/payment |
+| POST | `/print-bridge/heartbeats` | Registered installation/station service | Report readiness without financial/customer payloads |
 | GET | `/reports/{reportName}` | reports.view | Allowlisted reports with date/role scope |
 | GET | `/audit-events` | audit.view | Redacted auditable event list |
 | GET/PATCH | `/settings` | settings.manage | Redacted configuration, version-controlled edits |
 | GET | `/fiscal-documents` | fiscal.manage | Integration status/exceptions |
 | POST | `/fiscal-documents/{id}/reconciliations` | fiscal.manage | Query/reconcile uncertain result, no new duplicate invoice |
-| GET | `/events` | Authenticated principal | Server-filtered SSE stream |
+| GET | `/events` | Authenticated principal | Server-filtered short JSON event poll with cursor/limit; returns next cursor or snapshot-reload signal |
 | GET | `/health/live` | Public | Minimal process liveness only |
 | GET | `/health/ready` | Operations principal | Dependency readiness without secrets |
 
-Provider callback endpoints live on the selected adapter/relay, e.g. `/callbacks/mpesa`. Their exact vendor payload, verification and response semantics must be specified during the integration spike; do not invent a universal signed-callback protocol.
+Provider callback endpoints route to the hosted PHP adapter, e.g. `/callbacks/mpesa`; no separate relay is required. Their exact vendor payload, verification and response semantics must be specified during the integration spike; do not invent a universal signed-callback protocol.
 
 Admin reports, fiscal credentials, receipt lookup, and collection data must not be accessible solely by guessing a sequential order number. Bulk operations need their own authorization and limits if added later.

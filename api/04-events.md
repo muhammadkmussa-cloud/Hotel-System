@@ -31,10 +31,12 @@ Live events are notifications of committed state. Subscribers must refetch on ga
 }
 ```
 
-Streams are filtered server-side by authenticated principal and currently valid bindings. Do not broadcast all bills and rely on browser filtering. Revocation terminates subscriptions. Kiosk screen reset removes the previous checkout subscription; staff can still reconcile the payment.
+Event polling responses are filtered server-side by authenticated principal and currently valid bindings. Do not broadcast all bills and rely on browser filtering. Each request rechecks revocation. Kiosk screen reset clears the previous checkout cursor and access; staff can still reconcile the payment.
+
+`GET /api/v1/events` returns immediately with a bounded event list and next cursor. Read committed events directly without waiting for cron. An expired cursor signals an authoritative snapshot reload. Proposed active polling is 2–5 seconds with jitter/backoff; prove capacity on the DirectAdmin host.
 
 ## Outbox/inbox discipline
 
-Persist outbox event in the business transaction. Worker may deliver more than once; consumers deduplicate by stable event ID/resource version. Store external callback evidence durably before acknowledgment when the provider protocol allows. Apply money only after verification. Redact payloads in general logs and restrict raw provider evidence retention/access.
+Persist outbox event in the business transaction. Bounded cron jobs may deliver external work more than once; consumers deduplicate by stable event ID/resource version. Store external callback evidence durably before acknowledgment when the provider protocol allows. Apply money only after verification. Redact payloads in general logs and restrict raw provider evidence retention/access.
 
 Retry queues expose age and last error to operations. A dead-letter item remains actionable and cannot be silently deleted by routine cleanup. Recovery reuses original IDs; it never creates a fresh order merely to resend a kitchen notification.

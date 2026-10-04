@@ -5,15 +5,17 @@ Status: recommended implementation sequence. No development estimate is promised
 | Milestone | Work | Dependency | Exit evidence |
 |---|---|---|---|
 | M0 — Baseline | Review confirmed/default register, resolve contradictions, inventory real menu/assets, appoint hotel contact | This documentation | Requirements baseline, explicit unknowns, content owner |
-| M1 — Foundations and feasibility | Scaffold pinned stack; schema/API contracts; local HTTPS; DB migrations; CI; test payment/fiscal/printer/network assumptions | M0 | Validated API schema, supported version matrix, provider/hardware spike results |
+| M1 — Foundations and feasibility | Scaffold PHP, HTML/CSS/JavaScript and MySQL using the DirectAdmin layout; pin versions; schema/API contracts; HTTPS; migrations; test host/cron/polling/payment/fiscal/printer assumptions | M0 | Validated API schema, supported version matrix, provider/hardware spike results |
 | M2 — Premium prototype | Realistic food images, catalogue, ingredient orbit/list, cart, bill and kiosk layouts; accessibility | M0; can overlap M1 | Interactive prototype on actual devices and signed design review |
-| M3 — Catalogue and identity | Staff roles, device enrolment, ingredient composition, meal versions, media pipeline, publication | M1 | Tested permissions, chef review, published menu with local images |
-| M4 — Table ordering slice | Visits/guests/bindings, quotes, independent submission, immutable charges, extra orders, SSE | M3 and approved M2 patterns | Four-tablet concurrent Table 7 scenario; correct separate guest tickets |
+| M3 — Catalogue and identity | Staff roles, device enrolment, ingredient composition, meal versions, media pipeline, publication | M1 | Tested permissions, chef review, published menu with hosted images |
+| M4 — Table ordering slice | Visits/guests/bindings, quotes, independent submission, immutable charges, extra orders, scoped event polling | M3 and approved M2 patterns | Four-tablet concurrent Table 7 scenario; correct separate guest tickets |
 | M5 — Kitchen and printing | Station work, preparation states, bar routing if needed, immutable jobs/copies, collection display | M4 | Kitchen screen plus real printer evidence; outage/unknown-print handling |
 | M6 — Bills and payments | Shared charges, guest checkout, cash custody, external-card records, selected M-PESA adapter, reconciliation | M4, M1 integration evidence | Exact balances, no duplicate payment application, cash handover and late-success tests |
 | M7 — Kiosk | Eat-in/takeaway/name, prepaid release guard, unpaid cashier route, receipts, reset/timeout | M5–M6 | Unpaid orders never prepare; payment success yields one order/receipt |
 | M8 — Fiscal and operations | Approved eTIMS workflow, reports, refunds, audits, backups, install/update tooling | M6; fiscal spike M1 | Fiscal sandbox evidence, reconciled reports, isolated restore rehearsal |
 | M9 — Pilot and release | Physical installation rehearsal, staff training, performance/accessibility/security checks, supervised service | M2–M8 | Acceptance matrix complete; blocking issues resolved; hotel sign-off |
+
+The stack and integration inventory is in the [technology fact file](../TECHNOLOGY-FACT-FILE.md); upload mapping and host capabilities are in the [DirectAdmin layout](../architecture/05-directadmin-layout.md). This documentation update does not begin any implementation milestone.
 
 ## Order of implementation within a slice
 

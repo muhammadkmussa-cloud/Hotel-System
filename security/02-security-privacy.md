@@ -25,9 +25,9 @@ Allergy notes are sensitive operational information. Restrict to relevant prepar
 
 ## Secrets and integrations
 
-Keep separate test/production credentials outside source and browser bundles. Use OS/service secret management, least privilege, rotation, and restore procedures. Never store PAN, CVV, PIN, or magnetic-stripe data; card terminal remains external. Verify webhook mechanisms per provider and validate amounts/references, not just message text.
+Keep separate test/production credentials outside source and browser bundles. Use private DirectAdmin-account configuration outside all document roots, host-compatible access restrictions, least privilege, rotation, and restore procedures. Never store PAN, CVV, PIN, or magnetic-stripe data; card terminal remains external. Verify webhook mechanisms per provider and validate amounts/references, not just message text.
 
-Public callback relay cannot expose database, staff UI, printing, or filesystem APIs. Restrict outbound provider hosts. Use authenticated installation-specific delivery and replay protection. Backups containing secrets require separate protection and controlled restoration.
+Public callback handlers expose only provider intake routes and cannot bypass staff or print-bridge authorization. Restrict outbound provider hosts. Use separate installation-specific print-bridge credentials and replay protection. Never store secrets in DirectAdmin private_html, which may serve HTTPS content. Backups containing secrets require separate protection and controlled restoration.
 
 ## Sessions and requests
 

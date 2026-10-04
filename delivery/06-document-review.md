@@ -17,9 +17,9 @@ Checked the latest explicit decisions rather than treating the entire conversati
 - Kept cash custody separate from payment settlement and fiscal state separate from both.
 - Distinguished source-file blueprints from actual application files.
 
-## Automated documentation checks
+## Original version 1.0 documentation checks
 
-Final validation completed on 4 October 2026:
+Historical version 1.0 validation on 4 October 2026 (counts below predate version 1.1):
 
 | Check | Result |
 |---|---|
@@ -38,4 +38,30 @@ These checks reduce drafting errors but do not prove an error-free implementatio
 
 ## Deliberate remaining limitations
 
-No application code, live UI, production photographs, OpenAPI executable schema, database migrations, provider accounts, hardware purchases, or deployments are included. Framework versions will be pinned at implementation; merchant capabilities, tax configuration, exact printer compatibility, translations, retention, and operational targets require validation at the listed gates. All future software/hardware acceptance remains untested.
+No application code, live UI, production photographs, OpenAPI executable schema, database migrations, provider accounts, hardware purchases, or deployments are included. PHP, MySQL, and supporting dependency versions will be pinned at implementation; merchant capabilities, tax configuration, exact printer compatibility, translations, retention, and operational targets require validation at the listed gates. All future software/hardware acceptance remains untested.
+
+## Version 1.1 release notes — 4 October 2026
+
+- Recorded confirmed PHP, HTML/CSS/JavaScript, MySQL, documentation-only scope, and the final DirectAdmin hosting correction as C19–C23.
+- Added the technology fact file and DirectAdmin account layout, linked from README, the index, and navigation guide.
+- Retired D14's previous framework/database choices and D05's on-site hub. Updated frontend/backend blueprints to planned PHP/HTML/CSS/JavaScript paths and MySQL-compatible constraints.
+- Specified private application folders outside both public_html and private_html, native JavaScript modules, hosted callbacks, short polling, bounded cron batches, and a hotel-side print bridge.
+- Aligned R19, API event/bridge contracts, test scenarios, quality targets, installation/recovery procedures, integration notes, and host decision gate O13 with internet-dependent hosting.
+- Kept PHP libraries, framework-free structure, hosting tier, tool versions, providers, hardware, and achievable recovery targets visibly proposed or awaiting validation. No implementation, deployment, package installation, or external account change was performed.
+
+## Version 1.1 documentation validation
+
+Checks completed on 4 October 2026 after the version 1.1 changes:
+
+| Check | Result |
+|---|---|
+| Markdown documents | 46 non-empty, readable files |
+| Local document links | 117 checked; no missing targets |
+| Fenced JSON examples | 10 parsed successfully |
+| Code fences and text encoding | Balanced; no replacement characters |
+| Requirement/backlog traceability | R01–R22 retained |
+| Confirmed decisions | C01–C23 present |
+| Changed/added files | 33; all Markdown only |
+| Diff whitespace check | Passed |
+
+Reviewed active stack, deployment, API, recovery, and printing descriptions for contradictions; old stack/hosting names remain only where explicitly retired or contrasted for implementation compatibility. Application tests remain unrun because no application exists.

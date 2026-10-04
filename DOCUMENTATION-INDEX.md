@@ -1,6 +1,6 @@
 # Documentation index
 
-Hotel System · documentation version 1.0 · 4 October 2026.
+Hotel System · documentation version 1.1 · 4 October 2026.
 
 Read [README](README.md) first. These are specifications, not executable application files.
 
@@ -10,6 +10,7 @@ Read [README](README.md) first. These are specifications, not executable applica
 |---|---|
 | [AGENTS.md](AGENTS.md) | Instructions for future implementation |
 | [README.md](README.md) | Hotel System |
+| [TECHNOLOGY-FACT-FILE.md](TECHNOLOGY-FACT-FILE.md) | Confirmed stack, proposed supporting tools, integrations, equipment, and sequence |
 
 ## Product
 
@@ -36,7 +37,8 @@ Read [README](README.md) first. These are specifications, not executable applica
 | [architecture/01-system.md](architecture/01-system.md) | System architecture |
 | [architecture/02-domain-data.md](architecture/02-domain-data.md) | Domain and database specification |
 | [architecture/03-state-machines.md](architecture/03-state-machines.md) | State machines and release conditions |
-| [architecture/04-realtime-offline.md](architecture/04-realtime-offline.md) | Real-time updates and offline operation |
+| [architecture/04-realtime-offline.md](architecture/04-realtime-offline.md) | Updates, reconnection, and offline behaviour |
+| [architecture/05-directadmin-layout.md](architecture/05-directadmin-layout.md) | DirectAdmin account layout, public/private boundaries, and host requirements |
 
 ## Frontend
 
@@ -116,4 +118,3 @@ Read [README](README.md) first. These are specifications, not executable applica
 | Document | Purpose |
 |---|---|
 | [docs/CODEX-NAVIGATION-GUIDE.md](docs/CODEX-NAVIGATION-GUIDE.md) | Developer navigation guide |
-

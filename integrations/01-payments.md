@@ -10,6 +10,8 @@ Alternative: Paystack M-PESA. Its published API supports phone prompts, but its 
 
 Sources: [Safaricom](https://developer.safaricom.co.ke/apis), [Paystack payment channels](https://paystack.com/docs/payments/payment-channels/), [Paystack Kenya pricing](https://paystack.com/ke/pricing).
 
+The PHP adapter runs on DirectAdmin. Provider callbacks use the hotel domain HTTPS endpoint directly, with durable MySQL inbox records; no local-hub relay is needed. Initiation may make a bounded post-commit request, while DirectAdmin cron reconciles queued/uncertain work. Validate host timeouts, outbound connectivity, cron latency, and callback routing in M1.
+
 ## Payment flow
 
 1. Freeze server-priced checkout and reserve required availability.
