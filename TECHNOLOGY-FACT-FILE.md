@@ -6,23 +6,31 @@ Documentation version 1.1 · 4 October 2026. This is the central technology plan
 
 | Area | We will use | Responsibility | Decision |
 |---|---|---|---|
-| Backend | PHP | Authentication, permissions, menu rules, orders, bills, payments, reports, and integration processing | C19 |
+| Backend | PHP with Laravel | Authentication, permissions, menu rules, orders, bills, payments, reports, and integration processing | C19, C25 |
 | Frontend | Basic HTML, CSS, and JavaScript | All tablet, kiosk, cashier, waiter, kitchen, collection, and administration screens | C20 |
 | Database | MySQL | Authoritative hotel records, transactions, financial history, and durable jobs | C21 |
 | Hosting | DirectAdmin | Domain, public/private file layout, PHP/MySQL hosting, HTTPS, and scheduled jobs | C23 |
-| Current phase | Documentation and planning only | Record the stack and integration plan before creating code | C22 |
+| Current phase | Reviewed local build preparation | Documentation-first baseline complete; proceed through small reviewed tasks | C22, C24 |
 
 These choices replace the earlier D14 recommendation. DirectAdmin supersedes the earlier on-site hub proposal D05 and the briefly requested cPanel target. One hotel continues to have its own isolated installation, database, media, credentials, and backups (C01).
 
+## Version targets checked at build start
+
+Checked 4 October 2026: [Laravel 13.34.0](https://github.com/laravel/framework/releases/tag/v13.34.0) is the current published stable framework release. [Laravel 13 requires PHP 8.3+](https://laravel.com/framework/docs/releases); local CLI PHP is 8.3.30 with PDO MySQL, cURL, GD, and multibyte support. Composer 2.10.2 is available locally. These are local observations, not hosting verification.
+
+The [MySQL general-availability download](https://dev.mysql.com/downloads/mysql/) currently lists 26.7.0; 26.10.0 is [early access](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-10-0.html) and is not selected. The 26.7.1 [security update is Docker-image-specific](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-7-1.html); use the appropriate patched artifact if Docker is selected for local tests. Choose/pin the exact installable artifact during database setup, never an unreviewed floating latest tag.
+
+Laravel 13.34.0 and MySQL 26.7 GA are selected targets, not installed project dependencies or a tested pair yet. P01.02 must resolve/pin the framework and dependency lockfile; P02 must prove real-MySQL behaviour. The actual DirectAdmin domain, PHP web/CLI versions, database engine/version, and quotas remain unknown under O13. The user's latest-version preference does not close that evidence gate or authorize upgrading the host.
+
 ## Recommended supporting tools
 
-Everything in this section is a **proposed default (D16/D17)**, not an additional user-confirmed choice. Use the smallest set needed for the first release. Select and lock compatible supported versions in M1; versioned documentation links below do not pin the application version.
+Laravel is confirmed in C25. The remaining supporting details in this section are **proposed defaults (D16/D17)**, not additional user-confirmed choices. Use the smallest set needed for the first release. Select and lock compatible supported versions in M1; versioned documentation links below do not pin the application version.
 
 | Area | Recommendation | Purpose and boundary |
 |---|---|---|
-| PHP structure | One modular application; no full PHP framework initially | Separate request handling, business rules, database access, and provider adapters. Reuse maintained libraries for infrastructure; a framework such as Laravel is not selected. |
+| PHP structure | Laravel with thin controllers, actions/services, policies, and provider adapters | Laravel selected in C25; domain modularity remains a recommendation. Use its maintained routing, validation, sessions, and migrations instead of rebuilding them. |
 | PHP dependencies | Composer with a committed lockfile | Dependency management and autoloading; review the exact libraries in M1. |
-| Database connection | PDO with the MySQL driver and prepared statements | Keep SQL and credentials on the backend; validate requests before database access. |
+| Database connection | Laravel database layer using PDO MySQL and bound parameters | Keep SQL/credentials on the backend; explicit transactions, locks, and server validation remain required. |
 | Database configuration | MySQL with InnoDB, foreign keys, unique constraints, indexes, and utf8mb4 | Transactions and row locking for concurrent tablets, bills, and jobs. No separate cache database or message broker initially. |
 | Frontend structure | Semantic HTML, shared plain CSS, native JavaScript modules | Reusable DOM components, CSS Grid/Flexbox, and responsive layouts; no frontend framework or mandatory bundler. |
 | Browser/API communication | Same-origin HTTPS, JSON endpoints, native Fetch API | PHP validates all commands. Create OpenAPI schemas in M1 and generate a JavaScript-compatible client contract; JSDoc can provide editor hints without changing the frontend language. |

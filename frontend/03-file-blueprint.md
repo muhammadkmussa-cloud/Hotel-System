@@ -42,14 +42,14 @@ public_html/
   media/                        # published validated derivatives
   service-worker.js             # public asset cache only
 hotel-app/
-  views/                        # HTML templates rendered through public entry
-    customer.html
-    kiosk.html
-    staff.html
-    kitchen.html
-    collection.html
+  resources/views/              # Blade templates render plain HTML
+    customer.blade.php
+    kiosk.blade.php
+    staff.blade.php
+    kitchen.blade.php
+    collection.blade.php
 ```
 
-Templates use escaped data through the PHP view layer; authorization stays in backend use cases. Shared DOM modules render text safely and expose explicit mount/cleanup behaviour. Routes and APIs are served through `public_html/index.php` as described in the backend blueprint. Keep tests in the development repository outside the public upload.
+Templates use escaped data through Laravel Blade; authorization stays in backend use cases. Shared DOM modules render text safely and expose explicit mount/cleanup behaviour. Routes and APIs are served through `public_html/index.php` as described in the backend blueprint. Keep tests in the development repository outside the public upload.
 
 Each feature owns its UI, API calls, and meaningful tests. Load only the modules needed for the active mode. Every routed feature needs loading, denied, empty, disconnected, and error states. Do not create empty files just to satisfy this inventory.

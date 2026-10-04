@@ -6,7 +6,7 @@ No application tests have been run in this documentation-only project. The scena
 
 Domain tests: money allocation, rounding, state transitions, recipe composition, pricing snapshots, and permission predicates. Database integration tests: actual MySQL/InnoDB constraints/locking, idempotency, outbox/inbox and rollback. Contract tests: eventual OpenAPI request/response schemas and example fixtures. UI/component tests: accessible ingredient state, cart isolation, error rendering. End-to-end tests: multiple independent browser contexts against a real PHP/MySQL backend in an isolated test environment. Hardware/provider tests: actual printers, selected merchant sandbox, fiscal integrator sandbox, and controlled live pilot.
 
-Proposed tools: PHPUnit for PHP domain/integration tests and Playwright with JavaScript for DOM and browser journeys. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
+Proposed tools: PHPUnit with Laravel HTTP/testing facilities for PHP domain/integration tests and Playwright with JavaScript for DOM and browser journeys. Use real MySQL for locking/concurrency tests. Development tooling is not the production runtime.
 
 ## Mandatory cases
 

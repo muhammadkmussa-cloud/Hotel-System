@@ -40,3 +40,12 @@ Restaurant research reviewed 3 October 2026; technical references and KRA integr
 ## Conclusions versus evidence
 
 PHP, HTML/CSS/JavaScript, MySQL, and DirectAdmin are user-confirmed choices C19–C21/C23. Supporting tools, polling/cron design, design palette, sharing default, counter collection, and build sequence remain project recommendations, not vendor prescriptions. The previous on-site hub and framework stack have been superseded. The ingredient orbit is a feature to validate, not a proven market novelty or a demonstrated usability improvement. Hotel sales growth, staffing savings, build cost, and delivery dates have not been estimated from evidence and are not promised.
+
+## Build-start version references — 4 October 2026
+
+- [Laravel 13.34.0 release](https://github.com/laravel/framework/releases/tag/v13.34.0): checked stable framework target; dependency resolution/lockfile still required.
+- [Laravel release policy](https://laravel.com/framework/docs/releases): Laravel 13 supports PHP 8.3–8.5; local PHP 8.3.30 meets the minimum, not proof of host compatibility.
+- [MySQL GA downloads](https://dev.mysql.com/downloads/mysql/): current general download lists 26.7.0.
+- [MySQL Docker security patch](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-7-1.html): 26.7.1 applies to Docker images; select the appropriate patched artifact if used.
+- [MySQL 26.10 notes](https://dev.mysql.com/doc/relnotes/mysql/26.10/en/news-26-10-0.html): early access, excluded from stable target.
+- [Laravel structure](https://laravel.com/framework/docs/13.x/structure) and [deployment](https://laravel.com/framework/docs/13.x/deployment): conventional private application/public-root separation. DirectAdmin-installed software remains unverified.

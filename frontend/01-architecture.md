@@ -2,9 +2,11 @@
 
 Status: HTML/CSS/JavaScript confirmed C20; supporting structure proposed D16/D17. See [screen inventory](../product/04-screen-map.md) and [source blueprint](03-file-blueprint.md).
 
+The Laravel backend choice does not select React, Vue, Livewire, Inertia, Tailwind, or a JavaScript application framework. A frontend build tool is not needed for the initial plain assets.
+
 ## Application modes
 
-One shared HTML/CSS/plain-JavaScript codebase provides table, kiosk, staff, kitchen, collection, and administration layouts. On-demand native JavaScript modules keep customer loading light. The backend supplies the current principal, device mode, visit/guest binding, and permitted capabilities. A URL or hidden button is never an authorization boundary.
+Laravel Blade templates render semantic HTML, with shared plain CSS and native JavaScript modules. This frontend provides table, kiosk, staff, kitchen, collection, and administration layouts. On-demand native JavaScript modules keep customer loading light. The backend supplies the current principal, device mode, visit/guest binding, and permitted capabilities. A URL or hidden button is never an authorization boundary.
 
 Customer flows share catalogue and meal-customisation components, but differ in submission: table orders release without prepayment; kiosk orders require a checkout/payment gate. Do not spread channel-dependent conditionals through every visual component; route containers call distinct application use cases.
 

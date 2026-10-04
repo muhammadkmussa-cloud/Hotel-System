@@ -65,3 +65,7 @@ Checks completed on 4 October 2026 after the version 1.1 changes:
 | Diff whitespace check | Passed |
 
 Reviewed active stack, deployment, API, recovery, and printing descriptions for contradictions; old stack/hosting names remain only where explicitly retired or contrasted for implementation compatibility. Application tests remain unrun because no application exists.
+
+## Build-start baseline change — Laravel selection
+
+On 4 October 2026, C24 authorized starting reviewed local work and C25 selected latest stable Laravel/MySQL. The fact file records the checked upstream versions separately from unknown DirectAdmin-installed versions. Backend/front-end blueprints and the deployment plan now use Laravel's private root, public directory mapping, Blade HTML, and bounded Artisan jobs. The plain CSS/JavaScript frontend, financial contracts, hosted-availability constraints, and one-hotel isolation remain unchanged. P00.02 independently reviews this decision alignment before completion; no application, provider, hosting, or hardware validation is claimed by this entry.

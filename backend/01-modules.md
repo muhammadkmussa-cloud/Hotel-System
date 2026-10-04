@@ -1,6 +1,6 @@
 # Backend modules and ownership
 
-Use a modular PHP application with explicit interfaces, PDO MySQL, and the [DirectAdmin layout](../architecture/05-directadmin-layout.md). Route handlers parse/authenticate and call use cases; use cases own domain transactions; repositories persist data; workers perform external side effects.
+Use a modular Laravel/PHP application with explicit interfaces, Laravel database access through PDO MySQL, and the [DirectAdmin layout](../architecture/05-directadmin-layout.md). Laravel routes/controllers and Form Requests authenticate/validate and call domain actions/services; use cases own domain transactions; repositories persist data; workers perform external side effects.
 
 | Module | Owns | Does not own |
 |---|---|---|

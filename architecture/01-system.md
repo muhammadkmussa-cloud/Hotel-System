@@ -1,10 +1,10 @@
 # System architecture
 
-Status: PHP, HTML/CSS/JavaScript, MySQL, and DirectAdmin are confirmed (C19–C21, C23). Supporting design choices D16/D17 remain proposed. One hotel per isolated installation.
+Status: PHP with Laravel, HTML/CSS/JavaScript, MySQL, and DirectAdmin are confirmed (C19–C21, C23, C25). Supporting design choices D16/D17 remain proposed. One hotel per isolated installation.
 
 ## DirectAdmin hosting model
 
-Deploy one modular PHP application and its MySQL database to a DirectAdmin hosting account. Customer and staff browsers reach the hotel's HTTPS domain over the internet. The public document root contains only the web entry point and approved public assets; application logic, configuration, dependencies, logs, and original uploads stay outside it. See the [DirectAdmin layout](05-directadmin-layout.md) and [technology fact file](../TECHNOLOGY-FACT-FILE.md).
+Deploy one modular Laravel/PHP application and its MySQL database to a DirectAdmin hosting account. Customer and staff browsers reach the hotel's HTTPS domain over the internet. The public document root contains only the web entry point and approved public assets; application logic, configuration, dependencies, logs, and original uploads stay outside it. See the [DirectAdmin layout](05-directadmin-layout.md) and [technology fact file](../TECHNOLOGY-FACT-FILE.md).
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ The hosting account is authoritative. The hotel print bridge has narrowly scoped
 | Layer | Choice | Status / boundary |
 |---|---|---|
 | Browser UI | HTML, CSS, plain JavaScript | Confirmed C20; native modules proposed |
-| Backend | PHP | Confirmed C19; modular application, Composer and PDO proposed D16 |
+| Backend | PHP with Laravel | Confirmed C19/C25; modular domain structure, Composer and MySQL/PDO access under D16 |
 | Database | MySQL | Confirmed C21; InnoDB transactions and constraints proposed D16 |
 | Hosting | DirectAdmin | Confirmed C23; ordinary shared-host limits assumed until provider evidence |
 | Updates | Short authenticated JSON polling with cursors | Proposed D17; no persistent SSE/WebSocket server required |

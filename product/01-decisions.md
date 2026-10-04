@@ -29,6 +29,8 @@ Reviewed against the conversation through 4 October 2026. This file prevents rec
 | C21 | Use MySQL for the database | Explicit technology choice on 4 October 2026 |
 | C22 | Plan the technologies and integrations and update the documentation before creating code | Explicit documentation-only instruction on 4 October 2026 |
 | C23 | Deploy using DirectAdmin and organise the architecture and file layout for that hosting environment | User clarified DirectAdmin after initially naming cPanel on 4 October 2026 |
+| C24 | Begin local build work in small verified steps, with independent step and phase reviews | User requested the reviewer workflow and then said “start” on 4 October 2026; C22 planning prerequisite is fulfilled |
+| C25 | Use the latest stable Laravel and MySQL releases as the implementation targets | User chose latest Laravel/MySQL on 4 October 2026; this is a version preference, not evidence of installed hosting versions |
 
 ## Proposed defaults
 
@@ -51,7 +53,7 @@ These guide the plan but are not additional confirmed user decisions.
 | D13 | eTIMS via a verified integrator, after fiscal workflow validation | Provider and hotel tax configuration are not yet selected |
 | D14 | Superseded by C19–C21; see the technology fact file | The previous React/Vite, Fastify, PostgreSQL, TypeScript recommendation is retired |
 | D15 | Manager approval for post-submission cancellations, discounts, and refunds | Authority and thresholds require hotel configuration |
-| D16 | Modular PHP without a full framework initially; Composer, PDO, MySQL InnoDB, native browser modules, and supporting tools in the fact file | Supporting recommendations for C19–C21; versions and compatibility to be validated in M1 |
+| D16 | Laravel modular application, Composer, MySQL InnoDB through Laravel database/PDO, native browser modules, and supporting tools in the fact file | The framework-free recommendation is superseded by C25; remaining supporting recommendations require compatibility validation |
 | D17 | DirectAdmin-compatible hosted application with private/public file separation, short polling, bounded PHP cron jobs, and hotel-side print bridge | Shared-host constraints are a planning assumption, not a confirmed hosting tier; validate O13 |
 
 ## Explicitly superseded or excluded
@@ -64,8 +66,9 @@ These guide the plan but are not additional confirmed user decisions.
 - Every ingredient always removable: infeasible as a blanket rule; D09 requires per-meal preparation constraints.
 - Downloadable zip: superseded by C18.
 - On-site server/default offline ordering D05 and the initial cPanel reference: superseded by DirectAdmin C23; no offline authoritative server is included.
+- Framework-free PHP default in D16: superseded by Laravel C25; the plain HTML/CSS/JavaScript frontend remains C20.
 - Previous technical baseline D14: superseded by confirmed PHP, HTML/CSS/JavaScript, and MySQL choices C19–C21.
 
 ## Remaining decisions
 
-See the [technology and integration fact file](../TECHNOLOGY-FACT-FILE.md) for the complete stack plan and [risk and decision gates](../delivery/05-risks-decisions.md) for validation. Unresolved items include supporting runtime/tool versions, payment merchant onboarding, actual recipes and photos, taxes/invoice boundaries, installed hardware, verified languages, commercial software terms, and local recovery requirements. The current task is documentation only under C22; future implementation follows the build plan.
+See the [technology and integration fact file](../TECHNOLOGY-FACT-FILE.md) for the complete stack plan and [risk and decision gates](../delivery/05-risks-decisions.md) for validation. Unresolved items include supporting runtime/tool versions, payment merchant onboarding, actual recipes and photos, taxes/invoice boundaries, installed hardware, verified languages, commercial software terms, and local recovery requirements. C22 documentation preparation is complete and C24 starts the reviewed local build plan. Live deployment/account changes remain separately authorized actions.
