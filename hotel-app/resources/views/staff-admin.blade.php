@@ -117,6 +117,7 @@
             <button type="submit" data-pending-label="Saving…">Save changes</button>
             <p data-submit-status class="visually-hidden" role="status" aria-live="polite"></p>
         </form>
+        @endif
     </section>
 
     <section aria-labelledby="staff-roles-heading">

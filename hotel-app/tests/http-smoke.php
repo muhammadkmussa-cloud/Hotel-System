@@ -184,6 +184,12 @@ PHP, FILE_APPEND);
     assertHttp($status === 302 && stripos($lockHeaders, '/staff/sign-in') !== false, 'Anonymous lock screen must redirect to sign in.');
     [$status] = requestHttp($origin, '/staff/unlock', 'POST', ['Content-Type: application/x-www-form-urlencoded'], 'password=x');
     assertHttp($status === 419, 'Unlock POST must require a CSRF token.');
+    [$status, $settingsHeaders] = requestHttp($origin, '/admin/settings');
+    assertHttp($status === 302 && stripos($settingsHeaders, '/staff/sign-in') !== false, 'Anonymous settings must redirect to sign in.');
+    [$status] = requestHttp($origin, '/admin/settings', 'POST', ['Content-Type: application/x-www-form-urlencoded'], 'name=X&timezone=Africa/Nairobi');
+    assertHttp($status === 419, 'Settings POST must require a CSRF token.');
+    [$status] = requestHttp($origin, '/admin/settings/receipt', 'POST', ['Content-Type: application/x-www-form-urlencoded'], 'receipt_header=X');
+    assertHttp($status === 419, 'Receipt POST must require a CSRF token.');
     echo "PASS staff sign-in screen renders and rejects CSRF-less POST\n";
     $requestIds = [];
     foreach (['/api/v1', '/api/v1/', '/api/v1/missing/deep/path', '/api/v1/missing/%3Cscript%3E', '/api/v1/health/live', '/api/v1/health/ready'] as $path) {

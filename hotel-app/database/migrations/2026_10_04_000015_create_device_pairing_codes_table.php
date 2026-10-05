@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('device_pairing_codes', function (Blueprint $table): void {
+            $table->uuid('id')->primary();
+            $table->char('code_hash', 64)->unique();
+            $table->uuid('device_id')->nullable();
+            $table->timestamp('expires_at');
+            $table->timestamp('used_at')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->foreign('device_id')->references('id')->on('devices')->nullOnDelete();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('device_pairing_codes');
+    }
+};

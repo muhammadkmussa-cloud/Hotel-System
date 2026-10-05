@@ -276,3 +276,40 @@ code_review reviewed the integrated authentication surface (P05.01–P05.10). No
 | P06.02 role grants | Changes requested → Approved | code_review found a CRITICAL TOCTOU race in the last-owner guard (check and delete not transactional). Fixed: revokeRoles wraps check+delete in a transaction with lockForUpdate on the owner count; added a concurrent two-owner revoke test (one refused, one owner remains). Also fixed: UI grant/revoke selector, revoke target existence check, owner-only revocation of owner, granted_by population, and negative tests. Evidence: MySQL StaffAdminTest 104 assertions; Foundation 76/586; browser 77. |
 
 | P06.03 staff deactivation | Changes requested → Approved | code_review found the last-owner check was outside the transaction (TOCTOU race), no try/catch, no already_inactive guard, and no audit record. Fixed: check moved inside the transaction with lockForUpdate, try/catch, already_inactive guard, staff_deactivated audit event; concurrent deactivation test proves exactly one owner remains. Evidence: MySQL StaffAdminTest 131 assertions; Foundation 76/586; browser 77. |
+
+| P06.04 staff screens | Approved | code_review confirmed denied/empty/error states, update/activate correctness, and no security issues. Added missing tests (invalid email, unknown activate target, staff_activated audit) and an empty-state guard on the edit form. Evidence: MySQL StaffAdminTest 152 assertions; Foundation 76/586; browser 77. |
+
+| P06.05 versioned settings | Approved | code_review confirmed atomic compare-and-increment, If-Match parsing, stale rejection, version increment, and the owner-only settings.manage gate. Aligned the business-day-cutoff format to HH:MM. Evidence: MySQL StaffAdminTest 170 assertions; Foundation 76/586; browser 77. |
+
+| P06.06 table configuration | Changes requested → Approved | code_review required a Playwright check for the Tables UI (added hotel-settings.spec.js anonymous-denial), a nullable label for deactivation, and 'tables' in the probe cleanup. Evidence: MySQL StaffAdminTest 193 assertions; Foundation 76/586; browser 78. |
+
+| P06.07 station configuration | Approved (advisories) | code_review found no CRITICAL/HIGH; advisories: negative settings.manage test added, double-negative assertion fixed, station name validation aligned to the table-label whitelist. Evidence: MySQL StaffAdminTest 219 assertions; Foundation 76/586; browser 78. |
+
+| P06.08 printer destinations | Changes requested → Approved | code_review found the allowlist read via env() breaks under config caching. Fixed: config/printers.php + config() access, PRINTER_BRIDGE_HOSTS in .env.example, unique constraint on destination, audit events, and URL edge-case tests (userinfo, subdomain, IP). Evidence: MySQL StaffAdminTest 245 assertions; Foundation 76/586; browser 78. |
+
+| P06.09 settings screen | Changes requested → Approved | code_review found the receipt form was non-functional (controller dropped the fields; current() never returned them) and config/services.php was missing. Fixed: dedicated storeReceipt() action + route, current() returns receipt fields, config/services.php added, HotelSettings fillable updated, persistence and positive/negative integration-status tests added. Evidence: MySQL StaffAdminTest 264 assertions; Foundation 76/586; browser 78. |
+
+## P06.10 verification run and S27/S28 evidence (4 October 2026)
+
+Full battery from the working tree with real MySQL 26.7.1:
+
+- Foundation PHPUnit: OK (76 tests, 586 assertions)
+- Browser (Playwright Chromium): 78 passed
+- JS units: 14 passed
+- Contract validator: OK; 13 tests OK
+- HTTP smoke: 16 PASS (adds /admin/settings anonymous redirect and receipt/settings CSRF 419)
+- Real MySQL, each from a clean disposable schema: MySqlMigrationTest 59, HotelSettingsTest 158, IdempotentCommandTest 101, VersionedUpdateTest 60, StaffIdentityTest 28, OwnerBootstrapTest 60, InstallationSetupTest 40, StaffAuthenticatorTest 119, StaffAdminTest 264 assertions — all OK.
+
+Screen evidence: `hotel-app/tests/evidence/p06/s27-staff-admin-denied.png` (S27 `/admin/staff`) and `s28-hotel-settings-denied.png` (S28 `/admin/settings`) — anonymous visitors are redirected to the staff sign-in screen, proving the screens are protected. Authenticated rendering is covered by the MySQL-backed support tests; the browser fixture has no DB.
+
+Scope covered: scoped staff listing/creation, role grants with self-escalation and last-owner guards, deactivation with immediate session loss, staff edit/activate screens, versioned hotel identity and business-day settings, table/station/printer-destination configuration, and audit events. Not claimed: real printer hardware, provider credentials, or production deployment.
+
+## P06 cumulative phase review (5 October 2026)
+
+code_review approved the integrated P06 surface (migrations 000008–000012, support classes, authorizer, controllers, routes, views, tests). No CRITICAL/HIGH issues; cross-step consistency verified (role guards, last-owner protection, session revocation, versioned settings, table/station/printer config, audit events, integration redaction). No scope creep, no secrets. P06 marked complete; P07.01 is next.
+
+| P07.01 device/session records | Approved | code_review confirmed only SHA-256 digests are stored (raw credential/token never persisted), FK restrict, and correct digest approach for high-entropy secrets. Evidence: MySQL StaffAdminTest 284 assertions; Foundation 76/586; browser 78. |
+
+| P07.02 pairing/activation | Approved (advisories) | code_review confirmed the pairing screen exposes nothing private, the raw code is shown once with only its digest stored, and single-use/expiry logic is correct. Fixed the single-use TOCTOU with a conditional update and added an expiry test. Evidence: MySQL StaffAdminTest 300 assertions; Foundation 76/586; browser 80. |
+
+| P07.03 device activation/admin screens | Blocked → Approved | code_review found /device/activate rendered a non-existent view (500) and activation never established a session. Fixed by removing the redundant controller/routes (/device/pair is the single flow), wiring session establishment on activation, handling revoke results, adding device_revoked audit, FK-safe probe cleanup, and removing a duplicate docblock. Evidence: MySQL StaffAdminTest 313 assertions; Foundation 76/586; browser 80. |

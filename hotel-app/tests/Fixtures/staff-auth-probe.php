@@ -12,7 +12,7 @@ try {
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
     $action = $argv[1] ?? 'inspect';
-    $owned = ['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'idempotent_commands', 'probe_migrations'];
+    $owned = ['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'visits', 'device_sessions', 'device_pairing_codes', 'devices', 'tables', 'stations', 'printer_destinations', 'roles', 'staff_users', 'hotel_settings', 'idempotent_commands', 'audit_events', 'probe_migrations'];
 
     if ($action === 'empty') {
         foreach ($owned as $table) { if ($schema->hasTable($table)) { echo json_encode(['empty' => false, 'table' => $table]); exit(0); } }
@@ -20,11 +20,12 @@ try {
         exit(0);
     }
     if ($action === 'cleanup') {
-        foreach (['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'idempotent_commands', 'probe_migrations'] as $table) { $schema->dropIfExists($table); }
+        foreach (['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'visits', 'tables', 'stations', 'printer_destinations', 'device_sessions', 'device_pairing_codes', 'devices', 'idempotent_commands', 'probe_migrations'] as $table) { $schema->dropIfExists($table); }
         echo json_encode(['cleaned' => true]);
         exit(0);
     }
     if ($action === 'migrate') {
+        // Drop all owned tables in FK-safe order (children before parents).
         foreach ($owned as $table) { $schema->dropIfExists($table); }
         $output = new Symfony\Component\Console\Output\BufferedOutput;
         $status = $kernel->call('app:migrate', ['--no-interaction' => true], $output);
@@ -248,6 +249,137 @@ try {
         echo json_encode(['result' => $result]);
         exit(0);
     }
+    if ($action === 'settings-seed') {
+        $db->table('hotel_settings')->insert([
+            'id' => (string) Illuminate\Support\Str::uuid7(),
+            'name' => 'Settings Fixture Hotel',
+            'timezone' => 'Africa/Nairobi',
+            'currency' => 'KES',
+            'created_at' => now('UTC'), 'updated_at' => now('UTC'),
+        ]);
+        echo json_encode(['seeded' => true]);
+        exit(0);
+    }
+    if ($action === 'settings-current') {
+        $editor = $app->make(App\Support\HotelSettingsEditor::class);
+        echo json_encode($editor->current());
+        exit(0);
+    }
+    if ($action === 'integrations') {
+        echo json_encode($app->make(App\Support\IntegrationStatus::class)->summary());
+        exit(0);
+    }
+    if ($action === 'settings-update') {
+        $editor = $app->make(App\Support\HotelSettingsEditor::class);
+        $result = $editor->update(
+            (int) (getenv('SETTINGS_VERSION') ?: 1),
+            array_filter([
+                'name' => getenv('SETTINGS_NAME') ?: null,
+                'timezone' => getenv('SETTINGS_TIMEZONE') ?: null,
+                'business_day_cutoff' => getenv('SETTINGS_CUTOFF') ?: null,
+                'receipt_header' => getenv('SETTINGS_RECEIPT_HEADER') ?: null,
+                'receipt_footer' => getenv('SETTINGS_RECEIPT_FOOTER') ?: null,
+            ], static fn ($v) => $v !== null),
+        );
+        echo json_encode(['result' => $result, 'current' => $editor->current()]);
+        exit(0);
+    }
+    if ($action === 'tables-list') {
+        $tables = $app->make(App\Support\TableConfig::class);
+        echo json_encode(['tables' => array_map(static fn ($row) => $row, $tables->list())]);
+        exit(0);
+    }
+    if ($action === 'table-create' || $action === 'table-deactivate') {
+        $tables = $app->make(App\Support\TableConfig::class);
+        $result = $action === 'table-create'
+            ? $tables->create((string) (getenv('TABLE_LABEL') ?: ''))
+            : $tables->deactivate((string) (getenv('TABLE_ID') ?: ''));
+        echo json_encode(['result' => $result]);
+        exit(0);
+    }
+    if ($action === 'stations-list') {
+        $stations = $app->make(App\Support\StationConfig::class);
+        echo json_encode(['stations' => array_map(static fn ($row) => $row, $stations->list())]);
+        exit(0);
+    }
+    if ($action === 'station-create' || $action === 'station-deactivate') {
+        $stations = $app->make(App\Support\StationConfig::class);
+        $result = $action === 'station-create'
+            ? $stations->create((string) (getenv('STATION_NAME') ?: ''), (string) (getenv('STATION_KIND') ?: ''), null)
+            : $stations->deactivate((string) (getenv('STATION_ID') ?: ''));
+        echo json_encode(['result' => $result]);
+        exit(0);
+    }
+    if ($action === 'printers-list') {
+        $printers = $app->make(App\Support\PrinterDestinationConfig::class);
+        echo json_encode(['printers' => array_map(static fn ($row) => $row, $printers->list())]);
+        exit(0);
+    }
+    if ($action === 'printer-create' || $action === 'printer-deactivate') {
+        $printers = $app->make(App\Support\PrinterDestinationConfig::class);
+        $result = $action === 'printer-create'
+            ? $printers->create((string) (getenv('PRINTER_NAME') ?: ''), (string) (getenv('PRINTER_DESTINATION') ?: ''))
+            : $printers->deactivate((string) (getenv('PRINTER_ID') ?: ''));
+        echo json_encode(['result' => $result]);
+        exit(0);
+    }
+    if ($action === 'device-sessions') {
+        $sessions = $db->table('device_sessions')->where('device_id', (string) (getenv('DEVICE_ID') ?: ''))->get(['id', 'token_digest'])->all();
+        echo json_encode(['sessions' => array_map(static fn ($row) => (array) $row, $sessions)]);
+        exit(0);
+    }
+    if ($action === 'device-enroll' || $action === 'device-session' || $action === 'device-revoke') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        if ($action === 'device-enroll') {
+            echo json_encode($devices->enroll((string) (getenv('DEVICE_NAME') ?: ''), (string) (getenv('DEVICE_MODE') ?: ''), (string) (getenv('DEVICE_CREDENTIAL') ?: '')));
+        } elseif ($action === 'device-session') {
+            echo json_encode(['result' => $devices->createSession((string) (getenv('DEVICE_ID') ?: ''), (string) (getenv('DEVICE_TOKEN') ?: ''), (int) (getenv('DEVICE_TTL') ?: 120))]);
+        } else {
+            echo json_encode(['result' => $devices->revokeSession((string) (getenv('SESSION_ID') ?: ''))]);
+        }
+        exit(0);
+    }
+    if ($action === 'pairing-issue' || $action === 'pairing-activate') {
+        $pairing = $app->make(App\Support\DevicePairing::class);
+        if ($action === 'pairing-issue') {
+            $devices = $app->make(App\Support\DeviceRegistry::class);
+            $deviceId = $devices->enroll('Pairing Tablet', 'tablet', 'credential-value-000')['deviceId'];
+            echo json_encode(['code' => $pairing->issue($deviceId, 15)]);
+        } else {
+            echo json_encode($pairing->activate((string) (getenv('PAIRING_CODE') ?: '')));
+        }
+        exit(0);
+    }
+    if ($action === 'pairing-expire') {
+        $pairing = $app->make(App\Support\DevicePairing::class);
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        $device = $devices->enroll('Pairing Tablet', 'tablet', 'credential-value-999');
+        $code = $pairing->issue($device['deviceId'], 15);
+        $db->table('device_pairing_codes')->where('code_hash', hash('sha256', $code))
+            ->update(['expires_at' => now('UTC')->subMinute()]);
+        echo json_encode(['code' => $code]);
+        exit(0);
+    }
+    if ($action === 'device-list') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        echo json_encode(['devices' => array_map(static fn ($row) => $row, $devices->list())]);
+        exit(0);
+    }
+    if ($action === 'device-admin-revoke') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        echo json_encode(['result' => $devices->deactivate((string) (getenv('DEVICE_ID') ?: ''))]);
+        exit(0);
+    }
+    if ($action === 'visit-open') {
+        $visits = $app->make(App\Support\VisitService::class);
+        echo json_encode($visits->open((string) (getenv('TABLE_ID') ?: ''), (string) (getenv('ACTOR_ID') ?: '')));
+        exit(0);
+    }
+    if ($action === 'visit-close') {
+        $visits = $app->make(App\Support\VisitService::class);
+        echo json_encode(['result' => $visits->close((string) (getenv('VISIT_ID') ?: ''))]);
+        exit(0);
+    }
     if ($action === 'roundtrip') {
         $sessions = $app->make(App\Support\StaffSessions::class);
         $resolver = $app->make(App\Security\SessionPrincipalResolver::class);
@@ -287,6 +419,6 @@ try {
         'plainLeaked' => count($rows) === 1 && $rows[0]->password_hash === (getenv('STAFF_PASSWORD') ?: 'fixture-password-123'),
     ]);
 } catch (Throwable $error) {
-    if (getenv('PROBE_DEBUG') === '1') { fwrite(STDERR, $error->getMessage()."\n"); } else { fwrite(STDERR, "Staff auth fixture failed; private details withheld.\n"); }
+    if (getenv('PROBE_DEBUG') === '1') { fwrite(STDERR, $error->getMessage()."\n".$error->getTraceAsString()."\n"); } else { fwrite(STDERR, "Staff auth fixture failed; private details withheld.\n"); }
     exit(1);
 }

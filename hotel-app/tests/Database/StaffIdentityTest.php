@@ -58,7 +58,7 @@ final class StaffIdentityTest extends TestCase
                 'staff_role_grants' => true,
                 'staff_sessions' => true,
             ], $result['tables']);
-            self::assertSame(['owner'], $result['roles']);
+            self::assertSame(['auditor', 'cashier', 'kitchen_lead', 'kitchen_staff', 'manager', 'menu_editor', 'owner', 'waiter'], $result['roles']);
             self::assertTrue($result['duplicateEmail'], 'A duplicate staff email must be rejected.');
             self::assertTrue($result['duplicateEmailCase'], 'A case-insensitive duplicate staff email must be rejected.');
             self::assertTrue($result['duplicateToken'], 'A duplicate session token hash must be rejected.');

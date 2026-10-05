@@ -5,6 +5,10 @@ declare(strict_types=1);
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\StaffSignInController;
 use App\Http\Controllers\StaffSignOutController;
+use App\Http\Controllers\DeviceAdminController;
+use App\Http\Controllers\StaffVisitController;
+use App\Http\Controllers\DevicePairingController;
+use App\Http\Controllers\HotelSettingsController;
 use App\Http\Controllers\StaffAdminController;
 use App\Http\Controllers\StaffUnlockController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +30,21 @@ Route::post('/admin/staff/roles', [StaffAdminController::class, 'roles'])->middl
 Route::post('/admin/staff/deactivate', [StaffAdminController::class, 'deactivate'])->middleware('capability:staff.manage')->name('admin.staff.deactivate');
 Route::post('/admin/staff/update', [StaffAdminController::class, 'update'])->middleware('capability:staff.manage')->name('admin.staff.update');
 Route::post('/admin/staff/activate', [StaffAdminController::class, 'activate'])->middleware('capability:staff.manage')->name('admin.staff.activate');
+
+Route::get('/admin/settings', [HotelSettingsController::class, 'show'])->middleware('capability:settings.manage')->name('admin.settings');
+Route::post('/admin/settings', [HotelSettingsController::class, 'store'])->middleware('capability:settings.manage')->name('admin.settings.store');
+Route::post('/admin/settings/receipt', [HotelSettingsController::class, 'storeReceipt'])->middleware('capability:settings.manage')->name('admin.settings.receipt');
+Route::post('/admin/settings/tables', [HotelSettingsController::class, 'storeTables'])->middleware('capability:settings.manage')->name('admin.settings.tables');
+Route::post('/admin/settings/stations', [HotelSettingsController::class, 'storeStations'])->middleware('capability:settings.manage')->name('admin.settings.stations');
+Route::get('/device/pair', [DevicePairingController::class, 'show'])->name('device.pair');
+Route::post('/device/pair', [DevicePairingController::class, 'store'])->name('device.pair.store');
+Route::get('/admin/devices', [DeviceAdminController::class, 'show'])->middleware('capability:devices.manage')->name('admin.devices');
+Route::post('/admin/devices/revoke', [DeviceAdminController::class, 'revoke'])->middleware('capability:devices.manage')->name('admin.devices.revoke');
+
+Route::get('/staff/tables', [StaffVisitController::class, 'index'])->middleware('capability:visits.manage')->name('staff.tables');
+Route::post('/staff/visits/open', [StaffVisitController::class, 'open'])->middleware('capability:visits.manage')->name('staff.visits.open');
+Route::post('/staff/visits/close', [StaffVisitController::class, 'close'])->middleware('capability:visits.manage')->name('staff.visits.close');
+Route::post('/admin/settings/printers', [HotelSettingsController::class, 'storePrinters'])->middleware('capability:settings.manage')->name('admin.settings.printers');
 
 Route::view('/preview/components', 'preview.components');
 

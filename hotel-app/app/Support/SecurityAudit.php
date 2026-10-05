@@ -16,7 +16,7 @@ final class SecurityAudit
 {
     private const ALLOWED_EVENTS = [
         'login_succeeded', 'login_failed', 'logout', 'unlock_succeeded', 'unlock_failed',
-        'owner_bootstrapped', 'installation_configured', 'session_revoked', 'staff_deactivated', 'staff_activated',
+        'owner_bootstrapped', 'installation_configured', 'session_revoked', 'staff_deactivated', 'staff_activated', 'printer_destination_created', 'printer_destination_deactivated', 'device_revoked',
     ];
 
     private const FORBIDDEN_KEY_NEEDLES = ['password', 'token', 'secret', 'session', 'cookie', 'auth', 'credential', 'csrf'];

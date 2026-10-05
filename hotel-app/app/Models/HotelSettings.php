@@ -14,6 +14,8 @@ final class HotelSettings extends Record
         'currency',
         'test_mode',
         'business_day_cutoff',
+        'receipt_header',
+        'receipt_footer',
         'fiscal_configuration_version',
     ];
 

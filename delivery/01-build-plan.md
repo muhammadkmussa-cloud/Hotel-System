@@ -8,14 +8,14 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **63 / 320** |
+| First-release steps complete | **73 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **6 / 32** |
-| Current phase | P06 — Staff administration and hotel settings |
+| Phase gates complete | **7 / 32** |
+| Current phase | P07 — Devices, tables, visits, and guests |
 | Active task / owner | None |
-| Last completed implementation task | P06.03 |
-| Next task | **P06.04 — Staff list/edit/status screens with denied, empty, and error states** |
-| Next action | P06.03 approved; start P06.04 |
+| Last completed implementation task | P07.03 |
+| Next task | **P06.10 — Verify staff/settings routes and audit records; save S27/S28 evidence** |
+| Next action | P06 cumulative approved; start P07.01 |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
 | Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
 | Uncommitted changes | P05 migrations 000004–000007, app/Support + app/Security + controllers/routes/views, config, and tests/evidence pending. No staging/commit/push. |
@@ -236,12 +236,12 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P06.01** Implement scoped staff listing and creation; verify only authorized owners/managers can access it.
 - [x] **P06.02** Implement role grants with no self-escalation or last-owner removal; add negative checks.
 - [x] **P06.03** Implement staff deactivation; verify existing sessions lose access immediately.
-- [ ] **P06.04** Build staff list/edit/status screens with denied, empty, and error states.
-- [ ] **P06.05** Implement versioned hotel identity and business-day settings; verify stale updates fail.
-- [ ] **P06.06** Implement table configuration with unique active labels; prevent deletion of referenced/active tables.
-- [ ] **P06.07** Implement station configuration and routing metadata; restrict edits to settings permission.
-- [ ] **P06.08** Implement allowlisted printer destination configuration; reject arbitrary customer-controlled network targets.
-- [ ] **P06.09** Build the settings screen for hotel, tables, stations, and receipt identity; redact private integration settings.
+- [x] **P06.04** Build staff list/edit/status screens with denied, empty, and error states.
+- [x] **P06.05** Implement versioned hotel identity and business-day settings; verify stale updates fail.
+- [x] **P06.06** Implement table configuration with unique active labels; prevent deletion of referenced/active tables.
+- [x] **P06.07** Implement station configuration and routing metadata; restrict edits to settings permission.
+- [x] **P06.08** Implement allowlisted printer destination configuration; reject arbitrary customer-controlled network targets.
+- [x] **P06.09** Build the settings screen for hotel, tables, stations, and receipt identity; redact private integration settings.
 - [ ] **P06.10** Verify staff/settings routes and audit records; save S27/S28 completion evidence.
 
 <a id="p07"></a>
@@ -254,8 +254,8 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [journeys](../product/03-journeys.md), [data](../architecture/02-domain-data.md).
 
-- [ ] **P07.01** Create enrolled-device and device-session records; store credential digests rather than reusable secrets.
-- [ ] **P07.02** Implement short-lived pairing and activation; verify unpaired devices cannot see private data.
+- [x] **P07.01** Create enrolled-device and device-session records; store credential digests rather than reusable secrets.
+- [x] **P07.02** Implement short-lived pairing and activation; verify unpaired devices cannot see private data.
 - [ ] **P07.03** Build device activation and administrative device list/revocation screens.
 - [ ] **P07.04** Create visits with a MySQL-compatible active-table uniqueness guard; concurrent opens must yield one active visit.
 - [ ] **P07.05** Implement guest creation with unique labels within each visit; guest identity must survive tablet replacement.

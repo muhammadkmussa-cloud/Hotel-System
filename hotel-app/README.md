@@ -384,6 +384,30 @@ P05.01 created the `staff_users`, `roles`, `staff_role_grants`, and `staff_sessi
 
 P05.06 adds the sign-in submitting/denied UX: `public/assets/js/lib/single-submit.js` disables the control, sets `aria-busy`, prevents a duplicate submit, and announces a pending status via a live region; the denied alert is focused on load and the email field carries an inline error. Verified by `tests/browser/staff-sign-in.spec.js`.
 
+P07.03 adds the device activation screen (/device/pair) and the administrative device list with revoke; revocation is owner/manager-only, audited, and deactivates the device immediately. Evidence: StaffAdminTest 313 assertions on real MySQL.
+
+P07.02 adds short-lived pairing and activation: a 128-bit code is shown once and stored only as a SHA-256 digest; activation is single-use and expires, and the pairing screen exposes no private data. Evidence: StaffAdminTest 300 assertions on real MySQL; browser pairing-screen and CSRF tests.
+
+P07.01 adds enrolled-device and device-session records storing only SHA-256 digests (never raw credentials or tokens), with revocable sessions. Evidence: StaffAdminTest 284 assertions on real MySQL.
+
+P06.09 adds receipt identity settings and a redacted integrations status section (booleans only) on the settings screen. Evidence: StaffAdminTest 264 assertions on real MySQL.
+
+P06.08 adds allowlisted printer destinations (HTTPS + host allowlist, unique destination, audit events) and a Printer destinations section. P07.03 adds the device activation screen (/device/pair) and the administrative device list with revoke; revocation is owner/manager-only, audited, and deactivates the device immediately. Evidence: StaffAdminTest 313 assertions on real MySQL.
+
+P07.02 adds short-lived pairing and activation: a 128-bit code is shown once and stored only as a SHA-256 digest; activation is single-use and expires, and the pairing screen exposes no private data. Evidence: StaffAdminTest 300 assertions on real MySQL; browser pairing-screen and CSRF tests.
+
+P07.01 adds enrolled-device and device-session records storing only SHA-256 digests (never raw credentials or tokens), with revocable sessions. Evidence: StaffAdminTest 284 assertions on real MySQL.
+
+P06.09 adds receipt identity settings and a redacted integrations status section. Evidence: StaffAdminTest 245 assertions on real MySQL.
+
+P06.07 adds station configuration (kitchen/bar) with a routing-metadata column and a Stations section on the settings screen, gated by settings.manage. Evidence: StaffAdminTest 219 assertions on real MySQL.
+
+P06.06 adds table configuration: unique active labels via a generated column + unique index, deactivation instead of deletion, and a Tables section on the settings screen. Evidence: StaffAdminTest 193 assertions on real MySQL.
+
+P06.05 adds versioned hotel identity and business-day settings behind `capability:settings.manage` (owner only): updates require If-Match, stale edits fail, and the version increments atomically. Evidence: StaffAdminTest 170 assertions on real MySQL.
+
+P06.04 adds the staff list/edit/status screens: an edit form (name/email with uniqueness), per-member Activate/Deactivate, and the required denied (capability middleware), empty ("No staff members yet" / "no staff to edit"), and error (role=alert) states. Evidence: StaffAdminTest 152 assertions on real MySQL.
+
 P06.03 adds staff deactivation: a transactional deactivation that refuses self-deactivation and last-active-owner removal (row-locked, concurrency-tested), revokes all server-side sessions immediately, and records a staff_deactivated audit event. Evidence: StaffAdminTest 131 assertions on real MySQL.
 
 P06.02 adds role grant/revoke with guards: no self-escalation, only an owner can grant or revoke the owner role, and the last active owner cannot be stripped (transaction + row lock, concurrency-tested). `granted_by` is recorded. Evidence: `StaffAdminTest` 104 assertions on real MySQL.

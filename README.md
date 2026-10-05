@@ -16,14 +16,14 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 63 / 320 steps complete · 6 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 73 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P06 — Staff administration and hotel settings |
-| Active task | None — stopped after completed P05 phase |
-| Last completed build task | P06.03 — Staff deactivation with immediate session loss |
-| Next task | **P06.04 — Staff list/edit/status screens** |
+| Current phase | P07 — Devices, tables, visits, and guests |
+| Active task | None — stopped after completed P06 phase |
+| Last completed build task | P07.03 — Device activation and device admin screens |
+| Next task | **P07.01 — Enrolled-device and device-session records** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
 | Review gate | P00–P05 approved |
 | Last verified update | 4 October 2026 — Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review |
