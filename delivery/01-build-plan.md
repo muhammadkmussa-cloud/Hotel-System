@@ -13,9 +13,9 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 | Phase gates complete | **7 / 32** |
 | Current phase | P07 — Devices, tables, visits, and guests |
 | Active task / owner | None |
-| Last completed implementation task | P07.03 |
+| Last completed implementation task | P07.04 |
 | Next task | **P06.10 — Verify staff/settings routes and audit records; save S27/S28 evidence** |
-| Next action | P07.01–03 approved; start P07.04 |
+| Next action | P07.01–04 approved; start P07.05 |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
 | Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
 | Uncommitted changes | P05 migrations 000004–000007, app/Support + app/Security + controllers/routes/views, config, and tests/evidence pending. No staging/commit/push. |
@@ -257,7 +257,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P07.01** Create enrolled-device and device-session records; store credential digests rather than reusable secrets.
 - [x] **P07.02** Implement short-lived pairing and activation; verify unpaired devices cannot see private data.
 - [x] **P07.03** Build device activation and administrative device list/revocation screens.
-- [ ] **P07.04** Create visits with a MySQL-compatible active-table uniqueness guard; concurrent opens must yield one active visit.
+- [x] **P07.04** Create visits with a MySQL-compatible active-table uniqueness guard; concurrent opens must yield one active visit.
 - [ ] **P07.05** Implement guest creation with unique labels within each visit; guest identity must survive tablet replacement.
 - [ ] **P07.06** Implement staff-authorized device-to-guest binding; ignore arbitrary customer-supplied table/guest identities.
 - [ ] **P07.07** Build the waiter table overview with active visit, guest count, and later bill/status placeholders clearly labelled.

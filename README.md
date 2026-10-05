@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 73 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 74 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
 | Current phase | P07 — Devices, tables, visits, and guests |
-| Active task | None — stopped after completed P07.03 |
-| Last completed build task | P07.03 — Device activation and device admin screens |
-| Next task | **P07.04 — Visits with active-table uniqueness guard** |
+| Active task | None — stopped after completed P07.04 |
+| Last completed build task | P07.04 — Visits with active-table uniqueness guard |
+| Next task | **P07.05 — Guest creation and guest-device binding** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00–P06 approved; P07.01–03 approved |
-| Last verified update | 4 October 2026 — Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review |
+| Review gate | P00–P06 approved; P07.01–04 approved |
+| Last verified update | 4 October 2026 — Foundation76/581; browser80/80; test:js14/14; http-smoke16; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review; P07.01–04 approved |
 
 ### Feature and phase checklist
 
