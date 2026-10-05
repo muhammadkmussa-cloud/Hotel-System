@@ -14,13 +14,13 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('table_id');
             $table->enum('state', ['open', 'closed'])->default('open');
-            // One open visit per table: the key equals table_id while open and
-            // NULL once closed, and MySQL unique indexes treat NULLs as distinct.
-            $table->string('active_key', 36)->nullable()->storedAs('CASE WHEN state = "open" THEN table_id ELSE NULL END');
-            $table->unique('active_key');
             $table->timestamp('opened_at')->nullable();
             $table->timestamp('closed_at')->nullable();
+            $table->unsignedInteger('version')->default(1);
             $table->timestamps();
+            // MySQL-compatible partial uniqueness: only one open visit per table.
+            $table->unsignedTinyInteger('active_flag')->nullable()->storedAs('CASE WHEN state = "open" THEN 1 ELSE NULL END');
+            $table->unique(['table_id', 'active_flag'], 'visits_table_active_unique');
             $table->foreign('table_id')->references('id')->on('tables')->restrictOnDelete();
         });
     }

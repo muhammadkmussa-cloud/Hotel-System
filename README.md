@@ -21,11 +21,11 @@ This project contains **Markdown specifications, a build plan, and the initial [
 | Current status | Value |
 |---|---|
 | Current phase | P07 — Devices, tables, visits, and guests |
-| Active task | None — stopped after completed P06 phase |
+| Active task | None — stopped after completed P07.03 |
 | Last completed build task | P07.03 — Device activation and device admin screens |
-| Next task | **P07.01 — Enrolled-device and device-session records** |
+| Next task | **P07.04 — Visits with active-table uniqueness guard** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00–P05 approved |
+| Review gate | P00–P06 approved; P07.01–03 approved |
 | Last verified update | 4 October 2026 — Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review |
 
 ### Feature and phase checklist

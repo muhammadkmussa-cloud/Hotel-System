@@ -15,13 +15,13 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 | Active task / owner | None |
 | Last completed implementation task | P07.03 |
 | Next task | **P06.10 — Verify staff/settings routes and audit records; save S27/S28 evidence** |
-| Next action | P06 cumulative approved; start P07.01 |
+| Next action | P07.01–03 approved; start P07.04 |
 | Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
 | Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
 | Uncommitted changes | P05 migrations 000004–000007, app/Support + app/Security + controllers/routes/views, config, and tests/evidence pending. No staging/commit/push. |
 | Application verification | Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green |
-| Latest step review | P05.10 approved; cumulative P05 under review |
-| Latest phase review | Cumulative P04 approved by code_review after a required documentation fix; P05 may proceed |
+| Latest step review | P07.03 approved by code_review after fixes |
+| Latest phase review | Cumulative P06 approved; P07.01–03 individually approved |
 
 ## Frontend/UX verification rule
 
@@ -256,7 +256,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 - [x] **P07.01** Create enrolled-device and device-session records; store credential digests rather than reusable secrets.
 - [x] **P07.02** Implement short-lived pairing and activation; verify unpaired devices cannot see private data.
-- [ ] **P07.03** Build device activation and administrative device list/revocation screens.
+- [x] **P07.03** Build device activation and administrative device list/revocation screens.
 - [ ] **P07.04** Create visits with a MySQL-compatible active-table uniqueness guard; concurrent opens must yield one active visit.
 - [ ] **P07.05** Implement guest creation with unique labels within each visit; guest identity must survive tablet replacement.
 - [ ] **P07.06** Implement staff-authorized device-to-guest binding; ignore arbitrary customer-supplied table/guest identities.

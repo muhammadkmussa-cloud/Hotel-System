@@ -7,41 +7,39 @@ namespace App\Http\Controllers;
 use App\Support\VisitService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Validator;
 
 final class StaffVisitController
 {
-    public function index(): View
-    {
-        $tables = \Illuminate\Support\Facades\DB::table('tables')->orderBy('label')->get(['id', 'label']);
-        $activeVisits = \Illuminate\Support\Facades\DB::table('visits')
-            ->where('state', 'open')->orderBy('opened_at')->get(['id', 'table_id', 'opened_at']);
+    public function __construct(private readonly VisitService $visits) {}
 
-        return view('staff-tables', ['tables' => $tables, 'activeVisits' => $activeVisits]);
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = Validator::make($request->all(), [
+            'table_id' => ['required', 'string', 'uuid'],
+        ])->validate();
+
+        $result = $this->visits->open($validated['table_id'], (string) $request->attributes->get('principal.id', ''));
+
+        return redirect('/staff/tables')->with('status', $result['created'] ? 'Visit opened.' : 'Table already has an active visit.');
     }
 
-    public function open(Request $request, VisitService $visits): RedirectResponse
+    public function destroy(Request $request, string $visitId): RedirectResponse
     {
-        $validated = $request->validate(['table_id' => ['required', 'string', 'uuid']]);
-        $actor = $request->attributes->get('hotel.principal');
-        $actorId = $actor instanceof \App\Security\Principal ? $actor->identifier() : '';
+        $validated = Validator::make($request->all(), [
+            'expected_version' => ['nullable', 'integer', 'min:1'],
+        ])->validate();
 
-        $result = $visits->open($validated['table_id'], $actorId);
+        $result = $this->visits->close(
+            $visitId,
+            (string) $request->attributes->get('principal.id', ''),
+            $validated['expected_version'] ?? null,
+        );
 
-        return $result['conflict']
-            ? back()->withErrors(['table_id' => 'That table already has an active visit.'])
-            : redirect('/staff/tables')->with('status', 'Visit opened.');
-    }
+        if (!$result['success']) {
+            return redirect('/staff/tables')->with('status', 'Visit changed. Reload and try again.');
+        }
 
-    public function close(Request $request, VisitService $visits): RedirectResponse
-    {
-        $validated = $request->validate(['visit_id' => ['required', 'string', 'uuid']]);
-        $result = $visits->close($validated['visit_id']);
-
-        return match ($result) {
-            'closed' => redirect('/staff/tables')->with('status', 'Visit closed.'),
-            'not_found' => back()->withErrors(['visit_id' => 'Unknown visit.']),
-            default => back()->withErrors(['visit_id' => 'Close failed. Private details withheld.']),
-        };
+        return redirect('/staff/tables')->with('status', 'Visit closed.');
     }
 }
