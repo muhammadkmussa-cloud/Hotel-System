@@ -24,7 +24,7 @@ try {
 
     // Children before parents; every table this probe may create.
     $owned = [
-        'guests', 'device_sessions', 'device_pairing_codes', 'devices', 'visits',
+        'guest_bindings', 'guests', 'device_sessions', 'device_pairing_codes', 'devices', 'visits',
         'tables', 'stations', 'printer_destinations', 'staff_sessions', 'staff_role_grants',
         'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings',
         'idempotent_commands', 'audit_events', 'probe_migrations',
@@ -202,6 +202,96 @@ try {
         // Simulates every tablet being replaced: guest identity must survive.
         $deleted = $db->table('device_sessions')->delete();
         echo json_encode(['deleted' => $deleted]);
+        exit(0);
+    }
+
+    if ($action === 'create-device') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        echo json_encode($devices->enroll(
+            (string) (getenv('DEVICE_NAME') ?: 'Tablet 1'),
+            (string) (getenv('DEVICE_MODE') ?: 'tablet'),
+            (string) (getenv('DEVICE_CREDENTIAL') ?: 'fixture-device-credential-1'),
+        ));
+        exit(0);
+    }
+
+    if ($action === 'create-device-session') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        $token = (string) (getenv('DEVICE_TOKEN') ?: 'fixture-device-token-1');
+        $result = $devices->createSession(
+            (string) (getenv('DEVICE_ID') ?: ''),
+            $token,
+            (int) (getenv('DEVICE_TTL') ?: 120),
+        );
+        $sessionId = $db->table('device_sessions')->where('token_digest', hash('sha256', $token))->value('id');
+        echo json_encode(['result' => $result, 'sessionId' => $sessionId === null ? null : (string) $sessionId]);
+        exit(0);
+    }
+
+    if ($action === 'revoke-device-session') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        echo json_encode(['result' => $devices->revokeSession((string) (getenv('DEVICE_SESSION_ID') ?: ''))]);
+        exit(0);
+    }
+
+    if ($action === 'expire-device-session') {
+        // Forces the session past its expiry without touching revoked_at.
+        $affected = $db->table('device_sessions')->where('id', (string) (getenv('DEVICE_SESSION_ID') ?: ''))
+            ->update(['expires_at' => now('UTC')->subMinute(), 'updated_at' => now('UTC')]);
+        echo json_encode(['expired' => $affected === 1]);
+        exit(0);
+    }
+
+    if ($action === 'bindable-sessions') {
+        $devices = $app->make(App\Support\DeviceRegistry::class);
+        echo json_encode(['sessions' => $devices->activeSessions(getenv('DEVICE_MODE') ?: null)]);
+        exit(0);
+    }
+
+    if ($action === 'bind-guest') {
+        $waitForBarrier();
+        $bindings = $app->make(App\Support\GuestBindingService::class);
+        $ttl = getenv('TTL_MINUTES');
+        echo json_encode($bindings->bind(
+            (string) (getenv('GUEST_ID') ?: ''),
+            (string) (getenv('DEVICE_SESSION_ID') ?: ''),
+            (string) (getenv('ACTOR_ID') ?: ''),
+            $ttl === false || $ttl === '' ? null : (int) $ttl,
+        ));
+        exit(0);
+    }
+
+    if ($action === 'revoke-binding') {
+        $bindings = $app->make(App\Support\GuestBindingService::class);
+        echo json_encode(['result' => $bindings->revoke(
+            (string) (getenv('BINDING_ID') ?: ''),
+            (string) (getenv('ACTOR_ID') ?: ''),
+        )]);
+        exit(0);
+    }
+
+    if ($action === 'resolve-binding') {
+        // Resolution takes only the device session: any guest identity supplied
+        // by the caller is ignored by construction.
+        $bindings = $app->make(App\Support\GuestBindingService::class);
+        $resolved = $bindings->resolveForDeviceSession((string) (getenv('DEVICE_SESSION_ID') ?: ''));
+        $spoofed = (string) (getenv('SPOOF_GUEST_ID') ?: '');
+        echo json_encode([
+            'resolved' => $resolved,
+            'ignoredSpoofedIdentity' => $resolved === null || $spoofed === '' || $resolved['guestId'] !== $spoofed,
+        ]);
+        exit(0);
+    }
+
+    if ($action === 'list-bindings') {
+        $bindings = $app->make(App\Support\GuestBindingService::class);
+        echo json_encode(['bindings' => $bindings->activeForGuest((string) (getenv('GUEST_ID') ?: ''))]);
+        exit(0);
+    }
+
+    if ($action === 'binding-rows') {
+        $rows = $db->table('guest_bindings')->get(['id', 'guest_id', 'device_session_id', 'revoked_at'])->all();
+        echo json_encode(['rows' => array_map(static fn ($row) => (array) $row, $rows)]);
         exit(0);
     }
 

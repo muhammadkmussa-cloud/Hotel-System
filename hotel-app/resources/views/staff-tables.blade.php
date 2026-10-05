@@ -64,8 +64,44 @@
                             <ul>
                                 @foreach ($visit['guests'] as $guest)
                                     <li>
-                                        {{ $guest['label'] }}@if ($guest['name'] !== null) — {{ $guest['name'] }}@endif
-                                        <span class="badge">{{ $guest['state'] }}</span>
+                                        <p>
+                                            {{ $guest['label'] }}@if ($guest['name'] !== null) — {{ $guest['name'] }}@endif
+                                            <span class="badge">{{ $guest['state'] }}</span>
+                                        </p>
+
+                                        @if (count($guest['devices']) === 0)
+                                            <p>No tablet is bound to this guest.</p>
+                                        @else
+                                            <ul>
+                                                @foreach ($guest['devices'] as $binding)
+                                                    <li>
+                                                        {{ $binding['deviceName'] }}
+                                                        <form method="post" action="/staff/guest-bindings/{{ $binding['id'] }}/revoke" data-single-submit>
+                                                            @csrf
+                                                            <button type="submit">Unbind tablet</button>
+                                                        </form>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+
+                                        @if (count($bindableSessions) === 0)
+                                            <p>No active tablet sessions are available to bind.</p>
+                                        @else
+                                            <form method="post" action="/staff/guest-bindings" data-single-submit>
+                                                @csrf
+                                                <input type="hidden" name="guest_id" value="{{ $guest['id'] }}">
+                                                <div class="field">
+                                                    <label for="bind-{{ $guest['id'] }}">Bind a tablet</label>
+                                                    <select id="bind-{{ $guest['id'] }}" name="device_session_id" required>
+                                                        @foreach ($bindableSessions as $session)
+                                                            <option value="{{ $session['sessionId'] }}">{{ $session['deviceName'] }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <button type="submit">Bind tablet</button>
+                                            </form>
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>
