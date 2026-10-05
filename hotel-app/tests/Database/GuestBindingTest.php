@@ -179,4 +179,105 @@ final class GuestBindingTest extends TestCase
             }
         }
     }
+
+    /**
+     * P07.10 — replacing a tablet ends the old device session together with
+     * its binding, and the guest keeps its number for the replacement.
+     */
+    public function testReplacingATabletEndsTheOldSessionAndKeepsTheGuest(): void
+    {
+        self::assertSame('1', getenv('HOTEL_TEST_DB_ALLOW_SCHEMA'), 'Disposable-schema opt-in required.');
+        $env = ['PATH' => getenv('PATH'), 'APP_ENV' => 'testing', 'APP_URL' => 'http://127.0.0.1', 'APP_KEY' => 'base64:'.base64_encode(random_bytes(32))];
+        foreach (['HOST', 'PORT', 'DATABASE', 'USERNAME', 'PASSWORD'] as $key) {
+            $value = getenv('HOTEL_TEST_DB_'.$key);
+            self::assertTrue(is_string($value) && $value !== '', 'Explicit disposable DB settings required.');
+            $env['DB_'.$key] = $value;
+        }
+        $env = array_merge(array_fill_keys(array_keys(getenv()), false), $env);
+        $source = dirname(__DIR__, 2);
+        $fixture = sys_get_temp_dir().'/hotel-replace-'.bin2hex(random_bytes(8));
+        $files = new Filesystem;
+        $files->makeDirectory($fixture, 0700);
+        $owned = false;
+        try {
+            foreach (['app', 'config', 'routes', 'database/migrations'] as $directory) {
+                $files->copyDirectory($source.'/'.$directory, $fixture.'/'.$directory);
+            }
+            foreach (['bootstrap/cache', 'storage/logs'] as $directory) {
+                $files->makeDirectory($fixture.'/'.$directory, 0700, true);
+            }
+            foreach (['bootstrap/app.php', 'bootstrap/providers.php', 'artisan'] as $file) {
+                $files->copy($source.'/'.$file, $fixture.'/'.$file);
+            }
+            $files->copy($source.'/tests/Fixtures/visit-service-probe.php', $fixture.'/probe.php');
+            symlink($source.'/vendor', $fixture.'/vendor');
+            $run = static function (string $action, array $overrides = []) use ($fixture, $env): array {
+                $process = new Process([PHP_BINARY, 'probe.php', $action], $fixture, array_merge($env, $overrides), timeout: 60);
+                $process->run();
+                self::assertTrue($process->getErrorOutput() === '', 'Private error output withheld: '.$process->getErrorOutput());
+                $data = json_decode($process->getOutput(), true);
+                self::assertIsArray($data);
+
+                return $data;
+            };
+
+            $owned = true;
+            self::assertSame(0, $run('migrate')['status']);
+
+            $waiterId = $run('create-staff', ['STAFF_EMAIL' => 'waiter@example.test', 'STAFF_ROLES' => 'waiter'])['id'];
+            self::assertSame('created', $run('create-table', ['TABLE_LABEL' => 'R1'])['result']);
+            $tableId = $run('table-id', ['TABLE_LABEL' => 'R1'])['id'];
+            $visitId = $run('open-visit', ['VISIT_TABLE_ID' => $tableId, 'ACTOR_ID' => $waiterId])['id'];
+            $guestId = $run('add-guest', ['VISIT_ID' => $visitId, 'ACTOR_ID' => $waiterId, 'GUEST_NAME' => 'Ada'])['id'];
+
+            $tabletA = $run('create-device', ['DEVICE_NAME' => 'Tablet A', 'DEVICE_MODE' => 'tablet', 'DEVICE_CREDENTIAL' => 'fixture-credential-ra-0001'])['deviceId'];
+            $sessionA = $run('create-device-session', ['DEVICE_ID' => $tabletA, 'DEVICE_TOKEN' => 'fixture-token-ra-0001'])['sessionId'];
+            $binding = $run('bind-guest', ['GUEST_ID' => $guestId, 'DEVICE_SESSION_ID' => $sessionA, 'ACTOR_ID' => $waiterId]);
+            self::assertSame('created', $binding['result']);
+            self::assertSame($guestId, $run('resolve-binding', ['DEVICE_SESSION_ID' => $sessionA])['resolved']['guestId']);
+
+            // Replacing the tablet ends the binding *and* the old device
+            // session, so a handed-over device cannot keep reading the guest.
+            self::assertSame('revoked', $run('replace-binding', ['BINDING_ID' => $binding['id'], 'ACTOR_ID' => $waiterId])['result']);
+            self::assertTrue($run('device-session-state', ['DEVICE_SESSION_ID' => $sessionA])['revoked'], 'The replaced tablet loses its session.');
+            self::assertNull($run('resolve-binding', ['DEVICE_SESSION_ID' => $sessionA])['resolved'], 'The old tablet no longer resolves any guest.');
+
+            // The guest keeps its number; the replacement takes the old slot.
+            $tabletB = $run('create-device', ['DEVICE_NAME' => 'Tablet B', 'DEVICE_MODE' => 'tablet', 'DEVICE_CREDENTIAL' => 'fixture-credential-rb-0001'])['deviceId'];
+            $sessionB = $run('create-device-session', ['DEVICE_ID' => $tabletB, 'DEVICE_TOKEN' => 'fixture-token-rb-0001'])['sessionId'];
+            self::assertSame('created', $run('bind-guest', ['GUEST_ID' => $guestId, 'DEVICE_SESSION_ID' => $sessionB, 'ACTOR_ID' => $waiterId])['result']);
+            $resolved = $run('resolve-binding', ['DEVICE_SESSION_ID' => $sessionB, 'SPOOF_GUEST_ID' => $guestId])['resolved'];
+            self::assertIsArray($resolved);
+            self::assertSame($guestId, $resolved['guestId']);
+            self::assertSame('Guest 1', $resolved['guestLabel'], 'The guest keeps its number through a device change.');
+            self::assertSame($visitId, $resolved['visitId']);
+            self::assertSame('R1', $resolved['tableLabel']);
+
+            $guests = $run('list-guests', ['VISIT_ID' => $visitId])['guests'];
+            self::assertCount(1, $guests, 'Replacing a tablet never duplicates the guest.');
+            self::assertSame('Ada', $guests[0]['name']);
+            self::assertCount(1, $run('list-bindings', ['GUEST_ID' => $guestId])['bindings']);
+
+            // The old binding stays in the audit history, already revoked.
+            $rows = $run('binding-rows')['rows'];
+            self::assertCount(2, $rows);
+            $old = array_values(array_filter($rows, static fn (array $row): bool => $row['id'] === $binding['id']));
+            self::assertCount(1, $old);
+            self::assertNotNull($old[0]['revoked_at']);
+
+            // Replacement is idempotent and refuses junk identifiers.
+            self::assertSame('already_revoked', $run('replace-binding', ['BINDING_ID' => $binding['id'], 'ACTOR_ID' => $waiterId])['result']);
+            self::assertSame('invalid_input', $run('replace-binding', ['BINDING_ID' => 'not-a-uuid', 'ACTOR_ID' => $waiterId])['result']);
+            self::assertSame('invalid_input', $run('replace-binding', ['BINDING_ID' => $binding['id'], 'ACTOR_ID' => ''])['result']);
+            self::assertSame('not_found', $run('replace-binding', ['BINDING_ID' => '00000000-0000-7000-8000-000000000000', 'ACTOR_ID' => $waiterId])['result']);
+        } finally {
+            try {
+                if ($owned) {
+                    $run('cleanup');
+                }
+            } finally {
+                $files->deleteDirectory($fixture);
+            }
+        }
+    }
 }

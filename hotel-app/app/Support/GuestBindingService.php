@@ -144,6 +144,46 @@ final class GuestBindingService
     }
 
     /**
+     * Replace a tablet: end the binding *and* the device session it used, so a
+     * handed-over device cannot keep resolving the guest and any local draft
+     * on it is stale by design. Guest identity and history are untouched.
+     *
+     * @return string revoked|invalid_input|not_found|already_revoked|failed
+     */
+    public function revokeWithDeviceSession(string $bindingId, string $actorId): string
+    {
+        if (! Str::isUuid($bindingId) || $actorId === '') {
+            return 'invalid_input';
+        }
+
+        $connection = $this->database->connection('mysql');
+
+        try {
+            return DatabaseTransaction::run($connection, function () use ($connection, $bindingId): string {
+                $binding = $connection->table('guest_bindings')->where('id', $bindingId)->lockForUpdate()
+                    ->first(['revoked_at', 'device_session_id']);
+                if ($binding === null) {
+                    return 'not_found';
+                }
+                if ($binding->revoked_at !== null) {
+                    return 'already_revoked';
+                }
+
+                $now = now('UTC');
+                $connection->table('guest_bindings')->where('id', $bindingId)
+                    ->update(['revoked_at' => $now, 'updated_at' => $now]);
+                $connection->table('device_sessions')->where('id', $binding->device_session_id)
+                    ->whereNull('revoked_at')
+                    ->update(['revoked_at' => $now, 'updated_at' => $now]);
+
+                return 'revoked';
+            });
+        } catch (Throwable) {
+            return 'failed';
+        }
+    }
+
+    /**
      * Resolve the guest for an authenticated device session.
      *
      * No guest, table or visit identifier is accepted: identity comes from the

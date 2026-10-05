@@ -50,3 +50,28 @@ test('device-to-guest binding requires an authenticated staff session', async ({
     expect([302, 401, 403]).toContain(tables.status());
   }
 });
+
+test('visit detail and transfers deny anonymous visitors', async ({ page, request }) => {
+  const visitId = '00000000-0000-7000-8000-000000000000';
+
+  // P07.08 — the per-visit screen is staff-only.
+  const detail = await page.goto(`/staff/visits/${visitId}`);
+  if (detail.status() === 200) {
+    expect(page.url()).not.toContain('/staff/visits/');
+  } else {
+    expect([302, 401, 403]).toContain(detail.status());
+  }
+
+  // P07.09 — a transfer is manager-only, so a forged one must never land.
+  const forgedTransfer = await request.post(`/staff/visits/${visitId}/transfers`, {
+    form: { table_id: '00000000-0000-7000-8000-000000000001', waiter_id: '00000000-0000-7000-8000-000000000002' },
+    headers: { 'X-CSRF-TOKEN': 'anonymous' },
+  });
+  expect([302, 401, 403, 404, 405, 419]).toContain(forgedTransfer.status());
+
+  // P07.10 — replacing a tablet is staff-only too.
+  const forgedReplacement = await request.post('/staff/guest-bindings/00000000-0000-7000-8000-000000000003/replace', {
+    headers: { 'X-CSRF-TOKEN': 'anonymous' },
+  });
+  expect([302, 401, 403, 404, 405, 419]).toContain(forgedReplacement.status());
+});

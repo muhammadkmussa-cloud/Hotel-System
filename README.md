@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 76 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 80 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
 | Current phase | P07 — Devices, tables, visits, and guests |
-| Active task | None — stopped after completed P07.04 |
-| Last completed build task | P07.06 — Staff-authorized device-to-guest binding |
-| Next task | **P07.07 — Waiter table overview with guest counts and labelled bill placeholders** |
+| Active task | None — stopped after completed P07.10 |
+| Last completed build task | P07.10 — Reassign/revoke/replace-device flows clear local personal state |
+| Next task | **P08.01 — Create media metadata for ownership, rights, checksum, alt text, crop, and publication state** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00–P06 approved; P07.01–06 approved (P07.05 and P07.06 on code review alone — see verification note) |
-| Last verified update | 5 October 2026 — re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 207 documentation links; php-parser syntax check of every PHP file changed for P07.05/P07.06. Last full battery (P07.04): Foundation76/581; browser80/80; http-smoke16; nine real-MySQL database tests green. P07.05 and P07.06 have code-review approval only: PHPUnit, the MySQL suite, Playwright and http-smoke were not executed because this environment has no PHP, Composer, MySQL or Chromium |
+| Review gate | P00–P06 approved; P07.01–P07.10 approved at step level, all on code review alone; cumulative P07 review still requires executed PHPUnit/MySQL/Playwright/http-smoke evidence (see verification note) |
+| Last verified update | 5 October 2026 — re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 247 documentation links; php-parser syntax check of every PHP file changed for P07.07–P07.10, plus a Blade tag-balance check of both visit screens. Last full battery (P07.04): Foundation76/581; browser80/80; http-smoke16; nine real-MySQL database tests green. P07.05–P07.10 have code-review approval only: PHPUnit, the MySQL suite (now including VisitOverviewTest and VisitTransferTest), Playwright and http-smoke were not executed because this environment has no PHP, Composer, MySQL or Chromium |
 
 ### Feature and phase checklist
 
@@ -39,7 +39,7 @@ Check a phase only when all its required steps, verification checks, and indepen
 - [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
 - [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
 - [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps
-- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 6/10 steps
+- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (cumulative phase review pending executed evidence)
 - [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 0/10 steps
 - [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — 0/10 steps
 - [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — 0/10 steps

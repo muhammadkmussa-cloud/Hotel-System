@@ -295,6 +295,79 @@ try {
         exit(0);
     }
 
+    if ($action === 'overview') {
+        $visits = $app->make(App\Support\VisitService::class);
+        echo json_encode(['tables' => $visits->overview()]);
+        exit(0);
+    }
+
+    if ($action === 'visit-detail') {
+        $visits = $app->make(App\Support\VisitService::class);
+        echo json_encode(['visit' => $visits->visit((string) (getenv('VISIT_ID') ?: ''))]);
+        exit(0);
+    }
+
+    if ($action === 'transfer') {
+        $waitForBarrier();
+        $visits = $app->make(App\Support\VisitService::class);
+        $table = getenv('TABLE_ID');
+        $waiter = getenv('WAITER_ID');
+        $expected = getenv('EXPECTED_VERSION');
+        echo json_encode($visits->transfer(
+            (string) (getenv('VISIT_ID') ?: ''),
+            $table === false || $table === '' ? null : (string) $table,
+            $waiter === false || $waiter === '' ? null : (string) $waiter,
+            (string) (getenv('ACTOR_ID') ?: ''),
+            $expected === false || $expected === '' ? null : (int) $expected,
+        ));
+        exit(0);
+    }
+
+    if ($action === 'replace-binding') {
+        $bindings = $app->make(App\Support\GuestBindingService::class);
+        echo json_encode(['result' => $bindings->revokeWithDeviceSession(
+            (string) (getenv('BINDING_ID') ?: ''),
+            (string) (getenv('ACTOR_ID') ?: ''),
+        )]);
+        exit(0);
+    }
+
+    if ($action === 'device-session-state') {
+        $row = $db->table('device_sessions')->where('id', (string) (getenv('DEVICE_SESSION_ID') ?: ''))
+            ->first(['id', 'revoked_at', 'expires_at']);
+        echo json_encode($row === null ? ['found' => false] : [
+            'found' => true,
+            'revoked' => $row->revoked_at !== null,
+            'expiresAt' => (string) $row->expires_at,
+        ]);
+        exit(0);
+    }
+
+    if ($action === 'audit-events') {
+        echo json_encode(['events' => $db->table('audit_events')->orderBy('created_at')->pluck('event')->all()]);
+        exit(0);
+    }
+
+    if ($action === 'deactivate-table') {
+        $db->table('tables')->where('id', (string) (getenv('TABLE_ID') ?: ''))->update(['active' => 0]);
+        echo json_encode(['result' => 'deactivated']);
+        exit(0);
+    }
+
+    if ($action === 'audit-record') {
+        $audit = $app->make(App\Support\SecurityAudit::class);
+        $audit->record((string) (getenv('EVENT_NAME') ?: ''), (string) (getenv('ACTOR_ID') ?: ''), '127.0.0.1', ['probe' => 'fixture']);
+        $count = $db->table('audit_events')->where('event', (string) (getenv('EVENT_NAME') ?: ''))->count();
+        echo json_encode(['recorded' => $count >= 1]);
+        exit(0);
+    }
+
+    if ($action === 'deactivate-staff') {
+        $db->table('staff_users')->where('id', (string) (getenv('STAFF_ID') ?: ''))->update(['active' => 0]);
+        echo json_encode(['result' => 'deactivated']);
+        exit(0);
+    }
+
     fwrite(STDERR, "Unknown fixture action; private details withheld.\n");
     exit(1);
 } catch (Throwable) {

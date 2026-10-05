@@ -12,7 +12,7 @@
 <body>
     <main id="main">
         <h1>Tables</h1>
-        <p>Open a visit for a table and close it once balances are settled.</p>
+        <p>Table status for this service. Balances and kitchen status appear in later build steps.</p>
         @if (session('status'))
             <p role="status">{{ session('status') }}</p>
         @endif
@@ -30,15 +30,17 @@
         <section aria-labelledby="open-visit-heading">
             <h2 id="open-visit-heading">Open a visit</h2>
             @if (count($tables) === 0)
-                <p>No tables are configured yet.</p>
+                <p>No tables are configured yet. Add them in hotel settings.</p>
+            @elseif (count($availableTables) === 0)
+                <p>Every table already has an active visit.</p>
             @else
-                <form method="post" action="/staff/visits/open">
+                <form method="post" action="/staff/visits/open" data-single-submit>
                     @csrf
                     <div class="field">
                         <label for="table_id">Table</label>
                         <select id="table_id" name="table_id" required>
-                            @foreach ($tables as $table)
-                                <option value="{{ $table->id }}">{{ $table->label }}</option>
+                            @foreach ($availableTables as $table)
+                                <option value="{{ $table['tableId'] }}">{{ $table['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -47,84 +49,58 @@
             @endif
         </section>
 
-        <section aria-labelledby="active-visits-heading">
-            <h2 id="active-visits-heading">Active visits</h2>
-            @if (count($activeVisits) === 0)
-                <p>No active visits.</p>
+        <section aria-labelledby="table-status-heading">
+            <h2 id="table-status-heading">Table status</h2>
+            @if (count($tables) === 0)
+                <p>No tables are configured yet.</p>
             @else
-                @foreach ($activeVisits as $visit)
-                    <article class="state" aria-labelledby="visit-{{ $visit['id'] }}-heading">
-                        <h3 id="visit-{{ $visit['id'] }}-heading">Table {{ $visit['tableLabel'] }}</h3>
-                        <p>Opened {{ $visit['openedAt'] ?? 'just now' }}.</p>
-
-                        <h4>Guests</h4>
-                        @if (count($visit['guests']) === 0)
-                            <p>No guests yet. Add one before handing a tablet over.</p>
-                        @else
-                            <ul>
-                                @foreach ($visit['guests'] as $guest)
-                                    <li>
-                                        <p>
-                                            {{ $guest['label'] }}@if ($guest['name'] !== null) — {{ $guest['name'] }}@endif
-                                            <span class="badge">{{ $guest['state'] }}</span>
-                                        </p>
-
-                                        @if (count($guest['devices']) === 0)
-                                            <p>No tablet is bound to this guest.</p>
-                                        @else
-                                            <ul>
-                                                @foreach ($guest['devices'] as $binding)
-                                                    <li>
-                                                        {{ $binding['deviceName'] }}
-                                                        <form method="post" action="/staff/guest-bindings/{{ $binding['id'] }}/revoke" data-single-submit>
-                                                            @csrf
-                                                            <button type="submit">Unbind tablet</button>
-                                                        </form>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-
-                                        @if (count($bindableSessions) === 0)
-                                            <p>No active tablet sessions are available to bind.</p>
-                                        @else
-                                            <form method="post" action="/staff/guest-bindings" data-single-submit>
-                                                @csrf
-                                                <input type="hidden" name="guest_id" value="{{ $guest['id'] }}">
-                                                <div class="field">
-                                                    <label for="bind-{{ $guest['id'] }}">Bind a tablet</label>
-                                                    <select id="bind-{{ $guest['id'] }}" name="device_session_id" required>
-                                                        @foreach ($bindableSessions as $session)
-                                                            <option value="{{ $session['sessionId'] }}">{{ $session['deviceName'] }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <button type="submit">Bind tablet</button>
-                                            </form>
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-
-                        <form method="post" action="/staff/visits/{{ $visit['id'] }}/guests" data-single-submit>
-                            @csrf
-                            <div class="field">
-                                <label for="guest-name-{{ $visit['id'] }}">Guest name (optional)</label>
-                                <input id="guest-name-{{ $visit['id'] }}" name="name" type="text" maxlength="150" autocomplete="off">
-                            </div>
-                            <button type="submit">Add guest</button>
-                        </form>
-
-                        <form method="post" action="/staff/visits/{{ $visit['id'] }}/close" data-single-submit>
-                            @csrf
-                            <input type="hidden" name="expected_version" value="{{ $visit['version'] }}">
-                            <button type="submit">Close visit</button>
-                        </form>
-                    </article>
-                @endforeach
+                <table>
+                    <caption>{{ $occupiedCount }} of {{ count($tables) }} tables in use</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Table</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Guests</th>
+                            <th scope="col">Opened</th>
+                            <th scope="col">Balance</th>
+                            <th scope="col">Kitchen</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($tables as $table)
+                            <tr>
+                                <th scope="row">{{ $table['label'] }}</th>
+                                <td>{{ $table['visitId'] === null ? 'Available' : 'In use' }}</td>
+                                <td>{{ $table['guestCount'] }}</td>
+                                <td>{{ $table['openedAt'] ?? '—' }}</td>
+                                <td>
+                                    <span class="badge">Placeholder</span>
+                                    Not available yet (billing, P18)
+                                </td>
+                                <td>
+                                    <span class="badge">Placeholder</span>
+                                    Not available yet (kitchen, P16)
+                                </td>
+                                <td>
+                                    @if ($table['visitId'] === null)
+                                        <form method="post" action="/staff/visits/open" data-single-submit>
+                                            @csrf
+                                            <input type="hidden" name="table_id" value="{{ $table['tableId'] }}">
+                                            <button type="submit">Open visit</button>
+                                        </form>
+                                    @else
+                                        <a href="/staff/visits/{{ $table['visitId'] }}">Open visit details</a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             @endif
         </section>
+
+        <p><a href="/staff/tables">Refresh</a></p>
     </main>
     <script type="module">
         import { initSingleSubmit } from '/assets/js/lib/single-submit.js';
