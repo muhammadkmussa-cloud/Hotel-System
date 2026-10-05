@@ -42,8 +42,14 @@ Route::get('/admin/devices', [DeviceAdminController::class, 'show'])->middleware
 Route::post('/admin/devices/revoke', [DeviceAdminController::class, 'revoke'])->middleware('capability:devices.manage')->name('admin.devices.revoke');
 
 Route::get('/staff/tables', [StaffVisitController::class, 'index'])->middleware('capability:visits.manage')->name('staff.tables');
+Route::get('/staff/visits/{visitId}', [StaffVisitController::class, 'show'])->middleware('capability:visits.manage')->name('staff.visits.show');
+Route::post('/staff/visits/{visitId}/transfers', [StaffVisitController::class, 'transfer'])->middleware('capability:visits.transfer')->name('staff.visits.transfers');
+Route::post('/staff/guest-bindings/{bindingId}/replace', [StaffVisitController::class, 'replaceBinding'])->middleware('capability:visits.manage')->name('staff.guest-bindings.replace');
 Route::post('/staff/visits/open', [StaffVisitController::class, 'store'])->middleware('capability:visits.manage')->name('staff.visits.open');
 Route::post('/staff/visits/{visitId}/close', [StaffVisitController::class, 'destroy'])->middleware('capability:visits.manage')->name('staff.visits.close');
+Route::post('/staff/visits/{visitId}/guests', [StaffVisitController::class, 'storeGuest'])->middleware('capability:visits.manage')->name('staff.visits.guests.store');
+Route::post('/staff/guest-bindings', [StaffVisitController::class, 'storeBinding'])->middleware('capability:visits.manage')->name('staff.guest-bindings.store');
+Route::post('/staff/guest-bindings/{bindingId}/revoke', [StaffVisitController::class, 'destroyBinding'])->middleware('capability:visits.manage')->name('staff.guest-bindings.revoke');
 Route::post('/admin/settings/printers', [HotelSettingsController::class, 'storePrinters'])->middleware('capability:settings.manage')->name('admin.settings.printers');
 
 Route::view('/preview/components', 'preview.components');

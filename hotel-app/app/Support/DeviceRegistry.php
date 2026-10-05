@@ -94,6 +94,40 @@ final class DeviceRegistry
         return ['result' => 'enrolled', 'deviceId' => $deviceId, 'code' => $code];
     }
 
+    /**
+     * Sessions a staff member may still bind: device active, session neither
+     * revoked nor expired. Optionally filtered to one device mode.
+     *
+     * @return list<array{sessionId:string,deviceId:string,deviceName:string,mode:string,lastSeenAt:?string}>
+     */
+    public function activeSessions(?string $mode = null): array
+    {
+        $query = $this->database->connection('mysql')->table('device_sessions')
+            ->join('devices', 'devices.id', '=', 'device_sessions.device_id')
+            ->where('devices.active', 1)
+            ->whereNull('device_sessions.revoked_at')
+            ->where('device_sessions.expires_at', '>', now('UTC'));
+
+        if ($mode !== null) {
+            $query->where('devices.mode', $mode);
+        }
+
+        return $query->orderBy('devices.name')
+            ->get([
+                'device_sessions.id as session_id',
+                'device_sessions.device_id',
+                'devices.name as device_name',
+                'devices.mode',
+                'device_sessions.last_seen_at',
+            ])->map(static fn (object $row): array => [
+                'sessionId' => (string) $row->session_id,
+                'deviceId' => (string) $row->device_id,
+                'deviceName' => (string) $row->device_name,
+                'mode' => (string) $row->mode,
+                'lastSeenAt' => $row->last_seen_at === null ? null : (string) $row->last_seen_at,
+            ])->all();
+    }
+
     /** @return string created|invalid_input|not_found|failed */
     public function createSession(string $deviceId, string $token, int $ttlMinutes): string
     {

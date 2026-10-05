@@ -12,7 +12,7 @@ try {
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
     $action = $argv[1] ?? 'inspect';
-    $owned = ['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'visits', 'device_sessions', 'device_pairing_codes', 'devices', 'tables', 'stations', 'printer_destinations', 'roles', 'staff_users', 'hotel_settings', 'idempotent_commands', 'audit_events', 'probe_migrations'];
+    $owned = ['guest_bindings', 'guests', 'staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'visits', 'device_sessions', 'device_pairing_codes', 'devices', 'tables', 'stations', 'printer_destinations', 'roles', 'staff_users', 'hotel_settings', 'idempotent_commands', 'audit_events', 'probe_migrations'];
 
     if ($action === 'empty') {
         foreach ($owned as $table) { if ($schema->hasTable($table)) { echo json_encode(['empty' => false, 'table' => $table]); exit(0); } }
@@ -20,7 +20,7 @@ try {
         exit(0);
     }
     if ($action === 'cleanup') {
-        foreach (['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'visits', 'tables', 'stations', 'printer_destinations', 'device_sessions', 'device_pairing_codes', 'devices', 'idempotent_commands', 'probe_migrations'] as $table) { $schema->dropIfExists($table); }
+        foreach (['guest_bindings', 'guests', 'staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'visits', 'tables', 'stations', 'printer_destinations', 'device_sessions', 'device_pairing_codes', 'devices', 'idempotent_commands', 'probe_migrations'] as $table) { $schema->dropIfExists($table); }
         echo json_encode(['cleaned' => true]);
         exit(0);
     }

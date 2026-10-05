@@ -99,6 +99,8 @@ Read [README](README.md) first. This index lists specifications; initial executa
 | [delivery/04-acceptance.md](delivery/04-acceptance.md) | Acceptance and release checklist |
 | [delivery/05-risks-decisions.md](delivery/05-risks-decisions.md) | Open decisions and risks |
 | [delivery/06-document-review.md](delivery/06-document-review.md) | Documentation review record |
+| [delivery/07-database-foundation-verification.md](delivery/07-database-foundation-verification.md) | P02 database and money foundation verification |
+| [delivery/08-execution-evidence.md](delivery/08-execution-evidence.md) | Executed versus unexecuted evidence per build step (P07 records) |
 
 ## Research
 

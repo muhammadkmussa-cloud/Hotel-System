@@ -12,7 +12,7 @@
 <body>
     <main id="main">
         <h1>Tables</h1>
-        <p>Open a visit for a table and close it once balances are settled.</p>
+        <p>Table status for this service. Balances and kitchen status appear in later build steps.</p>
         @if (session('status'))
             <p role="status">{{ session('status') }}</p>
         @endif
@@ -30,15 +30,17 @@
         <section aria-labelledby="open-visit-heading">
             <h2 id="open-visit-heading">Open a visit</h2>
             @if (count($tables) === 0)
-                <p>No tables are configured yet.</p>
+                <p>No tables are configured yet. Add them in hotel settings.</p>
+            @elseif (count($availableTables) === 0)
+                <p>Every table already has an active visit.</p>
             @else
-                <form method="post" action="/staff/visits/open">
+                <form method="post" action="/staff/visits/open" data-single-submit>
                     @csrf
                     <div class="field">
                         <label for="table_id">Table</label>
                         <select id="table_id" name="table_id" required>
-                            @foreach ($tables as $table)
-                                <option value="{{ $table->id }}">{{ $table->label }}</option>
+                            @foreach ($availableTables as $table)
+                                <option value="{{ $table['tableId'] }}">{{ $table['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -47,25 +49,49 @@
             @endif
         </section>
 
-        <section aria-labelledby="active-visits-heading">
-            <h2 id="active-visits-heading">Active visits</h2>
-            @if (count($activeVisits) === 0)
-                <p>No active visits.</p>
+        <section aria-labelledby="table-status-heading">
+            <h2 id="table-status-heading">Table status</h2>
+            @if (count($tables) === 0)
+                <p>No tables are configured yet.</p>
             @else
                 <table>
-                    <caption>Open visits</caption>
-                    <thead><tr><th scope="col">Table</th><th scope="col">Opened at</th><th scope="col">Action</th></tr></thead>
+                    <caption>{{ $occupiedCount }} of {{ count($tables) }} tables in use</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Table</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Guests</th>
+                            <th scope="col">Opened</th>
+                            <th scope="col">Balance</th>
+                            <th scope="col">Kitchen</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        @foreach ($activeVisits as $visit)
+                        @foreach ($tables as $table)
                             <tr>
-                                <th scope="row">{{ $visit->table_id }}</th>
-                                <td>{{ $visit->opened_at }}</td>
+                                <th scope="row">{{ $table['label'] }}</th>
+                                <td>{{ $table['visitId'] === null ? 'Available' : 'In use' }}</td>
+                                <td>{{ $table['guestCount'] }}</td>
+                                <td>{{ $table['openedAt'] ?? '—' }}</td>
                                 <td>
-                                    <form method="post" action="/staff/visits/close">
-                                        @csrf
-                                        <input type="hidden" name="visit_id" value="{{ $visit->id }}">
-                                        <button type="submit">Close visit</button>
-                                    </form>
+                                    <span class="badge">Placeholder</span>
+                                    Not available yet (billing, P18)
+                                </td>
+                                <td>
+                                    <span class="badge">Placeholder</span>
+                                    Not available yet (kitchen, P16)
+                                </td>
+                                <td>
+                                    @if ($table['visitId'] === null)
+                                        <form method="post" action="/staff/visits/open" data-single-submit>
+                                            @csrf
+                                            <input type="hidden" name="table_id" value="{{ $table['tableId'] }}">
+                                            <button type="submit">Open visit</button>
+                                        </form>
+                                    @else
+                                        <a href="/staff/visits/{{ $table['visitId'] }}">Open visit details</a>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -73,6 +99,8 @@
                 </table>
             @endif
         </section>
+
+        <p><a href="/staff/tables">Refresh</a></p>
     </main>
     <script type="module">
         import { initSingleSubmit } from '/assets/js/lib/single-submit.js';
