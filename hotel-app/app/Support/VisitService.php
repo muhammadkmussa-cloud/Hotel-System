@@ -50,6 +50,33 @@ final class VisitService
     }
 
     /**
+     * Open visits with their table label, oldest first. Guests are attached by
+     * the caller so this service stays free of guest concerns.
+     *
+     * @return list<array{id:string,tableId:string,tableLabel:string,openedAt:?string,version:int}>
+     */
+    public function active(): array
+    {
+        return $this->database->connection('mysql')->table('visits')
+            ->join('tables', 'tables.id', '=', 'visits.table_id')
+            ->where('visits.state', 'open')
+            ->orderBy('visits.opened_at')
+            ->get([
+                'visits.id',
+                'visits.table_id',
+                'visits.opened_at',
+                'visits.version',
+                'tables.label as table_label',
+            ])->map(static fn (object $row): array => [
+                'id' => (string) $row->id,
+                'tableId' => (string) $row->table_id,
+                'tableLabel' => (string) $row->table_label,
+                'openedAt' => $row->opened_at === null ? null : (string) $row->opened_at,
+                'version' => (int) $row->version,
+            ])->all();
+    }
+
+    /**
      * Close a visit using a versioned update.
      *
      * @return array{success:bool,version:?int}

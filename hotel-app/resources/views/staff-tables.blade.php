@@ -52,25 +52,41 @@
             @if (count($activeVisits) === 0)
                 <p>No active visits.</p>
             @else
-                <table>
-                    <caption>Open visits</caption>
-                    <thead><tr><th scope="col">Table</th><th scope="col">Opened at</th><th scope="col">Action</th></tr></thead>
-                    <tbody>
-                        @foreach ($activeVisits as $visit)
-                            <tr>
-                                <th scope="row">{{ $visit->table_id }}</th>
-                                <td>{{ $visit->opened_at }}</td>
-                                <td>
-                                    <form method="post" action="/staff/visits/close">
-                                        @csrf
-                                        <input type="hidden" name="visit_id" value="{{ $visit->id }}">
-                                        <button type="submit">Close visit</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                @foreach ($activeVisits as $visit)
+                    <article class="state" aria-labelledby="visit-{{ $visit['id'] }}-heading">
+                        <h3 id="visit-{{ $visit['id'] }}-heading">Table {{ $visit['tableLabel'] }}</h3>
+                        <p>Opened {{ $visit['openedAt'] ?? 'just now' }}.</p>
+
+                        <h4>Guests</h4>
+                        @if (count($visit['guests']) === 0)
+                            <p>No guests yet. Add one before handing a tablet over.</p>
+                        @else
+                            <ul>
+                                @foreach ($visit['guests'] as $guest)
+                                    <li>
+                                        {{ $guest['label'] }}@if ($guest['name'] !== null) — {{ $guest['name'] }}@endif
+                                        <span class="badge">{{ $guest['state'] }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        <form method="post" action="/staff/visits/{{ $visit['id'] }}/guests" data-single-submit>
+                            @csrf
+                            <div class="field">
+                                <label for="guest-name-{{ $visit['id'] }}">Guest name (optional)</label>
+                                <input id="guest-name-{{ $visit['id'] }}" name="name" type="text" maxlength="150" autocomplete="off">
+                            </div>
+                            <button type="submit">Add guest</button>
+                        </form>
+
+                        <form method="post" action="/staff/visits/{{ $visit['id'] }}/close" data-single-submit>
+                            @csrf
+                            <input type="hidden" name="expected_version" value="{{ $visit['version'] }}">
+                            <button type="submit">Close visit</button>
+                        </form>
+                    </article>
+                @endforeach
             @endif
         </section>
     </main>

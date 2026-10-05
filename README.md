@@ -8,7 +8,7 @@ This project contains **Markdown specifications, a build plan, and the initial [
 
 ## Build progress
 
-**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation, exact rounding and deterministic total-preserving allocation are implemented. Bounded transaction retries pass a real MySQL deadlock test. A guarded reset supports separately marked demo settings. The database/money phase and separate-installation isolation have passed cumulative review.** The initial [OpenAPI health/error design contract](api/README.md) is validated; health endpoints remain unimplemented, while the API prefix and safe JSON 404/405 responses are now in place. Bounded JSON parsing and declared-field validation reject malformed, oversized and unexpected inputs. The foundations also include safe response envelopes, access-control interfaces, browser CSRF, scoped request/login limits, durable command replay, and stale-edit protection. No working product feature, live integration, or deployment is claimed yet.
+**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation, exact rounding and deterministic total-preserving allocation are implemented. Bounded transaction retries pass a real MySQL deadlock test. A guarded reset supports separately marked demo settings. The database/money phase and separate-installation isolation have passed cumulative review.** The initial [OpenAPI health/error design contract](api/README.md) is validated; health endpoints remain unimplemented, while the API prefix and safe JSON 404/405 responses are now in place. Bounded JSON parsing and declared-field validation reject malformed, oversized and unexpected inputs. The foundations also include safe response envelopes, access-control interfaces, browser CSRF, scoped request/login limits, durable command replay, and stale-edit protection. Reviewed staff administration, versioned hotel settings, table/station/printer configuration, device enrolment and pairing, and visits are implemented and approved. No menu, ordering, billing, payment, kitchen, printing, kiosk, fiscal or reporting feature exists yet, and no live integration or deployment is claimed.
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 74 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 75 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
 | Current phase | P07 — Devices, tables, visits, and guests |
 | Active task | None — stopped after completed P07.04 |
-| Last completed build task | P07.04 — Visits with active-table uniqueness guard |
-| Next task | **P07.05 — Guest creation and guest-device binding** |
+| Last completed build task | P07.05 — Guest creation with unique labels within a visit |
+| Next task | **P07.06 — Staff-authorized device-to-guest binding** |
 | Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00–P06 approved; P07.01–04 approved |
-| Last verified update | 4 October 2026 — Foundation76/581; browser80/80; test:js14/14; http-smoke16; contract16 examples/13 tests; eight real-MySQL database tests green; P05 steps approved; cumulative P04 approved; cumulative P05 under review; P07.01–04 approved |
+| Review gate | P00–P06 approved; P07.01–05 approved (P07.05 on code review alone — see verification note) |
+| Last verified update | 5 October 2026 — re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 207 documentation links; php-parser syntax check of the P07.05 files. Last full battery (P07.04): Foundation76/581; browser80/80; http-smoke16; nine real-MySQL database tests green. P07.05 has code-review approval only: PHPUnit, the MySQL suite, Playwright and http-smoke were not executed because this environment has no PHP, Composer, MySQL or Chromium |
 
 ### Feature and phase checklist
 
@@ -38,8 +38,8 @@ Check a phase only when all its required steps, verification checks, and indepen
 - [x] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 10/10 steps
 - [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
 - [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
-- [ ] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 0/10 steps
-- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 0/10 steps
+- [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps
+- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 5/10 steps
 - [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 0/10 steps
 - [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — 0/10 steps
 - [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — 0/10 steps

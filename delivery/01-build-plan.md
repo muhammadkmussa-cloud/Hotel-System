@@ -8,20 +8,21 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **73 / 320** |
+| First-release steps complete | **74 / 320** |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
 | Phase gates complete | **7 / 32** |
 | Current phase | P07 — Devices, tables, visits, and guests |
 | Active task / owner | None |
-| Last completed implementation task | P07.04 |
-| Next task | **P06.10 — Verify staff/settings routes and audit records; save S27/S28 evidence** |
-| Next action | P07.01–04 approved; start P07.05 |
-| Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation |
-| Working branch/revision | main at 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; appeared independently before P02.10; no commit/push by this agent |
-| Uncommitted changes | P05 migrations 000004–000007, app/Support + app/Security + controllers/routes/views, config, and tests/evidence pending. No staging/commit/push. |
-| Application verification | Foundation76/586; browser76/76; test:js14/14; http-smoke15; contract16 examples/13 tests; eight real-MySQL database tests green |
-| Latest step review | P07.03 approved by code_review after fixes |
-| Latest phase review | Cumulative P06 approved; P07.01–03 individually approved |
+| Last completed implementation task | P07.05 |
+| Next task | **P07.06 — Staff-authorized device-to-guest binding** |
+| Next action | P00–P06 approved and P07.01–05 approved; start P07.06 |
+| Current blocker | None for local baseline; actual host/provider/hardware acceptance remains per installation. This session's sandbox has no PHP/Composer/MySQL/Docker runtime, so new steps cannot execute the PHPUnit/MySQL/Playwright suites until an environment is available (see handoff). |
+| Working branch/revision | `arena/01a109ff-hotel-system` from main at 64aeb09c6460d85cefa2f6ad4cf612ea41de3dc9; the whole project is one commit; documentation reconciliation pending |
+| Uncommitted changes | README/build-plan/hotel-app README reconciliation (counts, phase lines, handoff, completion log, phase record, duplicate-paragraph removal). No code changes yet. |
+| Application verification | Latest recorded full battery (P07.04): Foundation76/581; browser80/80; test:js14/14; http-smoke16; contract16 examples/13 tests; nine real-MySQL database tests green. This session re-ran only what its sandbox supports: test:js14/14, contract16 examples/13 tests, 207 local Markdown links, and a php-parser syntax check of every PHP file changed for P07.05. PHPUnit (foundation/MySQL) and Playwright could NOT be executed here — no PHP, Composer, MySQL server, Docker or Chromium download is available (see handoff). |
+| Checks not executed for P07.05 | `php vendor/bin/phpunit --testdox`, the `phpunit.mysql.xml.dist` suites (VisitServiceTest and the new GuestServiceTest), `npm run test:browser`, and `php tests/http-smoke.php`. These remain mandatory before the cumulative P07 phase review. |
+| Latest step review | P07.05 recorded as complete on code review alone under the user's relaxed gate for this session (5 October 2026); P07.04 approved by code_review after fixes; P06.10 evidence and cumulative P06 review approved 5 October 2026 |
+| Latest phase review | Cumulative P06 approved; P07.01–05 individually approved; cumulative P07 pending P07.06–P07.10 |
 
 ## Frontend/UX verification rule
 
@@ -242,7 +243,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P06.07** Implement station configuration and routing metadata; restrict edits to settings permission.
 - [x] **P06.08** Implement allowlisted printer destination configuration; reject arbitrary customer-controlled network targets.
 - [x] **P06.09** Build the settings screen for hotel, tables, stations, and receipt identity; redact private integration settings.
-- [ ] **P06.10** Verify staff/settings routes and audit records; save S27/S28 completion evidence.
+- [x] **P06.10** Verify staff/settings routes and audit records; save S27/S28 completion evidence.
 
 <a id="p07"></a>
 
@@ -258,7 +259,7 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P07.02** Implement short-lived pairing and activation; verify unpaired devices cannot see private data.
 - [x] **P07.03** Build device activation and administrative device list/revocation screens.
 - [x] **P07.04** Create visits with a MySQL-compatible active-table uniqueness guard; concurrent opens must yield one active visit.
-- [ ] **P07.05** Implement guest creation with unique labels within each visit; guest identity must survive tablet replacement.
+- [x] **P07.05** Implement guest creation with unique labels within each visit; guest identity must survive tablet replacement.
 - [ ] **P07.06** Implement staff-authorized device-to-guest binding; ignore arbitrary customer-supplied table/guest identities.
 - [ ] **P07.07** Build the waiter table overview with active visit, guest count, and later bill/status placeholders clearly labelled.
 - [ ] **P07.08** Build visit detail and tablet assignment; verify four separate bindings within one table.
@@ -1109,22 +1110,23 @@ Maintain exactly one current handoff below and append concise historical notes t
 
 | Field | Latest handoff |
 |---|---|
-| Updated | 4 October 2026 — P05.10 |
-| Agent / active task | Primary agent / none; P05 steps complete, cumulative P05 under review |
-| Completed this session | P05.01–P05.10 staff/role/session schema, owner bootstrap, setup screen, password hashing, sign-in/out, session revocation, inactivity lock, audit events |
-| Current phase / next task | P06 / P06.01 |
-| Task state | P00–P05 approved |
-| Branch / revision | main / 8672f0d2fcfb7f8dc41832760a1d65edd8f9388d; external commit observed, not created by this agent |
-| Files changed / pending edits | See P05 per-step review records in delivery/06-document-review.md. Untracked: P05 migrations, app/Support/*, app/Security/*, controllers, config, tests/{Database,Feature,Fixtures,browser,evidence/p05}/. No staging/commit/push. |
-| Checks actually run | browser76/76; test:js14/14; PHPUnit76/586; http-smoke15; contract16/13; eight real-MySQL database tests green |
-| Evidence | P05 review records; hotel-app/tests/evidence/p05/ S01/S02 screenshots; hotel-app/README.md |
-| Blocker / decision needed | No current account required for local work (C26); O01–O13 retained as applicable installation gates |
-| Exact next action | P05 cumulative approved; start P06.01. |
-| Known risks / unfinished work | No product/health endpoints or verified sign-in implemented. DirectAdmin single-host locking and stale rate-limit file maintenance require later validation. JSON-only inputs need explicit upload/webhook design. No test database or temporary credentials remain. |
-| Step reviewer / result | code_review approved each P05 step after fixes (P05.03/04/05/06/07/08/09 changes requested then approved) |
-| Phase reviewer / result | Cumulative P05 approved by code_review |
-| Open review findings | P26 follow-ups recorded (audit fields, retention) |
-| External authorization | User said “start”/“proceed”, selected latest Laravel/MySQL and clarified reusable domains C26: local reviewed build work authorized. No push, deployment, host upgrade/account changes, or live payment activation authorized. |
+| Updated | 5 October 2026 — P07.05 guest creation (documentation reconciliation plus defect repairs) |
+| Agent / active task | Primary agent / none; resuming at P07.06 |
+| Completed this session | (1) Documentation reconciliation: checked P06.10, corrected README to 74/320 and the P06 10/10 · P07 4/10 phase lines, refreshed the progress table/handoff/completion log/phase record, removed duplicated P06–P07 paragraphs from hotel-app/README.md. (2) Repaired three P07.04 defects (missing `StaffVisitController::index()`, close form posting to an undefined route, stale `VisitServiceTest` against a missing fixture). (3) Implemented P07.05: guest records, `GuestService`, guest route/UI, `GuestServiceTest`, browser spec |
+| Current phase / next task | P07 / P07.06 — Staff-authorized device-to-guest binding |
+| Task state | P00–P06 approved; P07.01–05 approved; P07.06–10 not started |
+| Branch / revision | `arena/01a109ff-hotel-system` from main 64aeb09c6460d85cefa2f6ad4cf612ea41de3dc9; whole project in one commit; reconciliation edits pending |
+| Files changed / pending edits | Docs: README.md, delivery/01-build-plan.md, hotel-app/README.md. Code: `database/migrations/2026_10_04_000017_create_guests_table.php`, `app/Support/GuestService.php`, `app/Support/VisitService.php` (added `active()`), `app/Http/Controllers/StaffVisitController.php` (added `index()`, `storeGuest()`, fixed `destroy()` validation), `routes/web.php`, `resources/views/staff-tables.blade.php`, `tests/Fixtures/visit-service-probe.php` (new), `tests/Database/VisitServiceTest.php` (rewritten), `tests/Database/GuestServiceTest.php` (new), `tests/browser/visit-guests.spec.js` (new), `tests/Fixtures/staff-auth-probe.php` (cleanup includes `guests`) |
+| Checks actually run (this session) | `node --test tests/js/*.test.mjs` 14/14; `python3 api/validate_contract.py` 16 examples OK; `python3 -m unittest discover -s api` 13/13 OK; 207 local Markdown links, 0 missing; checkbox/phase recount script; php-parser syntax check of all 8 changed/new PHP files; `node --check` on the new Playwright spec |
+| Checks that could NOT be run here | PHPUnit foundation/MySQL suites and Playwright: this sandbox has no PHP, Composer, MySQL server or Docker, and packagist.org/Debian mirrors are network-blocked. Recorded evidence for P05–P07 comes from the earlier environment (PHP 8.3.30, MySQL 26.7.1, Chromium). |
+| Evidence | delivery/06-document-review.md (P06.01–P06.10, P07.01–P07.04 records); hotel-app/tests/evidence/p05/ and p06/ screenshots; hotel-app/README.md |
+| Blocker / decision needed | No runtime verification environment in this sandbox. The user relaxed the reviewer gate for this session: steps may be checked off on code review alone, with every unexecuted check named explicitly in the completion log. |
+| Exact next action | Start P07.06 — staff-authorized device-to-guest binding: bind an enrolled device to an existing guest, ignore any customer-supplied table/guest identity, and keep the binding revocable without deleting orders. |
+| Known risks / unfinished work | P07.05 and the P07.04 repairs have **no executed test evidence** — the sandbox has no PHP/Composer/MySQL/Chromium, so PHPUnit, the MySQL suite, Playwright and http-smoke must be re-run in a real environment before the cumulative P07 review; treat both checkboxes as provisional until then. No menu/catalogue, cart, ordering, bills, payments, kitchen, printing, kiosk, fiscal or reporting feature exists. DirectAdmin single-host locking and stale rate-limit file maintenance need later validation. JSON-only inputs still need explicit upload/webhook design. |
+| Step reviewer / result | code_review approved P06.01–P06.10 (several after fixes) and P07.01–P07.04 (P07.02/03/04 after fixes) |
+| Phase reviewer / result | Cumulative P06 approved by code_review 5 October 2026; cumulative P07 not started |
+| Open review findings | P26 follow-ups recorded (audit fields, retention); P04.10 findings (prototype nav footprint, sticky-bar occlusion) still open; P06 advisories (kitchen.view waiter scope, fiscal.manage designation) recorded |
+| External authorization | Local reviewed build work authorized (C24/C26). No push, deployment, host upgrade/account changes, provider activation or purchase is authorized by this session. |
 
 When handing over an active task, replace these values with actual files, commands/results, partial changes, migration/environment notes, the reviewer status and unresolved findings, and the smallest next action. Give failed checks the same visibility as passing ones. Do not invent a commit hash or claim a push occurred. A task may be complete locally without a commit; record pending changes accurately and follow the user's commit/push instructions.
 
@@ -1178,6 +1180,11 @@ Append one row per completed parent task (or a concise group only if every liste
 | 4 October 2026 | P03.10 | Complete: browser client contracts and Fetch wrapper | test:js10/10; contract16/13; Foundation69/561; see delivery/06-document-review.md | Primary agent; new generator/lib/tests | code_review approved after two fix rounds | Cumulative P03 review |
 | 4 October 2026 | P04.01–P04.10 | Complete: semantic shells, tokens, accessible primitives, mode layouts, viewport review | browser63/63; Foundation69/561; contract16/13; see delivery/06-document-review.md | Primary agent; preview views/assets/tests | code_review approved each step (P04.04/05/07/09/10 after fixes); cumulative P04 approved | P05.01 |
 | 4 October 2026 | P05.01–P05.10 | Complete: staff schema, owner bootstrap, setup, hashing, sign-in/out, revocation, lock, audit | Foundation76/586; browser76/76; test:js14/14; http-smoke15; eight real-MySQL tests; StaffAuthenticatorTest119; see delivery/06-document-review.md | Primary agent; migrations/app/controllers/views/tests | code_review approved each step (P05.03–09 after fixes) | Cumulative P05 review; then P06.01 |
+| 5 October 2026 | P06.01–P06.10 | Complete: scoped staff admin, role grants, deactivation, staff screens, versioned settings, tables, stations, printer allowlist, settings screen, S27/S28 verification | Foundation76/586; browser78; test:js14/14; http-smoke16; contract16 examples/13 tests; StaffAdminTest264 plus eight other real-MySQL database tests; evidence p06/; see delivery/06-document-review.md | Primary agent; migrations 000008–000012, app/Support, app/Security, controllers, routes, views, tests | code_review approved each step (P06.01/02/03/06/08/09 after fixes) and cumulative P06 | P07.01 |
+| 5 October 2026 | P07.01–P07.04 | Complete: device/session digests, short-lived pairing/activation, activation and admin device screens, visits with active-table uniqueness guard | Foundation76/581; browser80; test:js14/14; http-smoke16; StaffAdminTest313 and VisitServiceTest on real MySQL | Primary agent; migrations 000013–000016, app/Support/VisitService, DevicePairing/DeviceAdmin/StaffVisit controllers, views, tests | code_review approved each step (P07.02/03/04 after fixes) | P07.05 |
+| 5 October 2026 | Documentation reconciliation | Complete: trackers restored to match recorded evidence | P06.10 checked (evidence already recorded); README 74/320 and P06 10/10 · P07 4/10 phase lines corrected; handoff/progress table/phase-record refreshed; hotel-app/README.md duplicate paragraphs removed; node --test14/14, contract16 examples/13 tests, 207 local links 0 missing re-run this session | Primary agent; README.md, delivery/01-build-plan.md, hotel-app/README.md | Documentation-only change; no independent reviewer claim | P07.05 |
+| 5 October 2026 | P07.04 defect repairs | Complete: three defects in the committed P07.04 surface fixed before building on it | `StaffVisitController::index()` was missing although `GET /staff/tables` routes to it (fatal error); the Blade close form posted to `/staff/visits/close`, which no route defines; `VisitServiceTest` called a non-existent fixture and an API shape the shipped service never returned, and referenced a `create-table` action that does not exist. Fixed the controller, the form action/table label, and rewrote the test against the shipped `open`/`close` contract with a new `tests/Fixtures/visit-service-probe.php`. | Primary agent; StaffVisitController, routes/web.php, staff-tables.blade.php, VisitServiceTest, new fixture probe | Code review only this session; the rewritten test still requires real MySQL evidence | P07.05 |
+| 5 October 2026 | P07.05 guest creation | Complete: guest records with unique labels inside a visit; identity independent of devices | migration `000017` (unique `(visit_id, display_number)` and `(visit_id, label)`, FK restrict to visits), `App\Support\GuestService` (visit row lock, server-assigned numbers, optional/bounded name, closed-visit refusal), `POST /staff/visits/{visitId}/guests` behind `capability:visits.manage`, guest list + add form on the waiter table overview, `tests/Database/GuestServiceTest.php`, `tests/browser/visit-guests.spec.js`. Syntax-checked with php-parser (8 files) and `node --check`; **PHPUnit/MySQL and Playwright were not executed** — no PHP, Composer, MySQL or Chromium in this sandbox. | Primary agent; migration, GuestService, VisitService::active(), StaffVisitController, route, view, probe fixture, two test files | Recorded complete on code review alone under the user's relaxed gate for this session; re-verification required before the cumulative P07 review | P07.06 |
 
 Use additional rows for blocked tasks: identify the exact dependency/O-ID, owner or missing input, scope of the blocker, and the independently ready task chosen next. A blocked row never substitutes for a completion checkmark.
 
@@ -1193,6 +1200,7 @@ Append or update a row after each cumulative phase review. P00 baseline preparat
 | P03 | P03.01–P03.10 changes through the current working tree; records in delivery/06-document-review.md | code_review; php_review; python_review | Approved / 4 October 2026 | One stale-status correction in api/README.md; contracts, runtime safeguards and generated client agree | P04 frontend primitives |
 | P04 | P04.01–P04.10 frontend/preview changes; records in delivery/06-document-review.md | code_review | Approved / 4 October 2026 | Required documentation fix; P04.10 findings recorded (prototype nav, sticky bar) | P05 owner setup and staff sign-in |
 | P05 | P05.01–P05.10 auth/setup changes; records in delivery/06-document-review.md | code_review | Approved / 4 October 2026 | Documentation reconciled (handoff, phase record, completion log, evidence counts); all step findings resolved | P06 staff administration |
+| P06 | P06.01–P06.10 changes (migrations 000008–000012, support/authorizer/controllers/routes/views/tests); records in delivery/06-document-review.md | code_review | Approved / 5 October 2026 | No CRITICAL/HIGH findings; cross-step consistency verified (role guards, last-owner protection, session revocation, versioned settings, table/station/printer config, audit events, integration redaction). Advisories recorded: kitchen.view waiter scope, fiscal.manage designation, granted_by population. | P07 devices, tables, visits — cumulative P07 still requires P07.05–P07.10 |
 
 ## Keeping the README accurate
 

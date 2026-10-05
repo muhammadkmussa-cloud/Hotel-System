@@ -384,36 +384,6 @@ P05.01 created the `staff_users`, `roles`, `staff_role_grants`, and `staff_sessi
 
 P05.06 adds the sign-in submitting/denied UX: `public/assets/js/lib/single-submit.js` disables the control, sets `aria-busy`, prevents a duplicate submit, and announces a pending status via a live region; the denied alert is focused on load and the email field carries an inline error. Verified by `tests/browser/staff-sign-in.spec.js`.
 
-P07.03 adds the device activation screen (/device/pair) and the administrative device list with revoke; revocation is owner/manager-only, audited, and deactivates the device immediately. Evidence: StaffAdminTest 313 assertions on real MySQL.
-
-P07.02 adds short-lived pairing and activation: a 128-bit code is shown once and stored only as a SHA-256 digest; activation is single-use and expires, and the pairing screen exposes no private data. Evidence: StaffAdminTest 300 assertions on real MySQL; browser pairing-screen and CSRF tests.
-
-P07.01 adds enrolled-device and device-session records storing only SHA-256 digests (never raw credentials or tokens), with revocable sessions. Evidence: StaffAdminTest 284 assertions on real MySQL.
-
-P06.09 adds receipt identity settings and a redacted integrations status section (booleans only) on the settings screen. Evidence: StaffAdminTest 264 assertions on real MySQL.
-
-P06.08 adds allowlisted printer destinations (HTTPS + host allowlist, unique destination, audit events) and a Printer destinations section. P07.03 adds the device activation screen (/device/pair) and the administrative device list with revoke; revocation is owner/manager-only, audited, and deactivates the device immediately. Evidence: StaffAdminTest 313 assertions on real MySQL.
-
-P07.02 adds short-lived pairing and activation: a 128-bit code is shown once and stored only as a SHA-256 digest; activation is single-use and expires, and the pairing screen exposes no private data. Evidence: StaffAdminTest 300 assertions on real MySQL; browser pairing-screen and CSRF tests.
-
-P07.01 adds enrolled-device and device-session records storing only SHA-256 digests (never raw credentials or tokens), with revocable sessions. Evidence: StaffAdminTest 284 assertions on real MySQL.
-
-P06.09 adds receipt identity settings and a redacted integrations status section. Evidence: StaffAdminTest 245 assertions on real MySQL.
-
-P06.07 adds station configuration (kitchen/bar) with a routing-metadata column and a Stations section on the settings screen, gated by settings.manage. Evidence: StaffAdminTest 219 assertions on real MySQL.
-
-P06.06 adds table configuration: unique active labels via a generated column + unique index, deactivation instead of deletion, and a Tables section on the settings screen. Evidence: StaffAdminTest 193 assertions on real MySQL.
-
-P06.05 adds versioned hotel identity and business-day settings behind `capability:settings.manage` (owner only): updates require If-Match, stale edits fail, and the version increments atomically. Evidence: StaffAdminTest 170 assertions on real MySQL.
-
-P06.04 adds the staff list/edit/status screens: an edit form (name/email with uniqueness), per-member Activate/Deactivate, and the required denied (capability middleware), empty ("No staff members yet" / "no staff to edit"), and error (role=alert) states. Evidence: StaffAdminTest 152 assertions on real MySQL.
-
-P06.03 adds staff deactivation: a transactional deactivation that refuses self-deactivation and last-active-owner removal (row-locked, concurrency-tested), revokes all server-side sessions immediately, and records a staff_deactivated audit event. Evidence: StaffAdminTest 131 assertions on real MySQL.
-
-P06.02 adds role grant/revoke with guards: no self-escalation, only an owner can grant or revoke the owner role, and the last active owner cannot be stripped (transaction + row lock, concurrency-tested). `granted_by` is recorded. Evidence: `StaffAdminTest` 104 assertions on real MySQL.
-
-P06.01 adds scoped staff administration: `StaffAdmin` (list with roles, transactional create with hashed password and role grants) behind `capability:staff.manage` on `/admin/staff`, enforced by `StaffCapabilityAuthorizer` (owner/manager only). A controller guard prevents a manager from granting the owner role (no self-escalation). Baseline roles are seeded by migration 000008. Evidence: `StaffAdminTest` 65 assertions on real MySQL; browser anonymous-denial test.
-
 P05.10 ran the full battery (Foundation 76/586, browser 76, JS 14, contract 13, http-smoke 15, and eight real-MySQL database tests from clean schemas) and recorded S01/S02 evidence in `tests/evidence/p05/`.
 
 P05.09 adds security audit events (`audit_events`, `SecurityAudit`): login success/failure, logout, and unlock success/failure are recorded with actor, IP, UTC time, and bounded non-secret context; credential-like keys (`password`, `token`, `session`, `cookie`, `auth`, `credential`, `csrf` and variants) are filtered and unknown event names rejected. Failed-login auditing is bounded per IP, and login/unlock throttling keys on the submitted email (sign-in) or the server-side staff id (unlock) plus IP. Full audit-trail fields, retention, and operational health remain P26 follow-ups.
@@ -435,3 +405,41 @@ P05.02 adds the guarded one-time owner bootstrap:
 - The password is hashed with the Laravel hasher (bcrypt by default) and never stored or echoed in plaintext; P05.04 formalizes verification.
 
 Evidence: `OwnerBootstrapTest` on real MySQL 26.7.1 — 60 assertions covering missing/short secret, wrong secret, invalid password, one-time creation with a verifiable hash, sequential refusal, and two competing processes resolving to exactly one owner. Foundation PHPUnit 70/568.
+
+### P06 — staff administration and hotel settings
+
+P06.01 adds scoped staff administration: `StaffAdmin` (list with roles, transactional create with hashed password and role grants) behind `capability:staff.manage` on `/admin/staff`, enforced by `StaffCapabilityAuthorizer` (owner/manager only). A controller guard prevents a manager from granting the owner role (no self-escalation). Baseline roles are seeded by migration `000008`. Evidence: `StaffAdminTest` 65 assertions on real MySQL; browser anonymous-denial test.
+
+P06.02 adds role grant/revoke with guards: no self-escalation, only an owner can grant or revoke the owner role, and the last active owner cannot be stripped (transaction + `lockForUpdate`, concurrency-tested). `granted_by` is recorded. Evidence: `StaffAdminTest` 104 assertions on real MySQL.
+
+P06.03 adds staff deactivation: a transactional deactivation that refuses self-deactivation and last-active-owner removal (row-locked, concurrency-tested), revokes all server-side sessions immediately, and records a `staff_deactivated` audit event. Evidence: `StaffAdminTest` 131 assertions on real MySQL.
+
+P06.04 adds the staff list/edit/status screens: an edit form (name/email with uniqueness), per-member Activate/Deactivate, and the required denied (capability middleware), empty ("No staff members yet" / "no staff to edit") and error (`role=alert`) states. Evidence: `StaffAdminTest` 152 assertions on real MySQL.
+
+P06.05 adds versioned hotel identity and business-day settings behind `capability:settings.manage` (owner only): updates require `If-Match`, stale edits fail, and the version increments atomically. Evidence: `StaffAdminTest` 170 assertions on real MySQL.
+
+P06.06 adds table configuration: unique active labels via a generated column plus unique index, deactivation instead of deletion, and a Tables section on the settings screen. Evidence: `StaffAdminTest` 193 assertions on real MySQL.
+
+P06.07 adds station configuration (kitchen/bar) with a routing-metadata column and a Stations section on the settings screen, gated by `settings.manage`. Evidence: `StaffAdminTest` 219 assertions on real MySQL.
+
+P06.08 adds allowlisted printer destinations (HTTPS plus host allowlist read through `config/printers.php`, unique destination, audit events) and a Printer destinations section. Evidence: `StaffAdminTest` 245 assertions on real MySQL.
+
+P06.09 adds receipt identity settings and a redacted integrations status section (booleans only) on the settings screen. Evidence: `StaffAdminTest` 264 assertions on real MySQL.
+
+P06.10 ran the full battery (Foundation 76/586, browser 78, JS 14, contract 16 examples/13 tests, http-smoke 16, and nine real-MySQL database tests from clean schemas) and recorded S27/S28 evidence in `tests/evidence/p06/`. Cumulative P06 review approved 5 October 2026.
+
+### P07 — devices, tables, visits, and guests
+
+P07.01 adds enrolled-device and device-session records (`devices`, `device_sessions`) storing only SHA-256 digests — never raw credentials or tokens — with revocable sessions. Evidence: `StaffAdminTest` 284 assertions on real MySQL.
+
+P07.02 adds short-lived pairing and activation: a 128-bit code is shown once and stored only as a SHA-256 digest; activation is single-use and expires, and the pairing screen exposes no private data. Evidence: `StaffAdminTest` 300 assertions on real MySQL; browser pairing-screen and CSRF tests.
+
+P07.03 adds the device activation screen (`/device/pair`, the single activation flow), which establishes the device session, and the administrative device list with revoke; revocation is owner/manager-only, audited, and deactivates the device immediately. Evidence: `StaffAdminTest` 313 assertions on real MySQL; browser 80.
+
+P07.04 adds visits (`visits`, migration `000016`) with a MySQL-compatible active-table uniqueness guard (unique index on a generated `active_flag` column) and versioned close. Concurrent opens yield exactly one active visit; failed opens leave no partial rows. Evidence: `VisitServiceTest` on real MySQL covering concurrent opens, rollback and protected fields; Foundation 76/581; browser 80.
+
+P07.05 adds guests (`guests`, migration `000017`) with server-assigned display numbers and labels that are unique inside one visit (`(visit_id, display_number)` and `(visit_id, label)` unique indexes, `RESTRICT` foreign key to visits). `App\Support\GuestService::add()` locks the visit row inside a `DatabaseTransaction`, refuses closed visits and unknown visits, bounds the optional guest name (1–150 characters, no control characters), and caps a visit at 32 guests. Guest identity is a record of its own — it is never derived from a tablet or device session, so replacing a device cannot renumber or reassign a guest; `GuestServiceTest` proves this by deleting every `device_sessions` row and re-reading the same guest. `POST /staff/visits/{visitId}/guests` sits behind `capability:visits.manage`, and the waiter table overview lists each visit's guests with an add-guest form.
+
+This step also repaired three defects in the committed P07.04 surface: `StaffVisitController::index()` was missing although `GET /staff/tables` routes to it; the Blade close-visit form posted to `/staff/visits/close`, which no route defines; and `VisitServiceTest` drove a fixture file (`tests/Fixtures/visit-service-probe.php`) that did not exist against an API shape the shipped service never returned. The fixture now exists and both database tests match the shipped `VisitService`/`GuestService` contracts.
+
+Verification status: `GuestServiceTest` (real MySQL: sequential and concurrent adds, invalid names, closed-visit refusal, rollback, device replacement, per-visit numbering) and `tests/browser/visit-guests.spec.js` were written but **not executed** — this session's environment has no PHP, Composer, MySQL server or downloadable Chromium. Syntax was checked with a PHP parser; the suites must be run before the cumulative P07 review.
