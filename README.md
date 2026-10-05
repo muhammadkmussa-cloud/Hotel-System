@@ -16,17 +16,17 @@ This project contains **Markdown specifications, a build plan, and the initial [
 - [ ] Required provider, hardware, and recovery gates passed.
 - [ ] Authorized pilot and production release completed.
 
-**First-release checklist: 80 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**First-release checklist: 84 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
 
 | Current status | Value |
 |---|---|
-| Current phase | P07 — Devices, tables, visits, and guests |
-| Active task | None — stopped after completed P07.10 |
-| Last completed build task | P07.10 — Reassign/revoke/replace-device flows clear local personal state |
-| Next task | **P08.01 — Create media metadata for ownership, rights, checksum, alt text, crop, and publication state** |
-| Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation |
-| Review gate | P00–P06 approved. P07: P07.01–P07.04 approved by an independent reviewer with executed evidence; P07.04 repairs and P07.05–P07.10 are **Blocked: evidence missing** (implementer self-review only, no suite executed) and are ticked only under this session's relaxed gate. Cumulative P07 review not started — see [delivery/08-execution-evidence.md](delivery/08-execution-evidence.md) |
-| Last verified update | 5 October 2026 — the executed/unexecuted split for every P07 step is logged in [delivery/08-execution-evidence.md](delivery/08-execution-evidence.md). Re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 264 documentation links; php-parser syntax check of every PHP file changed for P07.07–P07.10, plus a Blade tag-balance check of both visit screens. Last full battery (P07.04): Foundation76/581; browser80/80; http-smoke16; nine real-MySQL database tests green. P07.05–P07.10 have code-review approval only: PHPUnit, the MySQL suite (now including VisitOverviewTest and VisitTransferTest), Playwright and http-smoke were not executed because this environment has no PHP, Composer, MySQL or Chromium |
+| Current phase | P08 — Safe meal and ingredient images |
+| Active task | None — stopped after completed P08.04 |
+| Last completed build task | P08.04 — Store original images outside public_html/private_html with server-generated names, SHA-256 hash-before-write, atomic rename, duplicate-safe unique constraints |
+| Next task | **P08.05 — Re-encode approved raster derivatives with metadata removal; verify GD support on the chosen host** |
+| Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation. P07 cumulative review still needs executed PHPUnit/MySQL/browser evidence; P08.01–P08.04 have implementer self-review only (no suite executed in this sandbox) |
+| Review gate | P00–P06 approved. P07: P07.01–P07.04 approved by an independent reviewer with executed evidence; P07.04 repairs and P07.05–P07.10 are **Blocked: evidence missing** (implementer self-review only, no suite executed) and are ticked only under this session's relaxed gate. Cumulative P07 review not started. P08.01–P08.04: implementer self-review, no PHP/MySQL executed — see [delivery/08-execution-evidence.md](delivery/08-execution-evidence.md) |
+| Last verified update | 5 October 2026 — P08.04 added `MediaStorage` (hash-before-write SHA-256, temp-sibling then atomic rename to permanent path, UUID7 sharded filenames under `private/media/originals/YYMM/`, MIME→extension allow-list, path-traversal guard, `media_uploaded` SecurityAudit event, defence-in-depth re-validation, post-write hash readback), `StoredOriginal` value object, migration 000021 adding `original_storage_path` and a (state, created_at) index, and MediaStorageTest with a temp-directory fake. Originals are written to `storage/app/private/` which is outside DirectAdmin's `public_html` document root and has `serve => false` in config/filesystems.php. P08.02 (BoundMediaUpload) and P08.03 (RasterValidator) remain in place. Re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 262 Markdown links 0 broken. PHPUnit (both foundation and MySQL suites), Playwright and http-smoke remain unexecuted because this sandbox has no PHP, Composer, MySQL or Chromium; Debian package mirrors and the Playwright browser CDN are network-blocked |
 
 ### Feature and phase checklist
 
@@ -40,7 +40,7 @@ Check a phase only when all its required steps, verification checks, and indepen
 - [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
 - [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps
 - [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (cumulative phase review pending executed evidence)
-- [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 0/10 steps
+- [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 4/10 steps
 - [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — 0/10 steps
 - [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — 0/10 steps
 - [ ] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — 0/10 steps

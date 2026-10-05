@@ -18,6 +18,7 @@ final class SecurityAudit
         'login_succeeded', 'login_failed', 'logout', 'unlock_succeeded', 'unlock_failed',
         'owner_bootstrapped', 'installation_configured', 'session_revoked', 'staff_deactivated', 'staff_activated', 'printer_destination_created', 'printer_destination_deactivated', 'device_revoked',
         'visit_transferred',
+        'media_metadata_edited', 'media_publication_changed', 'media_uploaded',
     ];
 
     private const FORBIDDEN_KEY_NEEDLES = ['password', 'token', 'secret', 'session', 'cookie', 'auth', 'credential', 'csrf'];

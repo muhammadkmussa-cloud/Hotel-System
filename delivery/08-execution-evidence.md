@@ -115,6 +115,23 @@ The gate in [delivery/01-build-plan.md](01-build-plan.md) requires an independen
 
 Until that evidence exists, treat the 80 / 320 count as "80 steps built and recorded", not "80 steps verified". The README phase checkbox for P07 stays unchecked for the same reason.
 
+
+| P08.02 authorized upload parsing / file-size limits | Yes | **None — implementer self-review** | JS 14/14; contract 16/13; 262 Markdown links 0 broken; `node --check` all JS; manual code read of middleware/limits/error/config; BoundMediaUploadTest and MediaUploadLimitsTest written (plain Symfony/PHPUnit, no Laravel bootstrap so they cannot be executed without PHP). | `php vendor/bin/phpunit --testdox` (MediaUploadLimitsTest, BoundMediaUploadTest, plus the prior MediaMetadataValidationTest); MySQL suites unchanged; `npm run test:browser`; `php tests/http-smoke.php` | `config/media.php`, `.env.example`, `app/Http/Middleware/BoundMediaUpload.php`, `app/Http/Requests/InvalidUpload.php`, `app/Support/MediaUploadLimits.php`, `bootstrap/app.php` (alias+singleton), `tests/Feature/MediaUploadLimitsTest.php`, `tests/Feature/BoundMediaUploadTest.php` |
+
+
+| P08.03 raster signature validation / decode limits | Yes | **None — implementer self-review** | JS 14/14; contract 16/13; 262 Markdown links 0 broken; `node --check` all JS; manual code review of validator/limits/value-object/exception; RasterLimitsTest + RasterValidatorTest written with pure-PHP minimal JPEG/PNG/WebP fixtures (no GD extension required for tests). | `php vendor/bin/phpunit --testdox` (RasterLimitsTest, RasterValidatorTest plus prior P08.01–P08.02 tests); MySQL suites unchanged; `npm run test:browser`; `php tests/http-smoke.php` (once upload route exists in P08.08) | `config/media.php` (raster block), `.env.example` (MEDIA_MAX_*), `app/Support/RasterInfo.php`, `app/Support/MediaException.php`, `app/Support/RasterLimits.php`, `app/Support/RasterValidator.php`, `bootstrap/app.php` (RasterLimits+RasterValidator singletons), `tests/Feature/RasterLimitsTest.php`, `tests/Feature/RasterValidatorTest.php` |
+
+
+| P08.04 quarantined private original storage / direct-access refusal | Yes | **None — implementer self-review** | JS 14/14; contract 16/13; 262 Markdown links 0 broken; `node --check` all JS; manual code review; MediaStorageTest written (temp-disk fake; no Laravel/DB bootstrap required). The direct-web-access-fails claim rests on `config/filesystems.php` (`'serve' => false`, root `storage/app/private/`) and the blueprint mapping `public/` as the sole document root; HTTP-level execution is deferred to P08.09/http-smoke when a server runs. | `php vendor/bin/phpunit --testdox` (MediaStorageTest plus all prior P08.01–P08.03 tests); MySQL suites including migration 000021; `php tests/http-smoke.php` (once upload/public routes exist in P08.08–P08.09); `npm run test:browser` | `database/migrations/2026_10_05_000021_add_media_original_storage_path.php`, `app/Support/StoredOriginal.php`, `app/Support/MediaStorage.php`, `app/Models/Media.php` (property), `app/Support/SecurityAudit.php` (event), `bootstrap/app.php` (singleton), `tests/Feature/MediaStorageTest.php` |
+
+## Maintenance rule
+
+## P08 rows
+
+| Step | Recorded complete | Independent reviewer | Executed in the recording environment | Not executed (must re-run) | Test files |
+|---|---|---|---|---|---|
+| P08.01 media metadata (ownership, rights, checksum, alt text, crop, publication state) | Yes | **None — implementer self-review** | JS 14/14; contract 16/13; 265 Markdown links; MediaMetadataValidationTest exists (cannot run without PHP); manual code read of migration/model/service/probe/test; audit allowlist updated to include `media_metadata_edited` and `media_publication_changed` | `php vendor/bin/phpunit --testdox` (foundation including new MediaMetadataValidationTest); MySQL suite `MediaMetadataTest`; http-smoke; browser suite (no UI added this step) | `database/migrations/2026_10_05_000020_create_media_table.php`, `app/Models/Media.php`, `app/Support/MediaMetadata.php`, `tests/Feature/MediaMetadataValidationTest.php`, `tests/Database/MediaMetadataTest.php`, `tests/Fixtures/media-metadata-probe.php` |
+
 ## Maintenance rule
 
 Update this log in the same change as any step: add the executed command with its result and date, move the check from *Not executed* to *Executed*, and record the reviewer outcome in the *Independent reviewer* column. Never delete a row — a step's history of what did and did not run is the review boundary for the next reviewer.
