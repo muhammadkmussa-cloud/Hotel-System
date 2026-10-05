@@ -32,6 +32,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'limit' => \App\Http\Middleware\LimitRequests::class,
             'principal' => \App\Http\Middleware\RequirePrincipal::class,
             'capability' => \App\Http\Middleware\RequireCapability::class,
+            'media.upload' => \App\Http\Middleware\BoundMediaUpload::class,
         ]);
         $isApi = fn (Request $request): bool => $request->is('api/v1', 'api/v1/*');
         $middleware->trimStrings(except: [$isApi]);
@@ -50,5 +51,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
 $app->singleton(\Illuminate\Contracts\Debug\ExceptionHandler::class, \App\Http\ExceptionHandler::class);
 $app->bind(LoadEnvironmentVariables::class, LoadPrivateEnvironment::class);
+$app->singleton(\App\Support\MediaUploadLimits::class);
+$app->singleton(\App\Support\RasterLimits::class, fn () => \App\Support\RasterLimits::fromConfig());
+$app->singleton(\App\Support\RasterValidator::class);
+$app->singleton(\App\Support\MediaStorage::class);
 
 return $app;
