@@ -15,6 +15,7 @@
         </div>
         <button class="btn-large btn-block" data-pending-label="Pairing…">Pair device</button>
     </form>
+    <p class="small muted">No private data is shown until this device is paired.</p>
     <p class="small muted">Staff? <a href="/staff/sign-in">Sign in instead</a>.</p>
 </section>
 @endsection

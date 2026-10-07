@@ -12,7 +12,7 @@
 
 <div class="grid-2">
 <section class="card"><h2>Details</h2>
-<form method="post" action="/admin/meals/{{ $meal->id }}">@csrf
+<form method="post" action="/admin/meals/{{ $meal->id }}" data-dirty-guard>@csrf
     <input type="hidden" name="version" value="{{ $meal->version }}">
     <div class="field"><label for="name">Name</label><input id="name" name="name" value="{{ $meal->name }}" required maxlength="120"></div>
     <div class="field"><label for="description">Description</label><textarea id="description" name="description" maxlength="1000">{{ $meal->description }}</textarea></div>
@@ -36,7 +36,7 @@
 <section class="card"><h2>Ingredients and choices</h2>
 <p class="hint">Fixed: always in the dish. Removable: guest may ask to leave it out. Extra: guest may add it for the price shown.</p>
 <div class="rule-row rule-head" aria-hidden="true"><span>Ingredient</span><span>Rule</span><span>Extra price (KSh)</span></div>
-<form method="post" action="/admin/meals/{{ $meal->id }}/ingredients">@csrf
+<form method="post" action="/admin/meals/{{ $meal->id }}/ingredients" data-dirty-guard>@csrf
     <input type="hidden" name="version" value="{{ $meal->version }}">
     @foreach ($rules as $i => $r)
         <div class="rule-row">

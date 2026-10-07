@@ -1,0 +1,35 @@
+P11 / S06 / S07 / T06 — customer menu and ingredient customiser evidence
+=========================================================================
+
+Date: 7 October 2026
+Environment: PHP 8.3.30, SQLite (seeded demo), Chromium via Playwright 1.63.0
+
+Command:
+  npx playwright test --project=authenticated tests/browser/customer-menu.authed.spec.js
+
+Result:
+  OK (1 test) — exercises the REAL kiosk customer screen (not the P04 prototype)
+
+Flow proven end to end:
+  - Pair a fresh kiosk device through the real admin → pairing flow.
+  - P11.02 published meal cards render from published data.
+  - P11.03 search filters the menu in place (focus retained), and a no-match
+    search shows an empty state with a "Show all dishes" recovery action.
+  - P11.05/P11.06 the customiser shows fixed ingredients as non-interactive
+    ("Included", no removal control), removable ingredients with a Remove
+    toggle, and extras with an Add control.
+  - P11.07 a dense ingredient set (7 included) collapses behind a
+    "Show all N ingredients" tray toggle (labels never shrink).
+  - P11.09 quantity stepper and add-to-order produce a cart line.
+
+Related coverage:
+  - P11.06 fixed-ingredient immutability against a forged request is asserted at
+    the service layer in tests/Database/MealCatalogueTest.php (cart-add with a
+    fixed id → VALIDATION_FAILED).
+  - Reduced motion is handled globally (public/assets/css/app.css) and is
+    asserted by tests/browser/viewports.spec.js for the component surfaces.
+
+Sources:
+  hotel-app/tests/browser/customer-menu.authed.spec.js
+  hotel-app/tests/Database/MealCatalogueTest.php
+  hotel-app/public/assets/js/apps/customer.js

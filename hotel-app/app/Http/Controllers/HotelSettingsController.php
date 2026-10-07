@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\RequirePrincipal;
+use App\Security\Principal;
 use App\Support\HotelSettingsEditor;
 use App\Support\IntegrationStatus;
 use App\Support\PrinterDestinationConfig;
+use App\Support\SecurityAudit;
 use App\Support\StationConfig;
 use App\Support\TableConfig;
 use App\Support\ResourceVersion;
@@ -16,6 +19,12 @@ use Illuminate\View\View;
 
 final class HotelSettingsController
 {
+    private function actor(Request $request): string
+    {
+        $principal = $request->attributes->get(RequirePrincipal::ATTRIBUTE);
+
+        return $principal instanceof Principal ? $principal->identifier() : '';
+    }
     public function show(HotelSettingsEditor $editor, TableConfig $tables, StationConfig $stations, PrinterDestinationConfig $printers, IntegrationStatus $integrations): View
     {
         return view('admin.settings', [
@@ -56,7 +65,7 @@ final class HotelSettingsController
         };
     }
 
-    public function storeStations(Request $request, StationConfig $stations): RedirectResponse
+    public function storeStations(Request $request, StationConfig $stations, SecurityAudit $audit): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:64'],
@@ -73,6 +82,10 @@ final class HotelSettingsController
             $result = $stations->create($validated['name'], $validated['kind'], null);
         }
 
+        if (in_array($result, ['created', 'deactivated'], true)) {
+            $audit->record($result === 'created' ? 'station_created' : 'station_deactivated', $this->actor($request), $request->ip());
+        }
+
         return match ($result) {
             'created', 'deactivated' => redirect('/admin/settings')->with('status', 'Station configuration updated.'),
             'duplicate' => back()->withInput()->withErrors(['name' => 'That station already exists.']),
@@ -83,7 +96,7 @@ final class HotelSettingsController
         };
     }
 
-    public function storeTables(Request $request, TableConfig $tables): RedirectResponse
+    public function storeTables(Request $request, TableConfig $tables, SecurityAudit $audit): RedirectResponse
     {
         $validated = $request->validate([
             'label' => ['nullable', 'string', 'max:64'],
@@ -98,6 +111,10 @@ final class HotelSettingsController
             ? $tables->deactivate($validated['table_id'])
             : $tables->create($validated['label']);
 
+        if (in_array($result, ['created', 'deactivated'], true)) {
+            $audit->record($result === 'created' ? 'table_created' : 'table_deactivated', $this->actor($request), $request->ip());
+        }
+
         return match ($result) {
             'created', 'deactivated' => redirect('/admin/settings')->with('status', 'Table configuration updated.'),
             'duplicate_label' => back()->withInput()->withErrors(['label' => 'That table label is already in use.']),
@@ -108,7 +125,7 @@ final class HotelSettingsController
         };
     }
 
-    public function storeReceipt(Request $request, HotelSettingsEditor $editor): RedirectResponse
+    public function storeReceipt(Request $request, HotelSettingsEditor $editor, SecurityAudit $audit): RedirectResponse
     {
         $validated = $request->validate([
             'receipt_header' => ['nullable', 'string', 'max:150'],
@@ -120,6 +137,10 @@ final class HotelSettingsController
             'receipt_footer' => $validated['receipt_footer'] ?? null,
         ]);
 
+        if ($result === 'updated') {
+            $audit->record('settings_updated', $this->actor($request), $request->ip());
+        }
+
         return match ($result) {
             'updated' => redirect('/admin/settings')->with('status', 'Receipt identity updated.'),
             'stale' => redirect('/admin/settings')->with('status', 'Settings changed elsewhere. Reload and try again.'),
@@ -128,7 +149,7 @@ final class HotelSettingsController
         };
     }
 
-    public function store(Request $request, HotelSettingsEditor $editor): RedirectResponse
+    public function store(Request $request, HotelSettingsEditor $editor, SecurityAudit $audit): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -142,6 +163,10 @@ final class HotelSettingsController
             'timezone' => $validated['timezone'],
             'business_day_cutoff' => $validated['business_day_cutoff'] ?: null,
         ]);
+
+        if ($result === 'updated') {
+            $audit->record('settings_updated', $this->actor($request), $request->ip());
+        }
 
         return match ($result) {
             'updated' => redirect('/admin/settings')->with('status', 'Settings updated.'),

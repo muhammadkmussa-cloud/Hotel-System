@@ -111,6 +111,10 @@ final class StaffVisitController
 
         $result = $this->visits->open($validated['table_id'], $this->actorId($request));
 
+        if ($result['id'] === null) {
+            return back()->withErrors(['table_id' => 'That table is not available.']);
+        }
+
         return redirect('/staff/tables')->with('status', $result['created'] ? 'Visit opened.' : 'Table already has an active visit.');
     }
 
@@ -162,6 +166,13 @@ final class StaffVisitController
             isset($validated['ttl_minutes']) ? (int) $validated['ttl_minutes'] : null,
         );
 
+        if ($result['result'] === 'created') {
+            $this->audit->record('guest_binding_created', $this->actorId($request), $request->ip(), [
+                'guest_id' => $validated['guest_id'],
+                'device_session_id' => $validated['device_session_id'],
+            ]);
+        }
+
         $message = match ($result['result']) {
             'created' => 'Tablet bound to guest.',
             'visit_closed' => 'That visit is closed. Reload the table list.',
@@ -187,6 +198,12 @@ final class StaffVisitController
         ]);
 
         $result = $this->bindings->revoke($bindingId, $this->actorId($request));
+
+        if ($result === 'revoked') {
+            $this->audit->record('guest_binding_revoked', $this->actorId($request), $request->ip(), [
+                'binding_id' => $bindingId,
+            ]);
+        }
 
         $message = match ($result) {
             'revoked' => 'Tablet unbound from the guest.',

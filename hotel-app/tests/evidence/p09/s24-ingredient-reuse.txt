@@ -1,0 +1,33 @@
+P09 / S24 — reusable ingredient catalogue evidence
+==================================================
+
+Date: 7 October 2026
+Environment: PHP 8.3.30, MySQL 26.7.1 (disposable schema), PHPUnit 12.5.37
+
+Command:
+  HOTEL_TEST_DB_ALLOW_SCHEMA=1 \
+  HOTEL_TEST_DB_HOST=127.0.0.1 HOTEL_TEST_DB_PORT=13306 \
+  HOTEL_TEST_DB_DATABASE=hotel_test HOTEL_TEST_DB_USERNAME=hotel_user \
+  HOTEL_TEST_DB_PASSWORD=*** \
+  php vendor/bin/phpunit --configuration phpunit.mysql.xml.dist \
+      tests/Database/IngredientCatalogueTest.php
+
+Result:
+  OK (1 test, 75 assertions)
+
+What it proves (real MySQL, not mocks):
+  - P09.03 unique active ingredient names; a duplicate is refused (DUPLICATE_NAME).
+  - P09.04 versioned edits; a stale version is refused (VERSION_CONFLICT).
+  - P09.01 create + edit + archive + restore each record an ingredient_versions
+    snapshot, so history has no gaps and references survive archiving.
+  - P09.05 self-reference and multi-level composition cycles are refused
+    (VALIDATION_FAILED); a valid compound composition is stored.
+  - P09.10 one media row is reused by multiple ingredients (no duplicated upload).
+
+Source: hotel-app/tests/Database/IngredientCatalogueTest.php
+        hotel-app/tests/Fixtures/ingredient-catalogue-probe.php
+
+Note: P09.09 nested-digest invalidation (a change to a child compound must
+re-invalidate meals using the parent) is fixed in
+app/Domain/Catalogue/MealCatalogue.php::refreshDigestsForIngredient (upward
+ancestor walk) and is covered by the P10 meal tests.

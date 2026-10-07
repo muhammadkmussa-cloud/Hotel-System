@@ -21,14 +21,14 @@ This project contains the specifications, the build plan and a **working [Larave
 
 | Current status | Value |
 |---|---|
-| Current phase | Strict independent re-review from P05 (started 7 October 2026); P05 re-approved after fixes |
-| Built | P00–P28 exist in code; independently **re-verified** only through P05 |
-| Blockers | Real-MySQL defects in P06/P07/P08 being fixed in review; MySQL/DirectAdmin host for P29/P30; Safaricom Daraja credentials; certified eTIMS route; receipt/kitchen printers; a hotel for the pilot |
-| Last verified update | 7 October 2026 — strict re-review baseline executed (Foundation 181/760, JS 15/15, real-MySQL 11/19, browser 81/3); P05 re-reviewed and approved after 2 HIGH fixes |
+| Current phase | Strict independent re-review from P05 (started 7 October 2026); P05–P13 approved after fixes (P11.10 partial); P14 next |
+| Built | P00–P28 exist in code; independently **re-verified** through P13 |
+| Blockers | P11.10 full T06 matrix outstanding; MySQL/DirectAdmin host for P29/P30; Safaricom Daraja credentials; certified eTIMS route; receipt/kitchen printers; a hotel for the pilot |
+| Last verified update | 7 October 2026 — Foundation 182/766, JS 15/15, real-MySQL 21/21, browser 93/93, contract 30 examples; P05–P13 re-reviewed and approved after fixes |
 
 ### Feature and phase checklist
 
-Phases P00–P04 passed independent review, and **P05 was independently re-reviewed and approved on 7 October 2026** after two HIGH fixes. P06–P28 exist in code but were NOT independently phase-reviewed (the broad pass waived the gate), and 7 October testing found real defects in P06/P07/P08, so their boxes are unchecked pending the strict re-review now in progress. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
+Phases P00–P04 passed independent review; **P05–P13 were independently re-reviewed on 7 October 2026** and approved after fixes (P11: 9/10 steps; P11.10 full T06 matrix partial). P14–P28 exist in code but were NOT independently phase-reviewed (the broad pass waived the gate), so their boxes are unchecked pending the strict re-review now in progress. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
 - [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
@@ -36,14 +36,14 @@ Phases P00–P04 passed independent review, and **P05 was independently re-revie
 - [x] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 10/10 steps
 - [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
 - [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps (re-reviewed and approved 7 October 2026)
-- [ ] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — code present; strict re-review pending (visit-open defect)
-- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — code present; strict re-review pending (guest binding/transfer defects)
-- [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — code present; strict re-review pending (media edit defect)
-- [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — code present; strict re-review pending
-- [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — code present; strict re-review pending
-- [ ] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — code present; strict re-review pending
-- [ ] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — code present; strict re-review pending
-- [ ] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — code present; strict re-review pending
+- [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [x] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [x] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [x] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [x] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [ ] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — 9/10 steps approved 7 October 2026; P11.10 (full T06 matrix) partial
+- [x] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [x] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — 10/10 steps (re-reviewed and approved 7 October 2026)
 - [ ] [P14 — Availability and preparation review](delivery/01-build-plan.md#p14) — code present; strict re-review pending
 - [ ] [P15 — Polling, durable jobs, and recovery](delivery/01-build-plan.md#p15) — code present; strict re-review pending
 - [ ] [P16 — Kitchen, order status, and waiter assistance](delivery/01-build-plan.md#p16) — code present; strict re-review pending

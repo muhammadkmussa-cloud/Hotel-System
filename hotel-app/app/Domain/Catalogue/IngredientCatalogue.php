@@ -52,18 +52,27 @@ final class IngredientCatalogue
     {
         $clean = $this->validate($data);
 
-        return Tx::run(function () use ($clean, $actorId): string {
-            if (DB::table('ingredients')->where('active', 1)->where('name', $clean['name'])->exists()) {
+        try {
+            return Tx::run(function () use ($clean, $actorId): string {
+                if (DB::table('ingredients')->where('active', 1)->where('name', $clean['name'])->exists()) {
+                    throw DomainError::conflict('DUPLICATE_NAME', 'An active ingredient already has that name.');
+                }
+                $id = Ids::new();
+                $now = now('UTC');
+                DB::table('ingredients')->insert($clean + ['id' => $id, 'active' => 1, 'version' => 1, 'created_at' => $now, 'updated_at' => $now]);
+                $this->snapshot($id, $actorId);
+                Audit::record('ingredient_created', $actorId, ['ingredient_id' => $id, 'name' => $clean['name']]);
+
+                return $id;
+            });
+        } catch (\Illuminate\Database\QueryException $error) {
+            // Two concurrent creates race past the existence check; the unique
+            // active-name index decides, and the loser gets a clean conflict.
+            if (\App\Domain\Operations\JobRunner::isDuplicate($error)) {
                 throw DomainError::conflict('DUPLICATE_NAME', 'An active ingredient already has that name.');
             }
-            $id = Ids::new();
-            $now = now('UTC');
-            DB::table('ingredients')->insert($clean + ['id' => $id, 'active' => 1, 'version' => 1, 'created_at' => $now, 'updated_at' => $now]);
-            $this->snapshot($id, $actorId);
-            Audit::record('ingredient_created', $actorId, ['ingredient_id' => $id, 'name' => $clean['name']]);
-
-            return $id;
-        });
+            throw $error;
+        }
     }
 
     /**
@@ -172,6 +181,8 @@ final class IngredientCatalogue
             }
             // Archiving keeps every reference: meals and published snapshots still resolve it.
             DB::table('ingredients')->where('id', $id)->update(['active' => $active ? 1 : 0, 'version' => (int) $row->version + 1, 'updated_at' => now('UTC')]);
+            // Record the archive/restore as a version so history has no gaps.
+            $this->snapshot($id, $actorId);
             Audit::record($active ? 'ingredient_restored' : 'ingredient_archived', $actorId, ['ingredient_id' => $id]);
         });
     }

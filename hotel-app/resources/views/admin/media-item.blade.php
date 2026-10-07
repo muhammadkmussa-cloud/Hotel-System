@@ -32,6 +32,22 @@
     </div>
     <button>Save details</button>
 </form>
+<h3>Hotel approval</h3>
+<p class="small muted" data-approval-summary>
+    @if ($m->content_approver_name || $m->chef_approver_name)
+        Content: {{ $m->content_approver_name ?: '—' }}@if($m->content_approved_at) ({{ $m->content_approved_at }})@endif ·
+        Chef: {{ $m->chef_approver_name ?: '—' }}@if($m->chef_approved_at) ({{ $m->chef_approved_at }})@endif
+    @else
+        Not yet approved. Demo/sample assets stay labelled “sample image”.
+    @endif
+</p>
+<form method="post" action="/admin/media/{{ $m->id }}/approve">@csrf
+    <div class="form-grid">
+        <div class="field"><label for="ca">Content approver</label><input id="ca" name="content_approver" value="{{ $m->content_approver_name }}" maxlength="150"></div>
+        <div class="field"><label for="cha">Chef approver</label><input id="cha" name="chef_approver" value="{{ $m->chef_approver_name }}" maxlength="150"></div>
+    </div>
+    <button>Record approval</button>
+</form>
 <h3>Edit history</h3>
 @forelse ($edits as $e)<p class="small muted">{{ \App\Domain\Hotel::localTime($e->created_at, 'd M H:i') }} · v{{ $e->from_version }}→v{{ $e->to_version }} · {{ implode(', ', array_keys(json_decode($e->changes, true) ?: [])) }}</p>@empty<p class="small muted">No edits.</p>@endforelse
 </section>

@@ -19,7 +19,7 @@ final class LimitRequests
 
     public function handle(Request $request, Closure $next, string $policy = 'requests', string $identityField = 'email'): Response
     {
-        if (! in_array($policy, ['requests', 'login'], true) || ! $request->hasSession()) throw new ServiceUnavailableHttpException;
+        if (! in_array($policy, ['requests', 'login', 'pairing'], true) || ! $request->hasSession()) throw new ServiceUnavailableHttpException;
         $subject = $request->session()->getId();
         if ($policy === 'login') {
             // Prefer a server-owned session value (e.g. staff_user_id for unlock) so a

@@ -3,6 +3,22 @@ import { live, formatKsh, setOffline } from './common.js';
 
 document.querySelector('[data-error-focus]')?.focus();
 
+// Warn before losing unsaved edits on forms marked data-dirty-guard (P10.06).
+const guardedForms = [...document.querySelectorAll('form[data-dirty-guard]')];
+if (guardedForms.length) {
+  let dirty = false;
+  guardedForms.forEach((form) => {
+    form.addEventListener('input', () => { dirty = true; });
+    form.addEventListener('change', () => { dirty = true; });
+    form.addEventListener('submit', () => { dirty = false; });
+  });
+  window.addEventListener('beforeunload', (event) => {
+    if (!dirty) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+}
+
 // Prevent double submission of any staff form.
 document.addEventListener('submit', (event) => {
   const form = event.target;

@@ -12,6 +12,7 @@ use App\Domain\Money;
 use App\Domain\Operations\PrintService;
 use App\Domain\Outbox;
 use App\Domain\Tx;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -40,7 +41,7 @@ final class OrderService
         $hash = self::idempotencyHash('table', $guest['guestId'], $key);
         $allergyNote = $this->cleanAllergyNote($allergyNote);
 
-        return Tx::run(function () use ($guest, $deviceSessionId, $hash, $quoteDigest, $allergyNote): array {
+        return $this->submitIdempotent(function () use ($guest, $deviceSessionId, $hash, $quoteDigest, $allergyNote): array {
             if (($replay = $this->replay($hash, $quoteDigest)) !== null) {
                 return $replay;
             }
@@ -74,7 +75,7 @@ final class OrderService
             Audit::record('order_submitted', null, ['submission_id' => $id, 'channel' => 'table', 'state' => $state, 'total_minor' => $quote['totalMinor']]);
 
             return ['submission' => $this->summary($id), 'replayed' => false];
-        });
+        }, $hash, $quoteDigest);
     }
 
     /**
@@ -94,7 +95,7 @@ final class OrderService
             throw DomainError::invalid('Keep the collection name under 40 characters.');
         }
 
-        return Tx::run(function () use ($kioskOrderId, $deviceSessionId, $hash, $quoteDigest, $allergyNote, $route, $dining, $name): array {
+        return $this->submitIdempotent(function () use ($kioskOrderId, $deviceSessionId, $hash, $quoteDigest, $allergyNote, $route, $dining, $name): array {
             if (($replay = $this->replay($hash, $quoteDigest)) !== null) {
                 return $replay;
             }
@@ -124,7 +125,7 @@ final class OrderService
             Audit::record('order_submitted', null, ['submission_id' => $id, 'channel' => 'kiosk', 'state' => $state, 'total_minor' => $quote['totalMinor']]);
 
             return ['submission' => $this->summary($id), 'replayed' => false];
-        });
+        }, $hash, $quoteDigest);
     }
 
     /** Create kitchen tickets (one per station) and post charges. Idempotent per submission. */
@@ -248,6 +249,28 @@ final class OrderService
         return $quote;
     }
 
+    /**
+     * Run a submission transaction; if a concurrent request wins the unique
+     * idempotency_hash race, replay its committed result instead of a 500.
+     *
+     * @param callable():array{submission:array,replayed:bool} $work
+     * @return array{submission:array,replayed:bool}
+     */
+    private function submitIdempotent(callable $work, string $hash, string $quoteDigest): array
+    {
+        try {
+            return Tx::run($work);
+        } catch (QueryException $error) {
+            if (\App\Domain\Operations\JobRunner::isDuplicate($error)) {
+                $replay = $this->replay($hash, $quoteDigest);
+                if ($replay !== null) {
+                    return $replay;
+                }
+            }
+            throw $error;
+        }
+    }
+
     /** @param array<string,mixed> $base @param array<string,string> $owner */
     private function createSubmission(array $base, array $quote, array $owner, mixed $reservationExpiry = null): string
     {
@@ -259,11 +282,23 @@ final class OrderService
         foreach ($quote['lines'] as $line) {
             $meal = DB::table('meals')->where('id', $line['mealId'])->first(['station_id', 'portions_remaining']);
             $itemId = Ids::new();
+            // Snapshot stable ingredient identity (IDs + extra unit prices), not
+            // just display names, so later renames/repricing cannot rewrite what
+            // the guest actually ordered (P13.01).
+            $extrasSnapshot = [];
+            foreach ($line['extraIds'] as $index => $extraId) {
+                $extrasSnapshot[] = [
+                    'id' => $extraId,
+                    'name' => $line['extras'][$index]['name'] ?? null,
+                    'price' => $line['extras'][$index]['price'] ?? null,
+                ];
+            }
             DB::table('order_items')->insert([
                 'id' => $itemId, 'submission_id' => $id, 'meal_id' => $line['mealId'], 'meal_version' => $line['mealVersion'],
                 'meal_name' => $line['name'], 'unit_price_minor' => $line['unitPriceMinor'], 'extras_minor' => $line['extrasMinor'],
                 'quantity' => $line['quantity'], 'line_total_minor' => $line['lineTotalMinor'],
-                'removed' => json_encode($line['removed']), 'extras' => json_encode(array_column($line['extras'], 'name')),
+                'removed' => json_encode($line['removed']), 'removed_ids' => json_encode($line['removedIds']),
+                'extras' => json_encode(array_column($line['extras'], 'name')), 'extras_snapshot' => json_encode($extrasSnapshot),
                 'note' => $line['note'], 'station_id' => $meal->station_id ?? $defaultStation, 'cancelled' => 0,
                 'created_at' => $now, 'updated_at' => $now,
             ]);

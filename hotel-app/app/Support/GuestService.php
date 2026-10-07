@@ -8,6 +8,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
+use LogicException;
 use Throwable;
 
 /**
@@ -86,6 +87,10 @@ final class GuestService
 
                 return ['result' => 'created', 'id' => $id, 'label' => 'Guest '.$displayNumber, 'displayNumber' => $displayNumber];
             });
+        } catch (LogicException $error) {
+            // A nested transaction is a programming error, not a data failure:
+            // let it propagate so callers cannot silently fold this write in.
+            throw $error;
         } catch (QueryException $error) {
             // The unique (visit_id, display_number)/(visit_id, label) indexes
             // are the final guard if the lock is ever bypassed.

@@ -38,10 +38,15 @@ final class DemoReset
         $this->database->purge('demo_reset');
         try {
             $connection = $this->database->connection('demo_reset');
-            // Refuse unexpected tables: future schema expansion needs an explicit reset review.
+            // The database must be a migrated application install carrying the
+            // demo marker. Compare against the tables the app's migrations
+            // create (plus the guard), so schema growth is allowed but an
+            // unexpected/foreign table still refuses the reset.
             $tables = $connection->getSchemaBuilder()->getTableListing($settings['database'], false);
             sort($tables);
-            if ($tables !== ['demo_reset_guard', 'hotel_settings', 'idempotent_commands', 'migrations']) return false;
+            $expected = $this->expectedTables();
+            sort($expected);
+            if ($tables !== $expected) return false;
             if ($connection->getDriverName() !== 'mysql') return false;
             $engines = $connection->select('SELECT ENGINE AS engine FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()');
             foreach ($engines as $table) {
@@ -67,5 +72,26 @@ final class DemoReset
         } finally {
             $this->database->purge('demo_reset');
         }
+    }
+
+    /**
+     * The tables a freshly migrated install contains: every table the app's
+     * migrations create, the migrator's own ledger, and the demo guard.
+     *
+     * @return list<string>
+     */
+    private function expectedTables(): array
+    {
+        $names = ['migrations', 'demo_reset_guard'];
+        foreach (glob(base_path('database/migrations').'/*.php') ?: [] as $file) {
+            $contents = (string) file_get_contents($file);
+            if (preg_match_all("/Schema::create\(\s*'([^']+)'/", $contents, $matches) > 0) {
+                foreach ($matches[1] as $name) {
+                    $names[] = $name;
+                }
+            }
+        }
+
+        return array_values(array_unique($names));
     }
 }

@@ -101,7 +101,7 @@ final class MediaMetadata
         }
 
         try {
-            VersionedUpdate::apply($connection, 'media', $mediaId, $expectedVersion, $clean);
+            VersionedUpdate::apply($connection, 'media', $mediaId, $expectedVersion, $clean, 'version');
 
             $this->audit->record('media_metadata_edited', $actorId, null, [
                 'media_id' => $mediaId,
@@ -152,7 +152,7 @@ final class MediaMetadata
         try {
             VersionedUpdate::apply($connection, 'media', $mediaId, $expectedVersion, [
                 'publication_state' => $targetState,
-            ]);
+            ], 'version');
 
             $this->audit->record('media_publication_changed', $actorId, null, [
                 'media_id' => $mediaId,

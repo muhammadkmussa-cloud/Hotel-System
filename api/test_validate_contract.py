@@ -28,7 +28,7 @@ class ContractValidationTest(unittest.TestCase):
         return value
 
     def test_current_contract_passes(self) -> None:
-        self.assertEqual(28, validate(self.document))
+        self.assertEqual(30, validate(self.document))
 
     def test_contract_covers_every_registered_runtime_route(self) -> None:
         source = (ROOT.parent / 'hotel-app/routes/api.php').read_text(encoding='utf-8')

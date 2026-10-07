@@ -8,6 +8,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use LogicException;
 use Throwable;
 
 /**
@@ -47,18 +48,23 @@ final class GuestBindingService
 
         try {
             return DatabaseTransaction::run($connection, function () use ($connection, $guestId, $deviceSessionId, $actorId, $ttlMinutes): array {
-                $guest = $connection->table('guests')->where('id', $guestId)->lockForUpdate()
-                    ->first(['id', 'visit_id', 'state']);
-                if ($guest === null) {
-                    return ['result' => 'guest_not_found'];
-                }
-                if ($guest->state !== 'active') {
+                // Lock order matches order submission (visit → guest) to avoid a
+                // deadlock when a guest orders while staff rebind the tablet.
+                $peek = $connection->table('guests')->where('id', $guestId)->first(['id', 'visit_id']);
+                if ($peek === null) {
                     return ['result' => 'guest_not_found'];
                 }
 
-                $visit = $connection->table('visits')->where('id', $guest->visit_id)->lockForUpdate()->first(['state']);
+                // A closed visit refuses new bindings regardless of the guest's
+                // own state, so the caller sees the visit-level reason.
+                $visit = $connection->table('visits')->where('id', $peek->visit_id)->lockForUpdate()->first(['state']);
                 if ($visit === null || $visit->state !== 'open') {
                     return ['result' => 'visit_closed'];
+                }
+
+                $guest = $connection->table('guests')->where('id', $guestId)->lockForUpdate()->first(['id', 'visit_id', 'state']);
+                if ($guest === null || $guest->state !== 'active') {
+                    return ['result' => 'guest_not_found'];
                 }
 
                 $session = $connection->table('device_sessions')->where('id', $deviceSessionId)->lockForUpdate()
@@ -104,6 +110,8 @@ final class GuestBindingService
 
                 return ['result' => 'created', 'id' => $id];
             });
+        } catch (LogicException $error) {
+            throw $error;
         } catch (QueryException $error) {
             return \App\Domain\Operations\JobRunner::isDuplicate($error) ? ['result' => 'conflict'] : ['result' => 'failed'];
         } catch (Throwable) {
@@ -138,6 +146,8 @@ final class GuestBindingService
 
                 return 'revoked';
             });
+        } catch (LogicException $error) {
+            throw $error;
         } catch (Throwable) {
             return 'failed';
         }
@@ -178,6 +188,8 @@ final class GuestBindingService
 
                 return 'revoked';
             });
+        } catch (LogicException $error) {
+            throw $error;
         } catch (Throwable) {
             return 'failed';
         }
@@ -204,10 +216,12 @@ final class GuestBindingService
             ->join('visits', 'visits.id', '=', 'guests.visit_id')
             ->join('tables', 'tables.id', '=', 'visits.table_id')
             ->join('device_sessions', 'device_sessions.id', '=', 'guest_bindings.device_session_id')
+            ->join('devices', 'devices.id', '=', 'device_sessions.device_id')
             ->where('guest_bindings.device_session_id', $deviceSessionId)
             ->whereNull('guest_bindings.revoked_at')
             ->whereNull('device_sessions.revoked_at')
             ->where('device_sessions.expires_at', '>', $now)
+            ->where('devices.active', 1)
             ->where('visits.state', 'open')
             ->where('guests.state', 'active')
             ->where(static function ($query) use ($now): void {

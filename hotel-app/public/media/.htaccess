@@ -1,0 +1,32 @@
+# Hardening for the writable public media directory.
+#
+# The application writes re-encoded raster derivatives (random .webp/.jpg names)
+# here at runtime. This directory must never execute code, so deny any script
+# handler and refuse non-raster extensions even if a file is planted.
+#
+# Apache 2.4 / DirectAdmin (LiteSpeed honours the same directives).
+
+# Disable any dynamic engine that could execute a planted file.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .sh
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8
+
+# Only serve raster images; everything else is denied outright.
+<FilesMatch "\.(?i:php|phtml|phar|pht|php[0-9]|cgi|pl|py|sh|html?|svg|xml)$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(?i:jpe?g|png|webp|avif)$">
+    Require all granted
+</FilesMatch>
+
+# Do not run anything from this tree as a CGI/script.
+Options -ExecCGI -Indexes
+AddType text/plain .php .phtml .phar .pht .php3 .php4 .php5 .php7 .php8

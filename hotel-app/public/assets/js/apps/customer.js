@@ -10,21 +10,47 @@ export function menuView(state, { onOpen }) {
   }
   const cats = menu.categories;
   const active = state.category ?? null;
-  const shown = active === null ? menu.meals : menu.meals.filter((m) => (m.categoryId ?? null) === (active === '__more' ? null : active));
+  let query = state.query ?? '';
+
+  const dish = (m) => h('button', {
+    type: 'button', class: 'dish', 'aria-disabled': String(!m.available),
+    'aria-label': `${m.name}, ${m.price}${m.available ? '' : ', ' + (m.availabilityNote ?? 'unavailable')}`,
+    onclick: () => onOpen(m.id),
+  }, img(m.image), h('div', { class: 'body' },
+    h('span', { class: 'name' }, m.name),
+    m.description ? h('span', { class: 'desc' }, m.description) : null,
+    h('span', { class: 'price' }, m.price),
+    !m.available ? h('span', { class: 'pill pill-danger' }, m.availabilityNote ?? 'Sold out')
+      : (m.availabilityNote ? h('span', { class: 'pill pill-warn' }, m.availabilityNote) : null)));
+
+  const inCategory = () => active === null ? menu.meals : menu.meals.filter((m) => (m.categoryId ?? null) === (active === '__more' ? null : active));
+  const matches = (list) => {
+    const q = query.trim().toLowerCase();
+    return q === '' ? list : list.filter((m) => (m.name ?? '').toLowerCase().includes(q) || (m.description ?? '').toLowerCase().includes(q));
+  };
+
+  const grid = h('div', { class: 'dish-grid' });
+  const noResults = h('div', { class: 'card center', hidden: true },
+    h('p', { class: 'muted' }, 'No dishes match your search.'),
+    h('button', { type: 'button', class: 'btn-secondary', onclick: () => { query = ''; input.value = ''; render(); input.focus(); } }, 'Show all dishes'));
+  const render = () => {
+    const list = matches(inCategory());
+    grid.replaceChildren(...list.map(dish));
+    noResults.hidden = list.length !== 0;
+  };
+  const input = h('input', { id: 'menu-search', type: 'search', placeholder: 'Search dishes', value: state.query ?? '',
+    oninput: (e) => { query = e.target.value; state.query = query; render(); } });
+  render();
+
   return h('div', {},
+    h('div', { class: 'menu-search field' },
+      h('label', { for: 'menu-search', class: 'visually-hidden' }, 'Search the menu'),
+      input),
     cats.length > 1 ? h('div', { class: 'cat-tabs', role: 'toolbar', 'aria-label': 'Menu sections' },
       h('button', { type: 'button', 'aria-pressed': String(active === null), onclick: () => state.set({ category: null }) }, 'All'),
       cats.map((c) => h('button', { type: 'button', 'aria-pressed': String(active === (c.id ?? '__more')), onclick: () => state.set({ category: c.id ?? '__more' }) }, c.name))) : null,
-    h('div', { class: 'dish-grid' }, shown.map((m) => h('button', {
-      type: 'button', class: 'dish', 'aria-disabled': String(!m.available),
-      'aria-label': `${m.name}, ${m.price}${m.available ? '' : ', ' + (m.availabilityNote ?? 'unavailable')}`,
-      onclick: () => onOpen(m.id),
-    }, img(m.image), h('div', { class: 'body' },
-      h('span', { class: 'name' }, m.name),
-      m.description ? h('span', { class: 'desc' }, m.description) : null,
-      h('span', { class: 'price' }, m.price),
-      !m.available ? h('span', { class: 'pill pill-danger' }, m.availabilityNote ?? 'Sold out')
-        : (m.availabilityNote ? h('span', { class: 'pill pill-warn' }, m.availabilityNote) : null))))));
+    grid,
+    noResults);
 }
 
 /** Meal customiser sheet. Calls addLine(payload) on confirm. */
@@ -66,6 +92,27 @@ export async function openMeal(base, mealId, { addLine, close }) {
   };
   const included = meal.ingredients.filter((i) => i.rule !== 'extra');
   const optional = meal.ingredients.filter((i) => i.rule === 'extra');
+
+  // P11.07 — dense ingredient sets collapse into an overflow tray rather than
+  // shrinking every label; a toggle reveals the full list.
+  const ingredientSection = (list) => {
+    const LIMIT = 6;
+    const listEl = h('ul', { class: 'ing-list' });
+    let expanded = list.length <= LIMIT;
+    const renderList = () => listEl.replaceChildren(...(expanded ? list : list.slice(0, LIMIT)).map(ingRow));
+    renderList();
+    const toggle = list.length <= LIMIT ? null : h('button', {
+      type: 'button', class: 'btn-ghost btn-small', 'aria-expanded': String(expanded),
+      onclick: (event) => {
+        expanded = !expanded;
+        event.currentTarget.setAttribute('aria-expanded', String(expanded));
+        event.currentTarget.textContent = expanded ? 'Show fewer ingredients' : `Show all ${list.length} ingredients`;
+        renderList();
+      },
+    }, `Show all ${list.length} ingredients`);
+
+    return [h('h3', {}, 'What’s in it'), listEl, toggle];
+  };
   const addBtn = h('button', { type: 'button', class: 'btn-large', disabled: !meal.available }, meal.available ? ['Add to order · ', totalEl] : 'Not available right now');
   addBtn.addEventListener('click', () => busy(addBtn, async () => {
     try {
@@ -84,7 +131,7 @@ export async function openMeal(base, mealId, { addLine, close }) {
       h('p', { class: 'price', style: 'font-weight:800' }, meal.price),
       meal.description ? h('p', {}, meal.description) : null,
       !meal.available ? h('div', { class: 'notice notice-warn' }, meal.availabilityNote ?? 'Sold out for now') : null,
-      included.length ? [h('h3', {}, 'What’s in it'), h('ul', { class: 'ing-list' }, included.map(ingRow))] : null,
+      included.length ? ingredientSection(included) : null,
       optional.length ? [h('h3', {}, 'Extras'), h('ul', { class: 'ing-list' }, optional.map(ingRow))] : null,
       h('p', { class: 'small muted' }, 'Ingredient information is provided by the kitchen. If you have an allergy, add a note when you send your order so staff can check with the kitchen.'),
       h('div', { class: 'field' }, h('label', { for: 'line-note' }, 'Request for this dish (optional)'), note),

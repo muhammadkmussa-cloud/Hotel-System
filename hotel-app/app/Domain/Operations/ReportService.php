@@ -34,9 +34,12 @@ final class ReportService
         $orders = DB::table('order_submissions')->whereNotNull('released_at')->whereBetween(DB::raw('date(released_at)'), [$from, $to]);
         $orderCount = (clone $orders)->count();
         $kiosk = (clone $orders)->where('channel', 'kiosk')->count();
+        // selectRaw bypasses Laravel's identifier wrapping, so qualify the raw
+        // columns with the connection's table prefix (empty for a normal install).
+        $prefix = DB::connection()->getTablePrefix();
         $top = DB::table('order_items')->join('charges', 'charges.order_item_id', '=', 'order_items.id')
             ->where('charges.state', 'posted')->whereBetween('charges.business_date', [$from, $to])
-            ->groupBy('order_items.meal_name')->selectRaw('order_items.meal_name as name, SUM(order_items.quantity) as qty, SUM(charges.gross_minor) as gross')
+            ->groupBy('order_items.meal_name')->selectRaw($prefix.'order_items.meal_name as name, SUM('.$prefix.'order_items.quantity) as qty, SUM('.$prefix.'charges.gross_minor) as gross')
             ->orderByDesc('qty')->limit(10)->get();
         $drawers = DB::table('drawer_sessions')->where('state', 'closed')->whereBetween(DB::raw('date(closed_at)'), [$from, $to])->get();
         $daily = DB::table('charges')->where('state', 'posted')->whereBetween('business_date', [$from, $to])

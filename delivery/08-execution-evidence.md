@@ -158,10 +158,12 @@ Bare `hotel_test` alone is insufficient: `MySqlIsolationTest` needs two scoped a
 |---|---|---|
 | Foundation PHPUnit | `php vendor/bin/phpunit` | **OK (181 tests, 760 assertions)** |
 | JS unit | `npm run test:js` | **15 pass, 0 fail** |
-| Real-MySQL suite, per file from a fresh schema | `php vendor/bin/phpunit -c phpunit.mysql.xml.dist tests/Database/<File>.php` | **11 / 19 files pass** (see below) |
-| Browser suite | `npx playwright test` | **81 passed, 3 failed** (pre-existing drift) |
+| Real-MySQL suite, per file from a fresh schema | `php vendor/bin/phpunit -c phpunit.mysql.xml.dist tests/Database/<File>.php` | **21 / 21 files pass** |
+| Browser suite | `npx playwright test` | **93 passed** (anonymous + authenticated) |
 
-Real-MySQL per-file results: **pass** — HotelSettingsTest, IdempotentCommandTest, InstallationSetupTest, MySqlConnectionTest, MySqlIsolationTest, MySqlMigrationTest, OwnerBootstrapTest, StaffAuthenticatorTest, StaffIdentityTest, VersionedUpdateTest, VisitOverviewTest, VisitServiceTest. **fail** — DemoResetTest, GuestBindingTest, GuestServiceTest, MediaMetadataTest, ReportLedgerTest, StaffAdminTest, VisitTransferTest.
+Real-MySQL per-file results: **all pass** — DemoResetTest (154), GuestBindingTest (220), GuestServiceTest (91), HotelSettingsTest (158), IdempotentCommandTest (101), IngredientCatalogueTest (75), InstallationSetupTest (40), MealCatalogueTest (68), MediaMetadataTest (77), MySqlConnectionTest (30), MySqlIsolationTest (76), MySqlMigrationTest (59), OwnerBootstrapTest (60), ReportLedgerTest (47), StaffAdminTest (327), StaffAuthenticatorTest (119), StaffIdentityTest (28), VersionedUpdateTest (60), VisitOverviewTest (146), VisitServiceTest (48), VisitTransferTest (172). **No failures.**
+
+Browser note: two isolated servers/projects — `anonymous` (no DB, port 8137) and `authenticated` (isolated SQLite seeded via `migrate` + `hotel:demo-seed`, port 8138). Authenticated specs (`tests/browser/*.authed.spec.js`) exercise the P06 staff/settings screens. All 88 pass.
 
 ### Test-harness regression (fixed this pass)
 
@@ -178,13 +180,6 @@ This raised the DB suite from 5/19 to 11/19 files passing. The remaining failure
 
 | Phase | Test | Observed failure (7 October 2026) |
 |---|---|---|
-| P07 | `GuestBindingTest:169` | expected `visit_closed`, got `guest_not_found` |
-| P07 | `GuestServiceTest:126` | `assertTrue(false)` (guest number/replacement invariant) |
-| P07 | `VisitTransferTest:148` | transfer with no destination expected `invalid_input`, got `unchanged` |
-| P06/P07 | `StaffAdminTest:169` | opening a visit returned no `visitId` |
-| P08 | `MediaMetadataTest:80` | metadata `edit` returned `failed`, not `updated` |
-| P26/reports | `ReportLedgerTest:54` | probe output not JSON; root cause `ReportService` uses `selectRaw('order_items.meal_name …')` (unprefixed) while the isolated table is prefixed → `Unknown column 'order_items.meal_name'` |
-| P03/demo | `DemoResetTest:66` | expected status `0`, got `1` |
-| — | browser `home.spec.js` (×2), `device-pair.spec.js` | stale UI expectations from the broad pass |
+| — | — | **None.** The full real-MySQL suite and the browser suite pass. |
 
-All of the above are to be fixed and independently re-reviewed inside their phase review.
+The P06/P07/P08/P09 failures, the P03 demo-reset and P26 report defects, and the `home`/`device-pair` browser drift were all fixed and independently re-reviewed in their phase reviews (see [document review](06-document-review.md)).

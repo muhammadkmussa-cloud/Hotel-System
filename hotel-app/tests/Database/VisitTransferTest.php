@@ -153,8 +153,11 @@ final class VisitTransferTest extends TestCase
             self::assertSame('unchanged', $run('transfer', ['VISIT_ID' => $visitId, 'TABLE_ID' => $tableThree, 'WAITER_ID' => $waiterId, 'ACTOR_ID' => $ownerId])['result']);
 
             // Two managers moving the same visit into the same free table:
-            // the row lock serialises them, so the loser sees the committed
-            // move and is refused instead of stacking two visits on one table.
+            // the row lock serialises them, so exactly one applies the move and
+            // the loser observes the committed move and returns a no-op
+            // ('unchanged') rather than stacking a second visit on the table.
+            // (Two *different* visits into one table is the destination_occupied
+            // case, asserted above.)
             $barrier = $fixture.'/barrier-'.bin2hex(random_bytes(4));
             $processes = [];
             foreach ([$tableTwo, $tableTwo] as $destination) {
@@ -177,7 +180,7 @@ final class VisitTransferTest extends TestCase
                 $results[] = $data['result'];
             }
             sort($results);
-            self::assertSame(['destination_occupied', 'transferred'], $results, 'A contested move must be refused, not merged.');
+            self::assertSame(['transferred', 'unchanged'], $results, 'A contested move applies exactly once; the other caller sees it as a no-op.');
             self::assertSame(5, $run('visit-detail', ['VISIT_ID' => $visitId])['visit']['version'], 'Exactly one of the two moves bumped the version.');
             $finalLabel = $run('visit-detail', ['VISIT_ID' => $visitId])['visit']['tableLabel'];
             self::assertSame('T2', $finalLabel);

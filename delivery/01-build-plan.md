@@ -10,19 +10,19 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 |---|---|
 | First-release steps complete | **84 / 320** (checkbox count; verification status is tracked separately below and in [execution evidence](08-execution-evidence.md)) |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **7 / 32** recorded (P00–P07); a strict re-review from P05 is in progress and may reopen any of P05–P28 |
-| Current phase | Strict independent re-review from P05 (started 7 October 2026) |
-| Active task / owner | P05 strict re-review — **completed** |
-| Last completed implementation task | P05 re-review: 10/10 steps approved after fixes (2 HIGH fixed: P05.06 single-submit contract, P05.08 idle→unlock routing) |
-| Next task | **P06 strict re-review** against current `main` (then P07, P08, … P28) |
-| Next action | Re-review P06 step-by-step, fix blocking findings, and record outcomes in [document review](06-document-review.md) and [execution evidence](08-execution-evidence.md) |
-| Current blocker | Real defects found in the P06/P07/P08 real-MySQL tests (visit open returns no id; guest binding reports `guest_not_found`; transfer validation returns `unchanged`; media `edit` returns `failed`; report query is prefix-sensitive) — each to be fixed and re-reviewed inside its phase review. External provider/hardware gates are unchanged. |
+| Phase gates complete | **12 / 32** recorded (P00–P13 ticked on re-review; P11.10 partial) |
+| Current phase | Strict independent re-review from P05 (started 7 October 2026); P05–P13 approved after fixes |
+| Active task / owner | P13 strict re-review — **completed** |
+| Last completed implementation task | P12 re-review: HIGH-1 typed cart quote schema + populated example; HIGH-2 removed the silent line rebase; HIGH-3 cart isolation/expiry/no-side-effects test (105 assertions) + S08/T05/T30 evidence |
+| Next task | **P14 strict re-review** against current `main` (then P15, … P28) |
+| Next action | Re-review P14 step-by-step, fix blocking findings, and record outcomes in [document review](06-document-review.md) and [execution evidence](08-execution-evidence.md) |
+| Current blocker | P11.10 full T06 matrix (3/8/20 ingredients, long labels, missing image, keyboard, reduced motion on the real screen) outstanding. Local suites otherwise green (Foundation 182/766, JS 15/15, real-MySQL 21/21, browser 93/93). External provider/hardware gates unchanged. |
 | Working branch/revision | `main` at `f92e9cf` (merge PR #4); 7 October re-review fixes are in the working tree |
-| Uncommitted changes | 10 `hotel-app/tests/Fixtures/*.php` probes (drop-all reset), `media-metadata-probe.php` paths, `report-ledger-probe.php` `allocation_id`, `resources/views/staff-sign-in.blade.php`, `public/assets/js/apps/staff.js`, `app/Http/ExceptionHandler.php`; docs `06-document-review.md`, `08-execution-evidence.md`, this file |
-| Application verification | Executed 7 October 2026: Foundation PHPUnit **181/760 OK**; `npm run test:js` **15/15**; real-MySQL per-file **11/19**; `npx playwright test` **81 passed / 3 failed (pre-existing drift)**; `staff-sign-in.spec.js` 4/4. No `php tests/http-smoke.php` run yet. |
-| Checks not executed | The 7 remaining real-MySQL defects and 3 browser-drift specs listed in [execution evidence](08-execution-evidence.md); `php tests/http-smoke.php`; cumulative P06–P28 reviews |
-| Latest step review | P05.01–P05.10 independently re-reviewed and approved after fixes (7 October 2026) |
-| Latest phase review | P05 re-review approved after fixes; P06 onward not yet re-reviewed |
+| Uncommitted changes | P05–P11 fixes across fixtures/tests, domain services, controllers, views/JS (incl. `customer.js` search + overflow tray, new `customer-menu.authed.spec.js`), config, routes; docs `06`/`08`/this file |
+| Application verification | Executed 7 October 2026: Foundation PHPUnit **182/766 OK**; `npm run test:js` **15/15**; real-MySQL per-file **21/21**; browser **93/93**; contract validator **30 examples** + 15 unittest OK. `php tests/http-smoke.php` not yet re-run. |
+| Checks not executed | `php tests/http-smoke.php`; the P11.10 T06 matrix; cumulative P13–P28 reviews |
+| Latest step review | P13.01–P13.10 independently re-reviewed and approved after fixes (7 October 2026) |
+| Latest phase review | P05–P13 re-reviews approved after fixes (P11.10 partial); P14 onward not yet re-reviewed |
 
 ## Frontend/UX verification rule
 
@@ -280,12 +280,12 @@ All steps below are initially unchecked. Source links identify the relevant cont
 - [x] **P08.02** Implement authorized upload parsing with file-size limits; reject oversized input before processing.
 - [x] **P08.03** Validate actual raster signatures and decoding limits; reject executable/vector or malformed uploads.
 - [x] **P08.04** Store original images outside both public_html and private_html; verify direct web access fails.
-- [ ] **P08.05** Re-encode approved raster derivatives with metadata removal; verify chosen host format support.
-- [ ] **P08.06** Generate responsive variants with dimensions; keep originals out of normal browser responses.
-- [ ] **P08.07** Implement versioned media metadata edits; record who changed rights, alt text, and crop.
-- [ ] **P08.08** Build the photo uploader with progress/error/preview states; a failed upload must not appear published.
-- [ ] **P08.09** Implement public-derivative delivery and safe missing-image placeholders; prevent script execution in writable media paths.
-- [ ] **P08.10** Run upload/security and image-layout checks; record demo versus hotel-approved asset status explicitly.
+- [x] **P08.05** Re-encode approved raster derivatives with metadata removal; verify chosen host format support.
+- [x] **P08.06** Generate responsive variants with dimensions; keep originals out of normal browser responses.
+- [x] **P08.07** Implement versioned media metadata edits; record who changed rights, alt text, and crop.
+- [x] **P08.08** Build the photo uploader with progress/error/preview states; a failed upload must not appear published.
+- [x] **P08.09** Implement public-derivative delivery and safe missing-image placeholders; prevent script execution in writable media paths.
+- [x] **P08.10** Run upload/security and image-layout checks; record demo versus hotel-approved asset status explicitly.
 
 <a id="p09"></a>
 
@@ -297,16 +297,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [ingredient experience](../design/02-ingredient-experience.md), [data](../architecture/02-domain-data.md).
 
-- [ ] **P09.01** Create ingredient records with image references and version history; preserve existing references on archive.
-- [ ] **P09.02** Implement scoped ingredient list/search with pagination; test access by permitted editors only.
-- [ ] **P09.03** Implement ingredient creation with validated names and metadata; prevent duplicate accidental submissions.
-- [ ] **P09.04** Implement versioned ingredient edits; preserve earlier composition facts used by published meals.
-- [ ] **P09.05** Create compound-ingredient relationships; reject self-reference and multi-level cycles.
-- [ ] **P09.06** Add preparation/allergen notes with limited visibility; do not derive allergy-safe claims from removals.
-- [ ] **P09.07** Build ingredient list/create/edit screens using the shared uploader.
-- [ ] **P09.08** Build a composition editor with readable nested ingredients and validation errors.
-- [ ] **P09.09** Invalidate affected draft recipe approvals after relevant ingredient changes; list impacted meals for review.
-- [ ] **P09.10** Verify one ingredient/image is reused by multiple dishes without duplicated uploads; record S24 evidence.
+- [x] **P09.01** Create ingredient records with image references and version history; preserve existing references on archive.
+- [x] **P09.02** Implement scoped ingredient list/search with pagination; test access by permitted editors only.
+- [x] **P09.03** Implement ingredient creation with validated names and metadata; prevent duplicate accidental submissions.
+- [x] **P09.04** Implement versioned ingredient edits; preserve earlier composition facts used by published meals.
+- [x] **P09.05** Create compound-ingredient relationships; reject self-reference and multi-level cycles.
+- [x] **P09.06** Add preparation/allergen notes with limited visibility; do not derive allergy-safe claims from removals.
+- [x] **P09.07** Build ingredient list/create/edit screens using the shared uploader.
+- [x] **P09.08** Build a composition editor with readable nested ingredients and validation errors.
+- [x] **P09.09** Invalidate affected draft recipe approvals after relevant ingredient changes; list impacted meals for review.
+- [x] **P09.10** Verify one ingredient/image is reused by multiple dishes without duplicated uploads; record S24 evidence.
 
 <a id="p10"></a>
 
@@ -318,16 +318,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [catalogue requirements](../product/02-requirements.md), [transactions](../backend/02-transactions.md).
 
-- [ ] **P10.01** Create categories and ordered category membership; implement editor-only category endpoints.
-- [ ] **P10.02** Create meals with editable drafts and immutable published versions; keep draft data out of guest queries.
-- [ ] **P10.03** Implement draft meal name, description, image, and category edits with version checks.
-- [ ] **P10.04** Implement backend-validated base price and tax-configuration references; retain exact minor-unit values.
-- [ ] **P10.05** Implement ingredient selection and fixed/removable/extra rules scoped to each meal draft.
-- [ ] **P10.06** Build the meal editor and preview, including photo and recipe controls; preserve unsaved-edit warnings.
-- [ ] **P10.07** Implement kitchen recipe review against the exact draft digest; relevant edits invalidate approval.
-- [ ] **P10.08** Implement guarded publication of a reviewed version; save publication events atomically.
-- [ ] **P10.09** Implement published menu/detail reads and initial sellable flag; old ordered versions remain retrievable internally.
-- [ ] **P10.10** Verify unpublished data is hidden and old snapshots remain unchanged after republishing; record S25/T04 evidence.
+- [x] **P10.01** Create categories and ordered category membership; implement editor-only category endpoints.
+- [x] **P10.02** Create meals with editable drafts and immutable published versions; keep draft data out of guest queries.
+- [x] **P10.03** Implement draft meal name, description, image, and category edits with version checks.
+- [x] **P10.04** Implement backend-validated base price and tax-configuration references; retain exact minor-unit values. *(Tax is the confirmed single global setting snapshotted at checkout; the draft carries the tax-inclusive base price in exact minor units.)*
+- [x] **P10.05** Implement ingredient selection and fixed/removable/extra rules scoped to each meal draft.
+- [x] **P10.06** Build the meal editor and preview, including photo and recipe controls; preserve unsaved-edit warnings.
+- [x] **P10.07** Implement kitchen recipe review against the exact draft digest; relevant edits invalidate approval.
+- [x] **P10.08** Implement guarded publication of a reviewed version; save publication events atomically.
+- [x] **P10.09** Implement published menu/detail reads and initial sellable flag; old ordered versions remain retrievable internally.
+- [x] **P10.10** Verify unpublished data is hidden and old snapshots remain unchanged after republishing; record S25/T04 evidence.
 
 <a id="p11"></a>
 
@@ -339,16 +339,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [premium design](../design/01-premium-design.md), [ingredient experience](../design/02-ingredient-experience.md).
 
-- [ ] **P11.01** Build the bound-guest header with server-provided table/guest labels; identity is read-only.
-- [ ] **P11.02** Build the category rail and meal cards from published data; sold-out cards explain their state.
-- [ ] **P11.03** Add catalogue search/filter and empty results; retain keyboard navigation and selected category.
-- [ ] **P11.04** Build meal detail with responsive hero image, description, and backend-supplied price.
-- [ ] **P11.05** Build labelled ingredient portraits around the hero; verify included, fixed, and removed states.
-- [ ] **P11.06** Add reversible permitted-removal toggles; fixed ingredients cannot be removed through UI or forged input.
-- [ ] **P11.07** Add the overflow tray/list for dense ingredient sets; never shrink labels indefinitely.
-- [ ] **P11.08** Add ingredient composition/details and preparation-review guidance without allergy-safe promises.
-- [ ] **P11.09** Add quantity controls and per-line modification summary; options must not modify the reusable catalogue.
-- [ ] **P11.10** Review 3/8/20 ingredients, long labels, missing images, keyboard, and reduced motion; record S06/S07/T06 evidence.
+- [x] **P11.01** Build the bound-guest header with server-provided table/guest labels; identity is read-only.
+- [x] **P11.02** Build the category rail and meal cards from published data; sold-out cards explain their state.
+- [x] **P11.03** Add catalogue search/filter and empty results; retain keyboard navigation and selected category.
+- [x] **P11.04** Build meal detail with responsive hero image, description, and backend-supplied price.
+- [x] **P11.05** Build labelled ingredient portraits around the hero; verify included, fixed, and removed states.
+- [x] **P11.06** Add reversible permitted-removal toggles; fixed ingredients cannot be removed through UI or forged input.
+- [x] **P11.07** Add the overflow tray/list for dense ingredient sets; never shrink labels indefinitely.
+- [x] **P11.08** Add ingredient composition/details and preparation-review guidance without allergy-safe promises.
+- [x] **P11.09** Add quantity controls and per-line modification summary; options must not modify the reusable catalogue.
+- [ ] **P11.10** Review 3/8/20 ingredients, long labels, missing images, keyboard, and reduced motion; record S06/S07/T06 evidence. *(partial — kiosk spec + evidence artifact exist; the full T06 matrix is outstanding)*
 
 <a id="p12"></a>
 
@@ -360,16 +360,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [API contracts](../api/02-endpoints.md), [frontend architecture](../frontend/01-architecture.md).
 
-- [ ] **P12.01** Define the session-bound draft-cart model; two differently customised copies of one meal remain separate lines.
-- [ ] **P12.02** Implement draft add/edit/remove operations; verify they do not create charges or kitchen work.
-- [ ] **P12.03** Persist permitted drafts with expiry and binding identity; another guest cannot recover the old draft.
-- [ ] **P12.04** Build the cart screen with quantity, image, ingredient changes, and explicit draft prices.
-- [ ] **P12.05** Define and validate the quote request/response schema; generate the updated JavaScript client contract.
-- [ ] **P12.06** Implement server quote calculation from current menu/pricing rules; ignore browser-supplied totals.
-- [ ] **P12.07** Validate quantity, permitted modifications, publication version, and availability during quoting.
-- [ ] **P12.08** Show changed-price/unavailable-item conflicts and require review; never silently accept a new price.
-- [ ] **P12.09** Build the final order review with a stable submission key and disabled duplicate-send state.
-- [ ] **P12.10** Verify cart isolation, malformed selections, and quote errors with real backend responses; record S08/T05/T30 evidence.
+- [x] **P12.01** Define the session-bound draft-cart model; two differently customised copies of one meal remain separate lines.
+- [x] **P12.02** Implement draft add/edit/remove operations; verify they do not create charges or kitchen work.
+- [x] **P12.03** Persist permitted drafts with expiry and binding identity; another guest cannot recover the old draft.
+- [x] **P12.04** Build the cart screen with quantity, image, ingredient changes, and explicit draft prices.
+- [x] **P12.05** Define and validate the quote request/response schema; generate the updated JavaScript client contract.
+- [x] **P12.06** Implement server quote calculation from current menu/pricing rules; ignore browser-supplied totals.
+- [x] **P12.07** Validate quantity, permitted modifications, publication version, and availability during quoting.
+- [x] **P12.08** Show changed-price/unavailable-item conflicts and require review; never silently accept a new price.
+- [x] **P12.09** Build the final order review with a stable submission key and disabled duplicate-send state.
+- [x] **P12.10** Verify cart isolation, malformed selections, and quote errors with real backend responses; record S08/T05/T30 evidence.
 
 <a id="p13"></a>
 
@@ -381,16 +381,16 @@ All steps below are initially unchecked. Source links identify the relevant cont
 
 **Read:** [transactions](../backend/02-transactions.md), [state machines](../architecture/03-state-machines.md).
 
-- [ ] **P13.01** Create submission/item tables with immutable meal, price, ingredient, and tax snapshots.
-- [ ] **P13.02** Create guest bills and proposed/posted charge records; distinguish provisional demand from sales.
-- [ ] **P13.03** Add submission transaction locks for visit, bill, and availability; enforce deterministic lock order.
-- [ ] **P13.04** Apply submission scope/state/version guards; reject closed visits and another guest's identity.
-- [ ] **P13.05** Recheck current sellability/whole-portion availability inside the transaction; concurrent last-portion requests cannot both succeed.
-- [ ] **P13.06** Save submission, eligible charges, distinct preparation work, and outbox intent atomically; rollback on failure.
-- [ ] **P13.07** Connect the order endpoint to durable idempotent results; same-key retries return the original order.
-- [ ] **P13.08** Connect the guest cart to confirmed submission; an uncertain response shows recovery rather than false success.
-- [ ] **P13.09** Add own-order read endpoints and later-order support; each additional submission gets its own ticket and charges.
-- [ ] **P13.10** Prove four-tablet independent submission, double taps, conflicting keys, and lost responses; record T01–T03/T19/T23 evidence.
+- [x] **P13.01** Create submission/item tables with immutable meal, price, ingredient, and tax snapshots.
+- [x] **P13.02** Create guest bills and proposed/posted charge records; distinguish provisional demand from sales.
+- [x] **P13.03** Add submission transaction locks for visit, bill, and availability; enforce deterministic lock order.
+- [x] **P13.04** Apply submission scope/state/version guards; reject closed visits and another guest's identity.
+- [x] **P13.05** Recheck current sellability/whole-portion availability inside the transaction; concurrent last-portion requests cannot both succeed.
+- [x] **P13.06** Save submission, eligible charges, distinct preparation work, and outbox intent atomically; rollback on failure.
+- [x] **P13.07** Connect the order endpoint to durable idempotent results; same-key retries return the original order.
+- [x] **P13.08** Connect the guest cart to confirmed submission; an uncertain response shows recovery rather than false success.
+- [x] **P13.09** Add own-order read endpoints and later-order support; each additional submission gets its own ticket and charges.
+- [x] **P13.10** Prove four-tablet independent submission, double taps, conflicting keys, and lost responses; record T01–T03/T19/T23 evidence.
 
 <a id="p14"></a>
 

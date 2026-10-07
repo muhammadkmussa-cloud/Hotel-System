@@ -1,0 +1,44 @@
+P13 / T01–T03 / T19 / T23 — independent order submission evidence
+=================================================================
+
+Date: 7 October 2026
+Environment: PHP 8.3.30, MySQL 26.7.1 (disposable schema), PHPUnit 12.5.37
+
+Command:
+  php vendor/bin/phpunit --configuration phpunit.mysql.xml.dist \
+      tests/Database/MealCatalogueTest.php
+    -> OK (1 test, 138 assertions)
+
+What it proves (real MySQL, not mocks):
+  - P13.07 idempotent submission: a same-key retry replays the original result
+    (replayed=true, same submission id) and creates exactly one submission and
+    one charge.
+  - P13.09 later-order support: a second order creates its own submission and
+    charges (submission count = 2).
+  - P13.01 ingredient snapshot: each order item stores `removed_ids` (stable
+    ingredient IDs) and `extras_snapshot` (id/name/price), not just display
+    names.
+
+Code fixes this pass (P13 review):
+  - HIGH-1 concurrent same-key race: `OrderService::submitIdempotent` catches a
+    duplicate `idempotency_hash` and replays the committed result instead of a
+    500.
+  - HIGH-2 lock order: `GuestBindingService::bind` now locks visit before guest,
+    matching `OrderService` (visit → guest) to avoid deadlocks.
+  - HIGH-3 frontend key: `table.js`/`kiosk.js` preserve the submission key on
+    network/5xx/408/429 and reset it only on a definitive 4xx, so a retry cannot
+    create a duplicate order.
+  - HIGH-4 ingredient identity: migration 000035 adds `order_items.removed_ids`
+    and `order_items.extras_snapshot`; `createSubmission` populates them.
+
+Outstanding (recorded, not blocking the fixes): a real four-tablet concurrent
+submission and concurrent same-key race are covered by code + sequential replay,
+not yet by a concurrency test; T01–T03/T19/T23 physical-device evidence requires
+the pilot hardware.
+
+Sources:
+  hotel-app/tests/Database/MealCatalogueTest.php
+  hotel-app/tests/Fixtures/meal-catalogue-probe.php
+  hotel-app/app/Domain/Ordering/OrderService.php
+  hotel-app/app/Support/GuestBindingService.php
+  hotel-app/database/migrations/2026_10_08_000035_add_order_item_ingredient_snapshot.php

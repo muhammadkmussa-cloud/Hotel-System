@@ -39,6 +39,12 @@ final class BoundMediaUpload
 {
     public const ATTRIBUTE = 'hotel.validatedUpload';
 
+    /**
+     * Non-file fields this endpoint legitimately accepts. Anything else is
+     * rejected so a client cannot smuggle work past the size/MIME gates.
+     */
+    private const ALLOWED_FIELDS = ['_token', 'kind', 'demo'];
+
     public function __construct(private readonly MediaUploadLimits $limits) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -63,12 +69,12 @@ final class BoundMediaUpload
             }
         }
 
-        // Require exactly one file and no additional POST fields. The full
-        // metadata-aware upload endpoint arrives in P08.08; until then extra
-        // multipart parts are rejected so a client cannot smuggle work past
-        // the size cap or seed metadata before validation exists.
-        if ($request->request->count() !== 0) {
-            throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Send only the file field; metadata endpoints arrive later.');
+        // Require exactly one file and no unexpected POST fields. `kind`/`demo`
+        // (and the CSRF token) are the endpoint's own metadata; any other field
+        // is refused so a client cannot smuggle work past the size cap.
+        $unexpected = array_diff(array_keys($request->request->all()), self::ALLOWED_FIELDS);
+        if ($unexpected !== []) {
+            throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Unexpected fields in the upload.');
         }
         if ($request->files->count() !== 1 || ! $request->files->has($field)) {
             throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Attach exactly one file under the "'.$field.'" field.');

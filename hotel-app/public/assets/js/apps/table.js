@@ -89,7 +89,11 @@ function cartView() {
       await load(['cart', 'orders', 'bill', 'menu']);
     } catch (e) {
       if (guard(e)) return;
-      if (e.status !== 0) state.submitKey = null; // retry the same key only after network failures
+      // Keep the same key for network failures, 5xx, 408 and 429 so a retry
+      // cannot create a duplicate order; only a definitive 4xx (which proves no
+      // order was created) resets it.
+      const definitive = e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429;
+      if (definitive) state.submitKey = null;
       toast(e.message, 6000);
       load(['cart', 'menu']);
     }

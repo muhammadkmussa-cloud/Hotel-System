@@ -51,6 +51,8 @@ final class MediaLibrary
         if (! in_array($kind, ['meal', 'ingredient'], true)) {
             throw DomainError::invalid('Choose whether the photo shows a meal or an ingredient.');
         }
+        // Fail before storing anything if this host cannot encode derivatives.
+        $this->hostEncoders();
         $sha = hash('sha256', $bytes);
         $existing = DB::table('media')->where('original_sha256', $sha)->value('id');
         if (is_string($existing)) {
@@ -101,6 +103,7 @@ final class MediaLibrary
         if (! function_exists('imagecreatefromstring')) {
             throw new RuntimeException('GD is required to derive images on this host.');
         }
+        $this->hostEncoders();
         $media = DB::table('media')->where('id', $mediaId)->first();
         if ($media === null || $media->original_storage_path === null) {
             throw DomainError::notFound('Image not found.');
@@ -190,7 +193,36 @@ final class MediaLibrary
     /** @return list<string> */
     private function formatsFor(string $purpose): array
     {
-        return in_array($purpose, ['card', 'hero'], true) ? ['webp', 'jpeg'] : ['webp'];
+        $available = $this->hostEncoders();
+        $wanted = in_array($purpose, ['card', 'hero'], true) ? ['webp', 'jpeg'] : ['webp'];
+
+        return array_values(array_filter($wanted, static fn (string $format): bool => in_array($format, $available, true)));
+    }
+
+    /**
+     * The image encoders this host can actually write. A missing encoder is a
+     * configuration error the operator must see, not a silent draft asset.
+     *
+     * @return list<string>
+     */
+    private function hostEncoders(): array
+    {
+        if (! function_exists('imagetypes')) {
+            throw DomainError::invalid('This host has no GD image support; images cannot be processed.');
+        }
+        $types = imagetypes();
+        $available = [];
+        if (($types & IMG_WEBP) !== 0) {
+            $available[] = 'webp';
+        }
+        if (($types & IMG_JPG) !== 0) {
+            $available[] = 'jpeg';
+        }
+        if ($available === []) {
+            throw DomainError::invalid('This host has no supported image encoder (WebP or JPEG).');
+        }
+
+        return $available;
     }
 
     private function orient(GdImage $image, string $bytes, string $mime): GdImage

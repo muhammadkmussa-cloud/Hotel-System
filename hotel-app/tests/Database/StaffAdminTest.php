@@ -162,14 +162,16 @@ final class StaffAdminTest extends TestCase
             self::assertSame('deactivated', $run('device-admin-revoke', ['DEVICE_ID' => $deviceId])['result'], 'A device can be revoked.');
             self::assertSame('already_inactive', $run('device-admin-revoke', ['DEVICE_ID' => $deviceId])['result'], 'Re-revocation is refused.');
 
-            // Visits: one active visit per table, concurrent opens yield one.
+            // Visits: one active visit per table, idempotent re-open, then close.
             self::assertSame('created', $run('table-create', ['TABLE_LABEL' => 'Visit Table'])['result'], 'A table can be configured.');
             $tableId = $run('tables-list')['tables'][0]['id'];
             $first = $run('visit-open', ['TABLE_ID' => $tableId, 'ACTOR_ID' => $ownerId]);
-            self::assertNotNull($first['visitId'], 'A visit can be opened.');
+            self::assertNotNull($first['id'], 'A visit can be opened.');
+            self::assertTrue($first['created'], 'The first open creates the visit.');
             $second = $run('visit-open', ['TABLE_ID' => $tableId, 'ACTOR_ID' => $ownerId]);
-            self::assertNull($second['visitId'], 'A duplicate open is refused.');
-            self::assertSame('closed', $run('visit-close', ['VISIT_ID' => $first['visitId']])['result'], 'A visit can be closed.');
+            self::assertSame($first['id'], $second['id'], 'A duplicate open returns the same active visit.');
+            self::assertFalse($second['created'], 'A duplicate open does not create a second visit.');
+            self::assertTrue($run('visit-close', ['VISIT_ID' => $first['id'], 'ACTOR_ID' => $ownerId])['success'], 'A visit can be closed.');
 
             // Short-lived pairing and activation.
             $code = $run('pairing-issue')['code'];
@@ -229,7 +231,12 @@ final class StaffAdminTest extends TestCase
             self::assertSame('already_active', $run('activate', ['ACTOR_ID' => $ownerId, 'STAFF_ID' => $waiterId])['result'], 'Activating an active member is refused.');
             self::assertSame('invalid_input', $run('update', ['ACTOR_ID' => $ownerId, 'STAFF_ID' => $waiterId, 'STAFF_NAME' => 'X', 'STAFF_EMAIL' => 'not-an-email'])['result'], 'Invalid email is refused.');
             self::assertSame('invalid_input', $run('activate', ['ACTOR_ID' => $ownerId, 'STAFF_ID' => '00000000-0000-0000-0000-000000000000'])['result'], 'Unknown staff member refused.');
-            self::assertContains('staff_activated', $run('audit-events')['events'], 'Activation is audited.');
+            $events = $run('audit-events')['events'];
+            self::assertContains('staff_activated', $events, 'Activation is audited.');
+            self::assertContains('staff_created', $events, 'Staff creation is audited.');
+            self::assertContains('staff_role_granted', $events, 'Role grants are audited (privilege change).');
+            self::assertContains('staff_role_revoked', $events, 'Role revocations are audited (privilege change).');
+            self::assertContains('staff_updated', $events, 'Staff identity edits are audited.');
 
             $remaining = $run('list')['staff'];
             $activeOwners = count(array_filter($remaining, static fn ($m) => $m['active'] && in_array('owner', $m['roles'], true)));

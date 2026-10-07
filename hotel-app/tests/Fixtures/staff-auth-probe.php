@@ -362,7 +362,7 @@ try {
         $devices = $app->make(App\Support\DeviceRegistry::class);
         $device = $devices->enroll('Pairing Tablet', 'tablet', 'credential-value-999');
         $code = $pairing->issue($device['deviceId'], 15);
-        $db->table('device_pairing_codes')->where('code_hash', hash('sha256', $code))
+        $db->table('device_pairing_codes')->where('code_hash', hash('sha256', App\Support\DevicePairing::normalise($code)))
             ->update(['expires_at' => now('UTC')->subMinute()]);
         echo json_encode(['code' => $code]);
         exit(0);
@@ -384,7 +384,7 @@ try {
     }
     if ($action === 'visit-close') {
         $visits = $app->make(App\Support\VisitService::class);
-        echo json_encode(['result' => $visits->close((string) (getenv('VISIT_ID') ?: ''))]);
+        echo json_encode($visits->close((string) (getenv('VISIT_ID') ?: ''), (string) (getenv('ACTOR_ID') ?: '')));
         exit(0);
     }
     if ($action === 'roundtrip') {

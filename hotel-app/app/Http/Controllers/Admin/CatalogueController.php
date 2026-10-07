@@ -10,6 +10,7 @@ use App\Domain\DomainError;
 use App\Domain\Media\MediaLibrary;
 use App\Domain\Money;
 use App\Security\Staff;
+use App\Support\SecurityAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -190,12 +191,12 @@ final class CatalogueController
             $i->thumb = $this->media->image($i->media_id, 'thumb', 'ingredient', false);
         }
 
-        return view('admin.ingredients', ['result' => $result, 'q' => (string) $request->query('q', ''), 'archived' => $request->boolean('archived')]);
+        return view('admin.ingredients', ['result' => $result, 'q' => (string) $request->query('q', ''), 'archived' => $request->boolean('archived'), 'mediaChoices' => $this->mediaChoices('ingredient')]);
     }
 
     public function storeIngredient(Request $request): RedirectResponse
     {
-        $id = $this->ingredients->create($request->only(['name', 'description', 'allergen_notes', 'preparation_notes']), $this->actor($request));
+        $id = $this->ingredients->create($request->only(['name', 'description', 'allergen_notes', 'preparation_notes', 'media_id']), $this->actor($request));
 
         return redirect('/admin/ingredients/'.$id)->with('status', 'Ingredient created.');
     }
@@ -253,7 +254,9 @@ final class CatalogueController
 
     public function uploadMedia(Request $request): RedirectResponse
     {
-        $file = $request->files->get('file');
+        // `file()` returns an Illuminate UploadedFile (the file bag holds the
+        // Symfony type), so the instanceof check below matches.
+        $file = $request->file('file');
         if (! $file instanceof UploadedFile || $file->getError() !== UPLOAD_ERR_OK) {
             throw DomainError::invalid($file instanceof UploadedFile && in_array($file->getError(), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
                 ? 'That photo is too large.' : 'Choose a JPEG, PNG or WebP photo to upload.');
@@ -302,5 +305,36 @@ final class CatalogueController
         $this->media->setState($mediaId, $state, $this->actor($request));
 
         return back()->with('status', 'Image is now '.$state.'.');
+    }
+
+    /**
+     * P08.10 — record who approved the photo content and the recipe match.
+     * Demo assets stay labelled; this is the explicit hotel-approval record.
+     */
+    public function approveMedia(Request $request, string $mediaId, SecurityAudit $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'content_approver' => ['nullable', 'string', 'max:150'],
+            'chef_approver' => ['nullable', 'string', 'max:150'],
+        ]);
+        $content = trim((string) ($validated['content_approver'] ?? ''));
+        $chef = trim((string) ($validated['chef_approver'] ?? ''));
+        if ($content === '' && $chef === '') {
+            throw DomainError::invalid('Name at least one approver.');
+        }
+        if (! DB::table('media')->where('id', $mediaId)->exists()) {
+            throw DomainError::notFound('Image not found.');
+        }
+        $today = now('UTC')->toDateString();
+        DB::table('media')->where('id', $mediaId)->update([
+            'content_approver_name' => $content !== '' ? $content : null,
+            'content_approved_at' => $content !== '' ? $today : null,
+            'chef_approver_name' => $chef !== '' ? $chef : null,
+            'chef_approved_at' => $chef !== '' ? $today : null,
+            'updated_at' => now('UTC'),
+        ]);
+        $audit->record('media_approval_recorded', $this->actor($request), $request->ip(), ['media_id' => $mediaId]);
+
+        return back()->with('status', 'Approval recorded.');
     }
 }

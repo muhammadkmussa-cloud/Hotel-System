@@ -89,7 +89,10 @@ function reviewView() {
       render();
     } catch (e) {
       if (guard(e)) return;
-      if (e.status !== 0) state.submitKey = null;
+      // Preserve the key on network/5xx/408/429 so a retry cannot duplicate the
+      // order; reset only on a definitive 4xx.
+      const definitive = e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429;
+      if (definitive) state.submitKey = null;
       toast(e.message, 6000);
       state.cart = await api('GET', `${BASE}/cart`).catch(() => state.cart);
       render();

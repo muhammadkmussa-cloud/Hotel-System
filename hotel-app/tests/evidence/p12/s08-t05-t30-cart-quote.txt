@@ -1,0 +1,43 @@
+P12 / S08 / T05 / T30 — guest cart and server quotes evidence
+==============================================================
+
+Date: 7 October 2026
+Environment: PHP 8.3.30, MySQL 26.7.1 (disposable schema), PHPUnit 12.5.37;
+JS/contract: Node 24 + Python 3
+
+Commands and results:
+  php vendor/bin/phpunit --configuration phpunit.mysql.xml.dist \
+      tests/Database/MealCatalogueTest.php
+    -> OK (1 test, 105 assertions)
+  npm run test:js
+    -> 15 pass / 0 fail (generated client up to date with the contract)
+  python3 api/validate_contract.py
+    -> OpenAPI structure, references, schemas and 30 examples passed
+  python3 -m unittest discover -s api
+    -> OK (15 tests)
+
+What it proves (real MySQL, not mocks):
+  - P12.01/P12.06 server-owned quote: the cart total is derived from the
+    published price (2 x KSh 250.00 = 50000 minor), not from the browser.
+  - P12.03 owner isolation: a different guest's quote is empty.
+  - P12.02 no side effects: adding to a draft creates no charges, order_items
+    or kitchen_tickets.
+  - P12.03 expiry: an expired draft is dropped from the quote.
+  - P12.06 digest stability: the quote digest is stable across reads.
+  - P11.06/P12.07 permitted modifications: a fixed ingredient cannot be removed
+    (VALIDATION_FAILED); a valid line is accepted.
+
+Contract (P12.05): the cart GET responses now carry a typed `CartQuoteResponse`
+(`CartQuote`/`CartQuoteLine`/`CartConflict`) in api/openapi.json, the JS client
+is regenerated, and the contract validator asserts the shape.
+
+Code fix (P12.07/P12.08): `CartService::update` no longer silently rebases a
+line to the current published version/price when modifications are supplied; it
+validates against the version the guest added and raises a `CART_CHANGED`
+conflict if that version is withdrawn.
+
+Sources:
+  hotel-app/tests/Database/MealCatalogueTest.php
+  hotel-app/tests/Fixtures/meal-catalogue-probe.php
+  hotel-app/app/Domain/Ordering/CartService.php
+  api/openapi.json

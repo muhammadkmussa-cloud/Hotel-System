@@ -404,7 +404,50 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
+            "description": "Authoritative cart quote.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartQuoteResponse"
+                },
+                "example": {
+                  "data": {
+                    "lines": [
+                      {
+                        "id": "0199ac1a-0000-7000-8000-000000000001",
+                        "mealId": "0199ac1a-0000-7000-8000-000000000002",
+                        "mealVersion": 1,
+                        "name": "Classic cheeseburger",
+                        "quantity": 1,
+                        "note": null,
+                        "removedIds": [],
+                        "extraIds": [],
+                        "removed": [],
+                        "extras": [],
+                        "unitPriceMinor": 115000,
+                        "extrasMinor": 0,
+                        "lineTotalMinor": 115000,
+                        "lineTotal": "KSh 1150.00",
+                        "image": {
+                          "src": "/media/v/ab/abcdef.webp",
+                          "webp": "/media/v/ab/abcdef.webp",
+                          "alt": "",
+                          "width": 160,
+                          "height": 160,
+                          "placeholder": false
+                        }
+                      }
+                    ],
+                    "totalMinor": 115000,
+                    "total": "KSh 1150.00",
+                    "count": 1,
+                    "conflicts": [],
+                    "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  "requestId": "req_demo_01"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -1556,7 +1599,50 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
+            "description": "Authoritative cart quote.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartQuoteResponse"
+                },
+                "example": {
+                  "data": {
+                    "lines": [
+                      {
+                        "id": "0199ac1a-0000-7000-8000-000000000001",
+                        "mealId": "0199ac1a-0000-7000-8000-000000000002",
+                        "mealVersion": 1,
+                        "name": "Classic cheeseburger",
+                        "quantity": 1,
+                        "note": null,
+                        "removedIds": [],
+                        "extraIds": [],
+                        "removed": [],
+                        "extras": [],
+                        "unitPriceMinor": 115000,
+                        "extrasMinor": 0,
+                        "lineTotalMinor": 115000,
+                        "lineTotal": "KSh 1150.00",
+                        "image": {
+                          "src": "/media/v/ab/abcdef.webp",
+                          "webp": "/media/v/ab/abcdef.webp",
+                          "alt": "",
+                          "width": 160,
+                          "height": 160,
+                          "placeholder": false
+                        }
+                      }
+                    ],
+                    "totalMinor": 115000,
+                    "total": "KSh 1150.00",
+                    "count": 1,
+                    "conflicts": [],
+                    "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  "requestId": "req_demo_01"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -2581,6 +2667,200 @@
         "uniqueItems": true,
         "items": {
           "$ref": "#/components/schemas/Uuid"
+        }
+      },
+      "CartQuoteResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "requestId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CartQuote"
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/RequestId"
+          },
+          "meta": {
+            "type": "object"
+          }
+        }
+      },
+      "CartQuote": {
+        "type": "object",
+        "required": [
+          "lines",
+          "totalMinor",
+          "total",
+          "count",
+          "conflicts",
+          "digest"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartQuoteLine"
+            }
+          },
+          "totalMinor": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartConflict"
+            }
+          },
+          "digest": {
+            "type": "string"
+          }
+        }
+      },
+      "CartQuoteLine": {
+        "type": "object",
+        "required": [
+          "id",
+          "mealId",
+          "mealVersion",
+          "name",
+          "quantity",
+          "removedIds",
+          "extraIds",
+          "unitPriceMinor",
+          "extrasMinor",
+          "lineTotalMinor",
+          "lineTotal"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "mealId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "mealVersion": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "removedIds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          "extraIds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "extras": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "price"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "unitPriceMinor": {
+            "type": "integer"
+          },
+          "extrasMinor": {
+            "type": "integer"
+          },
+          "lineTotalMinor": {
+            "type": "integer"
+          },
+          "lineTotal": {
+            "type": "string"
+          },
+          "image": {
+            "type": "object",
+            "properties": {
+              "src": {
+                "type": "string"
+              },
+              "webp": {
+                "type": "string"
+              },
+              "alt": {
+                "type": "string"
+              },
+              "width": {
+                "type": "integer"
+              },
+              "height": {
+                "type": "integer"
+              },
+              "placeholder": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "CartConflict": {
+        "type": "object",
+        "required": [
+          "lineId",
+          "type",
+          "message"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "lineId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "changed",
+              "withdrawn",
+              "unavailable",
+              "insufficient"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
         }
       },
       "CartLineInput": {

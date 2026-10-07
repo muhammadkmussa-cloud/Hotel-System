@@ -43,7 +43,7 @@ Route::post('/admin/settings/receipt', [HotelSettingsController::class, 'storeRe
 Route::post('/admin/settings/tables', [HotelSettingsController::class, 'storeTables'])->middleware('capability:settings.manage')->name('admin.settings.tables');
 Route::post('/admin/settings/stations', [HotelSettingsController::class, 'storeStations'])->middleware('capability:settings.manage')->name('admin.settings.stations');
 Route::get('/device/pair', [DevicePairingController::class, 'show'])->name('device.pair');
-Route::post('/device/pair', [DevicePairingController::class, 'store'])->name('device.pair.store');
+Route::post('/device/pair', [DevicePairingController::class, 'store'])->middleware('limit:pairing')->name('device.pair.store');
 Route::get('/admin/devices', [DeviceAdminController::class, 'show'])->middleware('capability:devices.manage')->name('admin.devices');
 Route::post('/admin/devices/revoke', [DeviceAdminController::class, 'revoke'])->middleware('capability:devices.manage')->name('admin.devices.revoke');
 Route::post('/admin/devices/enroll', [DeviceAdminController::class, 'enroll'])->middleware('capability:devices.manage');
@@ -138,9 +138,10 @@ Route::middleware('capability:catalogue.edit')->group(function (): void {
     Route::post('/admin/ingredients/{ingredientId}/components', [CatalogueController::class, 'ingredientComponents'])->whereUuid('ingredientId');
     Route::post('/admin/ingredients/{ingredientId}/archive', [CatalogueController::class, 'archiveIngredient'])->whereUuid('ingredientId');
     Route::get('/admin/media', [CatalogueController::class, 'mediaIndex']);
-    Route::post('/admin/media', [CatalogueController::class, 'uploadMedia']);
+    Route::post('/admin/media', [CatalogueController::class, 'uploadMedia'])->middleware('media.upload');
     Route::get('/admin/media/{mediaId}', [CatalogueController::class, 'mediaItem'])->whereUuid('mediaId');
     Route::post('/admin/media/{mediaId}', [CatalogueController::class, 'updateMedia'])->whereUuid('mediaId');
+    Route::post('/admin/media/{mediaId}/approve', [CatalogueController::class, 'approveMedia'])->whereUuid('mediaId');
     Route::post('/admin/media/{mediaId}/state', [CatalogueController::class, 'mediaState'])->whereUuid('mediaId');
 });
 

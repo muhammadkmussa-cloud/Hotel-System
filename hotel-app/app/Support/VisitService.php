@@ -7,6 +7,7 @@ namespace App\Support;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
+use LogicException;
 use Throwable;
 
 final class VisitService
@@ -15,12 +16,18 @@ final class VisitService
 
     /**
      * Open a visit for a table. If an open visit already exists, return it
-     * (idempotent) instead of creating a duplicate.
+     * (idempotent) instead of creating a duplicate. A missing or deactivated
+     * table is refused rather than creating a visit that the board cannot show.
      *
-     * @return array{id:string,created:bool}
+     * @return array{id:?string,created:bool,result?:string}
      */
     public function open(string $tableId, string $actorId): array
     {
+        $table = $this->database->connection('mysql')->table('tables')->where('id', $tableId)->first(['active']);
+        if ($table === null || ! (int) $table->active) {
+            return ['id' => null, 'created' => false, 'result' => 'table_not_found'];
+        }
+
         $existing = $this->database->connection('mysql')->table('visits')
             ->where('table_id', $tableId)->where('state', 'open')
             ->first(['id']);
@@ -78,7 +85,7 @@ final class VisitService
             return ['result' => 'invalid_input', 'version' => null];
         }
         if ($targetTableId === null && $targetWaiterId === null) {
-            return ['result' => 'unchanged', 'version' => null];
+            return ['result' => 'invalid_input', 'version' => null];
         }
 
         $connection = $this->database->connection('mysql');
@@ -128,6 +135,9 @@ final class VisitService
 
                 return ['result' => 'transferred', 'version' => $version + 1];
             });
+        } catch (LogicException $error) {
+            // A nested transaction is a programming error: let it propagate.
+            throw $error;
         } catch (QueryException $error) {
             // The active-table unique index is the final occupancy guard.
             return \App\Domain\Operations\JobRunner::isDuplicate($error)
@@ -268,11 +278,20 @@ final class VisitService
             return ['success' => true, 'version' => (int) $visit->version, 'blockers' => []];
         }
 
-        return DatabaseTransaction::run($connection, function () use ($connection, $visitId, $visit, $expectedVersion, $actorId): array {
-            $connection->table('visits')->where('id', $visitId)->lockForUpdate()->first();
+        return DatabaseTransaction::run($connection, function () use ($connection, $visitId, $expectedVersion, $actorId): array {
+            // Re-read under the row lock: a concurrent transfer may have bumped
+            // the version after the optimistic pre-check above.
+            $current = $connection->table('visits')->where('id', $visitId)->lockForUpdate()->first(['state', 'version']);
+            if ($current === null) {
+                return ['success' => false, 'version' => null, 'blockers' => []];
+            }
+            if ($current->state === 'closed') {
+                return ['success' => true, 'version' => (int) $current->version, 'blockers' => []];
+            }
+            $version = (int) $current->version;
             $blockers = \App\Domain\Ordering\VisitGuards::blockers($visitId);
             if ($blockers !== []) {
-                return ['success' => false, 'version' => (int) $visit->version, 'blockers' => $blockers];
+                return ['success' => false, 'version' => $version, 'blockers' => $blockers];
             }
             $now = now('UTC');
             $query = $connection->table('visits')->where('id', $visitId)->where('state', 'open');
@@ -281,10 +300,10 @@ final class VisitService
             }
             $affected = $query->update([
                 'state' => 'closed', 'closed_at' => $now,
-                'version' => $visit->version + 1, 'updated_at' => $now,
+                'version' => $version + 1, 'updated_at' => $now,
             ]);
             if ($affected !== 1) {
-                return ['success' => false, 'version' => (int) $visit->version, 'blockers' => []];
+                return ['success' => false, 'version' => $version, 'blockers' => []];
             }
             // Closing ends every guest identity on every tablet.
             $guestIds = $connection->table('guests')->where('visit_id', $visitId)->pluck('id')->all();
@@ -296,7 +315,7 @@ final class VisitService
             \App\Domain\Outbox::emit('visit.closed', 'visit:'.$visitId);
             \App\Domain\Outbox::emit('visit.closed', 'staff', ['visit_id' => $visitId]);
 
-            return ['success' => true, 'version' => (int) $visit->version + 1, 'blockers' => []];
+            return ['success' => true, 'version' => $version + 1, 'blockers' => []];
         });
     }
 }

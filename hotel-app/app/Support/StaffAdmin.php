@@ -98,6 +98,8 @@ final class StaffAdmin
             ]);
         }
 
+        $this->audit->record('staff_role_granted', $actorId, null, ['target' => $staffUserId, 'roles' => implode(',', $roleKeys)]);
+
         return 'granted';
     }
 
@@ -119,7 +121,7 @@ final class StaffAdmin
 
         $connection = $this->database->connection('mysql');
 
-        return $connection->transaction(function () use ($connection, $staffUserId, $roleKeys): string {
+        $result = $connection->transaction(function () use ($connection, $staffUserId, $roleKeys): string {
             // Lock the evaluated owner rows so concurrent revokes cannot both pass.
             if (in_array('owner', $roleKeys, true) && $this->isLastActiveOwner($staffUserId)) {
                 return 'refused_last_owner';
@@ -136,11 +138,17 @@ final class StaffAdmin
 
             return 'revoked';
         });
+
+        if ($result === 'revoked') {
+            $this->audit->record('staff_role_revoked', $actorId, null, ['target' => $staffUserId, 'roles' => implode(',', $roleKeys)]);
+        }
+
+        return $result;
     }
 
     /**
      * Update a staff member's name/email. Email must stay unique.
-     * @return string updated|invalid_input|duplicate_email|failed
+     * @return string updated|invalid_input|duplicate_email|refused_owner|failed
      */
     public function update(string $staffUserId, string $name, string $email, string $actorId): string
     {
@@ -151,6 +159,10 @@ final class StaffAdmin
         $name = trim($name);
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || $name === '' || mb_strlen($name) > 150) {
             return 'invalid_input';
+        }
+        // A non-owner must not edit an owner's login identity.
+        if ($this->staffHasRole($staffUserId, 'owner') && ! $this->staffHasRole($actorId, 'owner')) {
+            return 'refused_owner';
         }
         $connection = $this->database->connection('mysql');
         if (! $connection->table('staff_users')->where('id', $staffUserId)->exists()) {
@@ -168,6 +180,8 @@ final class StaffAdmin
                     'updated_at' => now('UTC'),
                 ]);
             });
+
+            $this->audit->record('staff_updated', $actorId, null, ['target' => $staffUserId]);
 
             return 'updated';
         } catch (QueryException) {
@@ -278,8 +292,8 @@ final class StaffAdmin
         return $activeOwners <= 1;
     }
 
-    /** @param list<string> $roleKeys @return string created|invalid_input|duplicate_email|failed */
-    public function create(string $email, string $name, string $password, array $roleKeys): string
+    /** @param list<string> $roleKeys @return string created|invalid_input|duplicate_email|refused_owner|failed */
+    public function create(string $email, string $name, string $password, array $roleKeys, ?string $actorId = null): string
     {
         $email = strtolower(trim($email));
         $name = trim($name);
@@ -288,6 +302,11 @@ final class StaffAdmin
         }
         if ($roleKeys === []) {
             return 'invalid_input';
+        }
+        // Only an owner may create another owner (authorization belongs here,
+        // not only in the HTTP controller).
+        if (in_array('owner', $roleKeys, true) && ($actorId === null || ! $this->staffHasRole($actorId, 'owner'))) {
+            return 'refused_owner';
         }
         $roleIds = $this->database->connection('mysql')->table('roles')
             ->whereIn('key', $roleKeys)->pluck('key', 'id')->all();
@@ -302,7 +321,7 @@ final class StaffAdmin
         }
 
         try {
-            $this->database->connection('mysql')->transaction(function () use ($email, $name, $hash, $roleIds): void {
+            $createdId = $this->database->connection('mysql')->transaction(function () use ($email, $name, $hash, $roleIds): string {
                 $id = (string) Str::uuid7();
                 $now = now('UTC');
                 $this->database->connection('mysql')->table('staff_users')->insert([
@@ -324,7 +343,11 @@ final class StaffAdmin
                         'updated_at' => $now,
                     ]);
                 }
+
+                return $id;
             });
+
+            $this->audit->record('staff_created', $actorId, null, ['target' => $createdId, 'roles' => implode(',', $roleKeys)]);
 
             return 'created';
         } catch (QueryException $error) {

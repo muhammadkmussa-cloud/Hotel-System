@@ -334,3 +334,140 @@ Independent re-review of the **current `main`** implementation (the code was ref
 | P05.10 tests + S01/S02 evidence | Approved | S01/S02 images present; MySQL/PHPUnit coverage for bootstrap/sign-in/out/lock/expired. The P05.06 browser evidence is now reproducible. |
 
 **P05 outcome:** 10/10 approved after fixes; 2 HIGH fixed and independently re-confirmed (no HIGH remains). Open MEDIUM/LOW advisories are recorded above and carried to their named phases. Also fixed this pass: the `tests/Fixtures/*` drop-list regression (see [execution evidence](08-execution-evidence.md)).
+
+## P06 strict re-review — 7 October 2026
+
+Independent re-review of the current `main`. Executed evidence: Foundation **181/760**; MySQL 26.7.1 `StaffAdminTest` **327 assertions OK**, `HotelSettingsTest` 158, `IdempotentCommandTest` 101, `InstallationSetupTest` 40, `OwnerBootstrapTest` 60, `StaffIdentityTest` 28, `StaffAuthenticatorTest` 119; browser (anonymous) 84 passed; browser (authenticated, new seeded fixture) 4 passed.
+
+| Step | Verdict | Findings and fixes |
+|---|---|---|
+| P06.01 scoped listing/creation | Approved | Owner/manager capability gate; no N+1. Fixed: owner-role creation now enforced inside `StaffAdmin::create()` (not only the controller). |
+| P06.02 role grants | **Changes requested → Approved** | Self-escalation, owner-only grant, last-owner lock all correct. HIGH: role grants/revokes were **not audited**. Fixed: `StaffAdmin` records `staff_role_granted`/`staff_role_revoked`; asserted in `StaffAdminTest`. |
+| P06.03 deactivation | Approved | Revokes all sessions inside the transaction; resolver re-checks revoked/active, so access is lost immediately. |
+| P06.04 staff screens | **Changes requested → Approved** | HIGH: browser spec only asserted anonymous denial. Fixed: new authenticated project (`server-authed.mjs` + `*/​*.authed.spec.js`) asserts owner view, non-owner denial and an accessible validation error. Empty state still unasserted (advisory). |
+| P06.05 versioned settings | Approved | Atomic compare-and-increment; stale rejected; owner-only gate. Audited via `settings_updated`. |
+| P06.06 table configuration | Approved | Unique active label via generated column + index; deactivate-only. Audited via `table_*`. |
+| P06.07 station configuration | Approved (advisory) | `settings.manage` gate correct. Advisory: routing metadata is always passed `null` and the encode guard is dead code (`StationConfig.php`, `HotelSettingsController.php`). |
+| P06.08 printer destinations | Approved | Fail-closed allowlist; scheme/host exact match; re-probed SSRF bypasses (userinfo, subdomain, IPv6, localhost) all rejected. |
+| P06.09 settings screen | **Changes requested → Approved** | HIGH (same as P06.04): screen states unasserted. Fixed by the authenticated settings spec (all sections + redaction). Integration status is boolean-only. |
+| P06.10 routes, audit, S27/S28 | **Changes requested → Approved** | HIGH: privilege/mutation audit incomplete. Fixed (events added + asserted). Advisory: S27/S28 PNGs are byte-identical and show only the anonymous redirect; replace with authenticated captures. |
+
+**P06 outcome:** 10/10 approved after fixes. HIGH-1 (missing privilege/mutation audit) and HIGH-2 (missing browser coverage) fixed and independently re-confirmed; two MEDIUM boundary issues (domain owner-guard on create; non-owner editing an owner) also fixed. Advisories: empty-state coverage, station routing metadata, S27/S28 screenshots, domain-guard negative test.
+
+## P07 strict re-review — 7 October 2026
+
+Independent re-review of the current `main`. Executed evidence: Foundation **181/760**; MySQL 26.7.1 `VisitServiceTest` 48, `GuestServiceTest` 91, `GuestBindingTest` 220, `VisitOverviewTest` 146, `VisitTransferTest` 172, `StaffAdminTest` 327 — all OK; browser **88 passed** (84 anonymous + 4 authenticated). The reviewer found **no CRITICAL/HIGH** issues; five MEDIUM items were fixed in this pass.
+
+Fixes to product code:
+- `VisitService::transfer()` returns `invalid_input` when no destination is named (was `unchanged`).
+- `VisitService::close()` re-reads `version` under the row lock (a concurrent transfer could otherwise regress the version).
+- `VisitService::open()` refuses a missing/deactivated table (`table_not_found`) instead of creating an invisible visit.
+- `GuestService::add()` / `VisitService::transfer()` / `GuestBindingService::bind()`/`revoke()` rethrow the top-level-transaction `LogicException` instead of swallowing it as `failed`.
+- `GuestBindingService::bind()` checks the visit state before the guest state (`visit_closed` precedence); `resolveForDeviceSession()` also requires `devices.active`.
+- Guest binding create/revoke are now audited (`guest_binding_created`/`guest_binding_revoked`).
+- `/device/pair` POST is throttled by a new `pairing` policy.
+
+Fixes to tests/fixtures (drift, not weakening): `VisitTransferTest` concurrent same-visit case expects `['transferred','unchanged']` (the loser sees the committed move; the two-different-visits `destination_occupied` case is still asserted); `device-pair.blade.php` regained the privacy note; `home.spec.js` rewritten for the hotel landing page.
+
+| Step | Verdict |
+|---|---|
+| P07.01 devices/sessions (digest-only) | Approved |
+| P07.02 pairing/activation | Approved (throttle added) |
+| P07.03 activation + admin device screens | Approved |
+| P07.04 visits + active-table uniqueness | Approved (version/close + inactive-table fixes) |
+| P07.05 guest creation, unique labels, device-independent | Approved |
+| P07.06 staff-authorized binding, no client IDs | Approved (audit added) |
+| P07.07 waiter overview | Approved |
+| P07.08 visit detail + four bindings | Approved |
+| P07.09 locked transfers + audit | Approved |
+| P07.10 replace/revoke flows | Approved (evidence doc reconciled) |
+
+**P07 outcome:** 10/10 approved after fixes; no CRITICAL/HIGH. Remaining advisories: nested-transaction coverage for `transfer`/`bind`/`revoke`, re-issuing a pairing code leaves the old code valid, `/admin/devices` view selects full rows (digests), no `/admin/devices` browser spec, dead duplicated views, and screen-map `/device/activate` vs `/device/pair` naming.
+
+## P08 strict re-review — 7 October 2026
+
+Independent re-review of the current `main`. The reviewer found the upload middleware inert, unverified host WebP support, no script-execution guard on the writable public media path, and no uploader UI (P08.08); P08.10 approval recording was absent. All HIGH findings were fixed.
+
+Fixes:
+- **H1 (inert upload middleware):** attached `media.upload` to `POST /admin/media`; relaxed its field allowlist to `_token`/`kind`/`demo` while keeping multipart-only, size, single-file and MIME checks. Also fixed a real bug: the controller compared a Symfony `UploadedFile` against Illuminate's class, so **every upload was rejected**; now uses `$request->file('file')`.
+- **H2 (host format support):** `MediaLibrary::hostEncoders()` verifies GD WebP/JPEG availability; upload fails loudly instead of silently producing no variants.
+- **H3 (script guard):** added `public/media/.htaccess` (engine off, RemoveHandler/Type, deny script/markup, -ExecCGI) tracked via `.gitignore`, plus `MediaPathHardeningTest`.
+- **H4 (uploader UI):** `admin/media.blade.php` uploader elements + `public/assets/js/apps/media-upload.js` (preview, XHR progress, error state, success/redirect-back detection) + `media-upload.authed.spec.js`.
+- **P08.10:** `approveMedia` action + route + form recording content/chef approvers, audited as `media_approval_recorded`.
+- **P08.01–P08.07:** media metadata edit/state was entirely broken (the `media` table uses `version`, but `VersionedUpdate` hardcoded `resource_version`); `VersionedUpdate::apply` now takes a `$versionColumn`, media passes `version`.
+
+Evidence: Foundation **182/766** (adds MediaPathHardeningTest); real-MySQL `MediaMetadataTest` **77 OK**; browser **91 passed** (incl. 3 media-upload authenticated specs).
+
+**P08 outcome:** all 10 steps approved; no step unimplemented. Residuals (non-blocking): approval bypasses versioning; `.htaccess` is Apache/LiteSpeed-only (nginx snippet not shipped) and is asserted rather than executed; P08.04 direct-access and image-layout checks not executed at HTTP/layout level.
+
+## P09 strict re-review — 7 October 2026
+
+Independent re-review. No CRITICAL issues; all 10 steps had working code but **no P09 test existed**. Fixes:
+
+- **H1 (nested invalidation):** `MealCatalogue::refreshDigestsForIngredient` now walks the component graph upward so editing a child compound invalidates meals that use the parent.
+- **H2 (coverage):** added `tests/Database/IngredientCatalogueTest.php` + probe (75 assertions) covering unique active names, versioned edit/stale, archive/restore snapshots, self/multi-level cycle rejection, media reuse.
+- **H3 (evidence):** added `tests/evidence/p09/s24-ingredient-reuse.txt`.
+- **M1:** archive/restore now records a version snapshot.
+- **M3:** ingredient create form gained a media `<select>` and the controller passes `media_id` (plus a browser test so an stdClass/array regression cannot recur).
+- **M5:** duplicate-name race maps to `DUPLICATE_NAME` instead of a 500.
+
+Residuals: H1 is fixed but not unit-tested (deferred to the P10 meal tests); P09.02 lacks an HTTP capability test; M2 (composition cycle TOCTOU) and M4 (`flatNames` depth cap) remain.
+
+## Related fixes outside the strict P05–P28 walk
+
+While completing the baseline, three defects were fixed and independently reviewed in their phases:
+- **P26 report prefix bug:** `ReportService::summary` used an unprefixed `selectRaw('order_items.meal_name …')`, which broke under the isolated prefixed schema; now qualified with the connection prefix.
+- **Report fixture drift:** the `report-ledger-probe` `adjustments`, `payments` and `refunds` multi-row inserts had mismatched keys, silently misassigning values; normalized to consistent keys.
+- **P03 demo-reset guard:** the exact four-table allowlist was stale after schema growth and refused a valid demo DB; it now compares against the app's migration-created table set, so it still rejects an unexpected/foreign table.
+
+## P10 strict re-review — 7 October 2026
+
+Independent re-review. No CRITICAL issues. The domain core (draft/publish/immutable snapshots/atomic events) was sound; three HIGH findings and P10.10 evidence were fixed.
+
+- **P10.07 (category rename did not invalidate approval):** `saveCategory` now runs in a transaction, locks the category, and re-derives each meal's draft digest in the category, so an approval is invalidated on rename.
+- **P10.06 (unsaved-edit warning):** shared `staff.js` warns before unload for `form[data-dirty-guard]`; the meal editor forms opt in.
+- **P10.04 (tax reference):** reconciled to the confirmed global-tax design (tax is a single setting snapshotted at checkout); recorded in the P10 evidence file.
+- **P10.10:** added `tests/Database/MealCatalogueTest.php` + probe (68 assertions) and `tests/evidence/p10/s25-t04-meal-publication.txt` covering exact minor units, draft isolation, digest-bound publication, immutable published snapshots, stale-edit conflicts and category-rename invalidation.
+
+Evidence: Foundation **182/766**; real-MySQL **21/21**; browser **92/92**.
+
+**P10 outcome:** 10/10 approved after fixes. Residuals (non-blocking): the dirty-flag is shared between the two editor forms and has no browser test; no customer preview element; the build-plan wording for P10.04 still says "tax-configuration references".
+
+## P11 strict re-review — 7 October 2026
+
+Independent re-review. No CRITICAL issues; server-owned identity, published-only reads, fixed-ingredient immutability in code, and catalogue non-mutation are sound. **Changes requested** — the phase cannot be approved yet.
+
+- **HIGH-1:** no automated test exercises the **real** customer menu/customiser. The 92 browser tests only cover the static `/preview/customer` P04 prototype; the real `/table` menu, customiser, sold-out state and per-line summary are untested (only a Python e2e flow touches them, outside the recorded evidence). Fix: add authenticated Playwright specs against a bound tablet/guest.
+- **HIGH-2:** the P11.06 security invariant (a `fixed` ingredient cannot be removed) is correctly enforced in `CartService::validateChoices` but has **no negative test**. Fix: assert 422 when `removed` contains a fixed id or an unoffered extra.
+- **HIGH-3:** P11.10 evidence (`tests/evidence/p11/`, S06/S07/T06) is absent.
+- **P11.03 not implemented:** there is no catalogue search/filter or empty-results state (only category tabs).
+- **P11.07 partial:** no overflow tray/collapse for dense ingredient sets (labels do not shrink, so that clause holds).
+- MEDIUM: sold-out card is `aria-disabled` but still activates; the customiser total is computed client-side (should be a server quote); ingredient portraits are a list, not composed around the hero; no customer-menu DB/feature test.
+
+**P11 outcome:** Approved after fixes. HIGH-1 (real customer-menu test), HIGH-2 (fixed-ingredient forged-input test) and P11.03 (search/filter) and P11.07 (overflow tray) fixed and independently re-confirmed. HIGH-3 (P11.10 evidence) partially resolved: an evidence artifact exists but the full T06 matrix (3/8/20 ingredients, long labels, missing image, keyboard, reduced motion on the real screen) is not yet demonstrated. Residuals (non-blocking): the customiser total is computed client-side (should be a server quote); a sold-out card is `aria-disabled` but still activates; ingredient portraits render as a list rather than around the hero; the bound-guest `/table` header (P11.01) still has no browser assertion.
+
+## P12 strict re-review — 7 October 2026
+
+Independent re-review. No CRITICAL issues. Fixes:
+
+- **HIGH-1 (quote response schema):** added `CartQuoteResponse`/`CartQuote`/`CartQuoteLine`/`CartConflict` to `api/openapi.json` and referenced them from both cart GET 200s with a populated example (including the server-emitted `image`); regenerated the JS client; the contract validator now covers 30 examples.
+- **HIGH-2 (silent line rebase):** `CartService::update` no longer overwrites `meal_version`/price; it validates against the version the guest added and raises `CART_CHANGED` if that version is withdrawn; expired lines are rejected.
+- **HIGH-3 (verification/evidence):** extended `MealCatalogueTest` (105 assertions) with server-quote total, owner isolation, no charges/kitchen work from a draft, expiry drop, and digest stability; added `tests/evidence/p12/s08-t05-t30-cart-quote.txt`.
+
+Evidence: Foundation **182/766**; JS **15/15**; real-MySQL **21/21**; browser **93/93**; contract **30 examples + 15 unittest OK**.
+
+**P12 outcome:** 10/10 approved after fixes. Residuals (non-blocking): the cart line image is returned by the server but not rendered in `cartLines()`; `CartService::add` has no transaction/lock; the pre-add customiser total is a client-side estimate.
+
+## P13 strict re-review — 7 October 2026
+
+Independent re-review. No CRITICAL issues. Fixes:
+
+- **HIGH-1 (concurrent same-key 500):** `OrderService` now routes `submitTable`/`submitKiosk` through `submitIdempotent`, which catches a duplicate `idempotency_hash` and replays the committed result.
+- **HIGH-2 (inverted lock order):** `GuestBindingService::bind` locks visit before guest, matching `OrderService` (visit → guest).
+- **HIGH-3 (frontend key loss):** `table.js`/`kiosk.js` preserve the submit key on network/5xx/408/429 and reset only on a definitive 4xx.
+- **HIGH-4 (ingredient identity):** migration 000035 adds `order_items.removed_ids`/`extras_snapshot`; `createSubmission` snapshots stable IDs and extra prices.
+- **P13.10:** extended `MealCatalogueTest` (138 assertions) with same-key replay, later-order independence and the ingredient snapshot; added `tests/evidence/p13/t01-t03-t19-t23-order-submission.txt`.
+
+Evidence: Foundation **182/766**; JS **15/15**; real-MySQL **21/21**; browser **93/93**.
+
+**P13 outcome:** 10/10 approved after fixes. Residuals (non-blocking): no bill/charge lock during submission; the order `reference` is a non-atomic count with no unique index; no single own-order read endpoint; the same-key/four-tablet races are covered by code + sequential replay, not a true concurrency test.

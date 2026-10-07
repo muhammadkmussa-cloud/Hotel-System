@@ -1,0 +1,41 @@
+P10 / S25 / T04 — meal, recipe and publication evidence
+=======================================================
+
+Date: 7 October 2026
+Environment: PHP 8.3.30, MySQL 26.7.1 (disposable schema), PHPUnit 12.5.37
+
+Command:
+  HOTEL_TEST_DB_ALLOW_SCHEMA=1 \
+  HOTEL_TEST_DB_HOST=127.0.0.1 HOTEL_TEST_DB_PORT=13306 \
+  HOTEL_TEST_DB_DATABASE=hotel_test HOTEL_TEST_DB_USERNAME=hotel_user \
+  HOTEL_TEST_DB_PASSWORD=*** \
+  php vendor/bin/phpunit --configuration phpunit.mysql.xml.dist \
+      tests/Database/MealCatalogueTest.php
+
+Result:
+  OK (1 test, 68 assertions)
+
+What it proves (real MySQL, not mocks):
+  - P10.04 exact minor units: a KSh 250.00 price is stored as 25000.
+  - P10.02/P10.10 draft isolation: an unpublished draft never appears in the
+    guest menu().
+  - P10.05/P10.07/P10.08: publication requires the exact approved recipe digest
+    (REVIEW_REQUIRED before approval); an approved meal publishes version 1.
+  - P10.02/P10.09 immutable snapshots: after editing the draft, the published
+    version 1 snapshot still reads the original name (republishing never rewrites
+    history).
+  - P10.03 version checks: a stale draft edit is refused (VERSION_CONFLICT).
+  - P10.07 category rename invalidates the meal's recipe approval (the draft
+    digest changes, so recipe_approved_digest no longer matches).
+
+Also added this pass: the meal editor forms carry a data-dirty-guard and the
+shared staff script warns before unload when edits are unsaved (P10.06).
+
+Source: hotel-app/tests/Database/MealCatalogueTest.php
+        hotel-app/tests/Fixtures/meal-catalogue-probe.php
+
+Reconciliation (P10.04): tax is a single global installation setting snapshotted
+onto each checkout (CheckoutService), not a per-meal reference. The meal draft
+carries the backend-validated, tax-inclusive base price; there is no per-meal
+tax configuration in the confirmed design, so the step wording is reconciled to
+the global-tax model rather than adding a redundant per-meal column.

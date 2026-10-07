@@ -17,8 +17,11 @@ class SecurityAudit
     private const ALLOWED_EVENTS = [
         'login_succeeded', 'login_failed', 'logout', 'unlock_succeeded', 'unlock_failed',
         'owner_bootstrapped', 'installation_configured', 'session_revoked', 'staff_deactivated', 'staff_activated', 'printer_destination_created', 'printer_destination_deactivated', 'device_revoked',
+        'staff_created', 'staff_updated', 'staff_role_granted', 'staff_role_revoked',
+        'settings_updated', 'table_created', 'table_deactivated', 'station_created', 'station_deactivated',
+        'guest_binding_created', 'guest_binding_revoked',
         'visit_transferred',
-        'media_metadata_edited', 'media_publication_changed', 'media_uploaded',
+        'media_metadata_edited', 'media_publication_changed', 'media_uploaded', 'media_approval_recorded',
     ];
 
     private const FORBIDDEN_KEY_NEEDLES = ['password', 'token', 'secret', 'session', 'cookie', 'auth', 'credential', 'csrf'];

@@ -138,19 +138,23 @@ DB::table('drawer_sessions')->insert(['id' => $ids['drawer'], 'opened_by' => $id
     'state' => 'open', 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
 DB::table('payments')->insert([
     ['id' => $ids['drawerPayment'], 'checkout_id' => $ids['checkout'], 'method' => 'cash', 'amount_minor' => 5000, 'reference' => 'DRAWER-CASH',
-        'state' => 'applied', 'drawer_session_id' => $ids['drawer'], 'business_date' => $date, 'created_at' => $now, 'updated_at' => $now],
+        'state' => 'applied', 'drawer_session_id' => $ids['drawer'], 'custody_staff_user_id' => null, 'business_date' => $date, 'created_at' => $now, 'updated_at' => $now],
     ['id' => $ids['custodyPayment'], 'checkout_id' => $ids['checkout'], 'method' => 'cash', 'amount_minor' => 5000, 'reference' => 'CUSTODY-CASH',
-        'state' => 'applied', 'custody_staff_user_id' => $ids['custodian'], 'business_date' => $date, 'created_at' => $now, 'updated_at' => $now],
+        'state' => 'applied', 'drawer_session_id' => null, 'custody_staff_user_id' => $ids['custodian'], 'business_date' => $date, 'created_at' => $now, 'updated_at' => $now],
 ]);
 DB::table('refunds')->insert([
     ['id' => '01990000-0000-7000-8000-000000000062', 'payment_id' => $ids['payment'], 'amount_minor' => 1000, 'reason' => 'Drawer payout',
-        'state' => 'approved', 'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'approved_at' => $now, 'created_at' => $now, 'updated_at' => $now],
+        'state' => 'approved', 'cash_source_type' => null, 'cash_custody_staff_user_id' => null, 'business_date' => null,
+        'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'completed_by' => null,
+        'approved_at' => $now, 'completed_at' => null, 'created_at' => $now, 'updated_at' => $now],
     ['id' => '01990000-0000-7000-8000-000000000063', 'payment_id' => $ids['payment'], 'amount_minor' => 1000, 'reason' => 'Custody payout',
-        'state' => 'completed', 'cash_source_type' => 'custodian', 'cash_custody_staff_user_id' => $ids['custodian'],
-        'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'completed_by' => $ids['actor'], 'business_date' => $date,
+        'state' => 'completed', 'cash_source_type' => 'custodian', 'cash_custody_staff_user_id' => $ids['custodian'], 'business_date' => $date,
+        'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'completed_by' => $ids['actor'],
         'approved_at' => $now, 'completed_at' => $now, 'created_at' => $now, 'updated_at' => $now],
     ['id' => '01990000-0000-7000-8000-000000000064', 'payment_id' => $ids['payment'], 'amount_minor' => 6000, 'reason' => 'Too much custody cash',
-        'state' => 'approved', 'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'approved_at' => $now, 'created_at' => $now, 'updated_at' => $now],
+        'state' => 'approved', 'cash_source_type' => null, 'cash_custody_staff_user_id' => null, 'business_date' => null,
+        'requested_by' => $ids['actor'], 'approved_by' => $ids['actor'], 'completed_by' => null,
+        'approved_at' => $now, 'completed_at' => null, 'created_at' => $now, 'updated_at' => $now],
 ]);
 $refundService = $app->make(App\Domain\Billing\RefundService::class);
 $refundService->complete('01990000-0000-7000-8000-000000000062', null, 'drawer:'.$ids['drawer'], $ids['actor']);

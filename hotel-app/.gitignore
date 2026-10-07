@@ -16,5 +16,7 @@
 /storage/**
 !/storage/**/
 !/storage/**/.gitignore
-/public/media/
+# Runtime media is per-installation; only the hardening file is tracked.
+/public/media/*
+!/public/media/.htaccess
 __pycache__/

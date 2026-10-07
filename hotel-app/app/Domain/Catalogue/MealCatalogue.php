@@ -42,19 +42,28 @@ final class MealCatalogue
         if ($name === '' || mb_strlen($name) > 80) {
             throw DomainError::invalid('Enter a category name of up to 80 characters.');
         }
-        $now = now('UTC');
-        if ($id === null) {
-            $id = Ids::new();
-            DB::table('categories')->insert(['id' => $id, 'name' => $name, 'display_order' => max(0, $order), 'active' => $active ? 1 : 0, 'created_at' => $now, 'updated_at' => $now]);
-        } else {
-            if (DB::table('categories')->where('id', $id)->update(['name' => $name, 'display_order' => max(0, $order), 'active' => $active ? 1 : 0, 'updated_at' => $now]) === 0) {
-                throw DomainError::notFound('Category not found.');
-            }
-        }
-        Audit::record('category_saved', $actorId, ['category_id' => $id, 'name' => $name]);
-        Outbox::emit('menu.changed', 'menu');
 
-        return $id;
+        return Tx::run(function () use ($id, $name, $order, $active, $actorId): string {
+            $now = now('UTC');
+            if ($id === null) {
+                $id = Ids::new();
+                DB::table('categories')->insert(['id' => $id, 'name' => $name, 'display_order' => max(0, $order), 'active' => $active ? 1 : 0, 'created_at' => $now, 'updated_at' => $now]);
+            } else {
+                if (Tx::lock('categories', $id) === null) {
+                    throw DomainError::notFound('Category not found.');
+                }
+                DB::table('categories')->where('id', $id)->update(['name' => $name, 'display_order' => max(0, $order), 'active' => $active ? 1 : 0, 'updated_at' => $now]);
+            }
+            // A rename changes every meal's category_name fact, so re-derive the
+            // drafts — which invalidates any earlier kitchen approval (P10.07).
+            foreach (DB::table('meals')->where('category_id', $id)->pluck('id')->all() as $mealId) {
+                $this->refreshDigest((string) $mealId);
+            }
+            Audit::record('category_saved', $actorId, ['category_id' => $id, 'name' => $name]);
+            Outbox::emit('menu.changed', 'menu');
+
+            return $id;
+        });
     }
 
     // ----- Drafts (P10.02–P10.05) -----
@@ -226,8 +235,21 @@ final class MealCatalogue
     /** @return list<string> names of meals whose draft changed because of this ingredient */
     public function refreshDigestsForIngredient(string $ingredientId): array
     {
+        // A change to a child compound ingredient changes the facts of every
+        // ancestor that contains it, so walk the component graph upward and
+        // refresh meals that reference the ingredient directly OR via a parent.
+        $ancestors = [$ingredientId];
+        $frontier = [$ingredientId];
+        while ($frontier !== []) {
+            $parents = DB::table('ingredient_components')
+                ->whereIn('child_ingredient_id', $frontier)
+                ->pluck('parent_ingredient_id')->all();
+            $frontier = array_values(array_diff($parents, $ancestors));
+            $ancestors = array_merge($ancestors, $frontier);
+        }
+
         $names = [];
-        $mealIds = DB::table('meal_ingredients')->where('ingredient_id', $ingredientId)->pluck('meal_id')->all();
+        $mealIds = DB::table('meal_ingredients')->whereIn('ingredient_id', $ancestors)->pluck('meal_id')->unique()->all();
         foreach (DB::table('meals')->whereIn('id', $mealIds)->get(['id', 'name', 'draft_digest', 'recipe_approved_digest']) as $meal) {
             $new = $this->refreshDigest($meal->id);
             if ($new !== $meal->draft_digest) {

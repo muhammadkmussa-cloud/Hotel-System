@@ -78,6 +78,7 @@ final class StaffAdminController
 
         return match ($result) {
             'updated' => redirect('/admin/staff')->with('status', 'Staff member updated.'),
+            'refused_owner' => back()->withInput()->withErrors(['staff_user_id' => 'Only an owner can edit an owner account.']),
             'duplicate_email' => back()->withInput()->withErrors(['email' => 'That email is already in use.']),
             'invalid_input' => back()->withInput()->withErrors(['email' => 'Check the staff details and try again.']),
             default => back()->withInput()->withErrors(['email' => 'Update failed. Private details withheld.']),
@@ -113,8 +114,9 @@ final class StaffAdminController
         // No self-escalation: only an owner may grant the owner role.
         $roles = array_values($validated['roles']);
         $principal = $request->attributes->get(RequirePrincipal::ATTRIBUTE);
+        $actorId = $principal instanceof Principal ? $principal->identifier() : '';
         if (in_array('owner', $roles, true)
-            && ! $admin->staffHasRole($principal instanceof Principal ? $principal->identifier() : '', 'owner')
+            && ! $admin->staffHasRole($actorId, 'owner')
         ) {
             return back()->withInput($request->only('email', 'name'))
                 ->withErrors(['roles' => 'Only an owner can grant the owner role.']);
@@ -125,10 +127,12 @@ final class StaffAdminController
             $validated['name'],
             $validated['password'],
             array_values($validated['roles']),
+            $actorId,
         );
 
         return match ($result) {
             'created' => redirect('/admin/staff')->with('status', 'Staff member created.'),
+            'refused_owner' => back()->withInput($request->only('email', 'name'))->withErrors(['roles' => 'Only an owner can grant the owner role.']),
             'duplicate_email' => back()->withInput()->withErrors(['email' => 'A staff member with that email already exists.']),
             'invalid_input' => back()->withInput()->withErrors(['email' => 'Check the staff details and try again.']),
             default => back()->withInput()->withErrors(['email' => 'Staff creation failed. Private details withheld.']),

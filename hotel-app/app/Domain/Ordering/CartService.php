@@ -72,6 +72,10 @@ final class CartService
         if ($row === null) {
             throw DomainError::notFound('That item is no longer in your order.');
         }
+        if (now('UTC')->greaterThan($row->expires_at)) {
+            DB::table('cart_lines')->where('id', $lineId)->delete();
+            throw DomainError::notFound('That item is no longer in your order.');
+        }
         if ($quantity === 0) {
             DB::table('cart_lines')->where('id', $lineId)->delete();
 
@@ -80,9 +84,14 @@ final class CartService
         $this->validateQuantity($quantity);
         $changes = ['quantity' => $quantity, 'expires_at' => now('UTC')->addHours(self::DRAFT_HOURS), 'updated_at' => now('UTC')];
         if ($removed !== null || $extras !== null) {
-            [$snapshot, $version] = $this->liveMeal($row->meal_id);
+            // Validate against the version the guest actually added; never
+            // silently rebase the line to a newer published price (P12.07/P12.08).
+            $snapshot = $this->meals->publishedSnapshot($row->meal_id, (int) $row->meal_version);
+            if ($snapshot === null) {
+                throw DomainError::conflict('CART_CHANGED', 'This dish changed. Review your order and accept the changes.');
+            }
             [$r, $e] = $this->validateChoices($snapshot, $removed ?? json_decode($row->removed_ingredient_ids, true), $extras ?? json_decode($row->extra_ingredient_ids, true));
-            $changes += ['removed_ingredient_ids' => json_encode($r), 'extra_ingredient_ids' => json_encode($e), 'meal_version' => $version];
+            $changes += ['removed_ingredient_ids' => json_encode($r), 'extra_ingredient_ids' => json_encode($e)];
         }
         if ($note !== null) {
             $changes['note'] = $this->cleanNote($note);

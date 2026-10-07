@@ -23,6 +23,11 @@
 <section class="card"><h2>New ingredient</h2>
 <form method="post" action="/admin/ingredients">@csrf
     <div class="field"><label for="name">Name</label><input id="name" name="name" required maxlength="120"></div>
+    <div class="field"><label for="media_id">Photo</label>
+        <select id="media_id" name="media_id"><option value="">No photo</option>
+            @foreach ($mediaChoices as $choice)<option value="{{ $choice->id }}">{{ $choice->label }}</option>@endforeach
+        </select>
+        <p class="hint">Upload photos in <a href="/admin/media?kind=ingredient">Photos → Ingredients</a>, then pick one here.</p></div>
     <div class="field"><label for="description">Description for guests</label><textarea id="description" name="description" maxlength="500"></textarea></div>
     <div class="field"><label for="allergen_notes">Allergen / dietary information</label><textarea id="allergen_notes" name="allergen_notes" maxlength="500" placeholder="e.g. Contains milk."></textarea></div>
     <div class="field"><label for="preparation_notes">Kitchen preparation notes (staff only)</label><textarea id="preparation_notes" name="preparation_notes" maxlength="500"></textarea></div>
