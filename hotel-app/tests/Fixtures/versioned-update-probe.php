@@ -10,6 +10,13 @@ try {
     $kernel->bootstrap();
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
     $id = '0199ac1a-0000-7000-8000-000000000001';
     $action = $argv[1];
     if ($action === 'empty') {
@@ -25,7 +32,7 @@ try {
         $row = $db->table('hotel_settings')->sole();
         echo json_encode(['name' => $row->name, 'version' => $row->resource_version]);
     } elseif ($action === 'cleanup') {
-        foreach (['idempotent_commands', 'hotel_settings', 'migrations'] as $table) $schema->dropIfExists($table);
+        $dropAll();
         echo json_encode(['cleaned' => true]);
     } else {
         try {

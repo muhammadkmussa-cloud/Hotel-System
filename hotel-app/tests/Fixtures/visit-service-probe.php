@@ -30,6 +30,17 @@ try {
         'idempotent_commands', 'audit_events', 'probe_migrations',
     ];
 
+    // The disposable schema is reset by dropping every base table (FK checks
+    // off) rather than a hardcoded subset, so newly added migrations with
+    // foreign keys onto owned tables cannot strand the schema.
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
+
     $waitForBarrier = static function (): void {
         $barrier = (string) (getenv('BARRIER') ?: '');
         if ($barrier === '') {
@@ -57,17 +68,13 @@ try {
     }
 
     if ($action === 'cleanup') {
-        foreach ($owned as $table) {
-            $schema->dropIfExists($table);
-        }
+        $dropAll();
         echo json_encode(['cleaned' => true]);
         exit(0);
     }
 
     if ($action === 'migrate') {
-        foreach ($owned as $table) {
-            $schema->dropIfExists($table);
-        }
+        $dropAll();
         $output = new Symfony\Component\Console\Output\BufferedOutput;
         $status = $kernel->call('app:migrate', ['--no-interaction' => true], $output);
         echo json_encode(['status' => $status]);

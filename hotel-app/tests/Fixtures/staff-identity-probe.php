@@ -12,6 +12,13 @@ try {
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
     $action = $argv[1] ?? 'probe';
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
 
     if ($action === 'empty') {
         foreach (['staff_users', 'roles', 'staff_role_grants', 'staff_sessions', 'installation_bootstrap', 'hotel_settings', 'idempotent_commands', 'probe_migrations'] as $table) {
@@ -25,18 +32,14 @@ try {
     }
 
     if ($action === 'cleanup') {
-        foreach (['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'idempotent_commands', 'probe_migrations'] as $table) {
-            $schema->dropIfExists($table);
-        }
+        $dropAll();
         echo json_encode(['cleaned' => true]);
         exit(0);
     }
 
     // This isolated disposable schema is reset to a known state so the test is
     // independent of whichever other disposable-schema tests ran before it.
-    foreach (['staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'idempotent_commands', 'probe_migrations'] as $table) {
-        $schema->dropIfExists($table);
-    }
+    $dropAll();
 
     $output = new Symfony\Component\Console\Output\BufferedOutput;
     $status = $kernel->call('app:migrate', ['--no-interaction' => true], $output);

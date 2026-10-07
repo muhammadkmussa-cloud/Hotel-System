@@ -9,14 +9,21 @@ declare(strict_types=1);
 use App\Support\MediaMetadata;
 use Illuminate\Contracts\Console\Kernel;
 
-require __DIR__.'/../../vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
 
-$app = require __DIR__.'/../../bootstrap/app.php';
+$app = require __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 $db = $app['db']->connection('mysql');
 $schema = $db->getSchemaBuilder();
+$dropAll = static function () use ($db, $schema): void {
+    $db->statement('SET FOREIGN_KEY_CHECKS=0');
+    foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+        $schema->dropIfExists((string) $row->name);
+    }
+    $db->statement('SET FOREIGN_KEY_CHECKS=1');
+};
 $media = app(MediaMetadata::class);
 
 $action = $argv[1] ?? 'empty';
@@ -130,8 +137,7 @@ try {
             break;
 
         case 'cleanup':
-            $schema->dropIfExists('media');
-            $schema->dropIfExists('migrations');
+            $dropAll();
             $out(['cleaned' => ! $schema->hasTable('media')]);
             break;
 

@@ -10,6 +10,13 @@ try {
     $kernel->bootstrap();
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
     $action = $argv[1];
     if ($action === 'empty') {
         echo json_encode(['empty' => $schema->getTableListing() === []]);
@@ -25,7 +32,7 @@ try {
         $db->table('idempotent_commands')->where('identity_hash', hash('sha256', json_encode(['guest:fixture', 'order:fixture', 'fixture-command-0001'])))->update(['result_data' => null]);
         echo json_encode(['damaged' => true]);
     } elseif ($action === 'cleanup') {
-        foreach (['idempotency_probe_effects', 'idempotent_commands', 'hotel_settings', 'migrations'] as $table) $schema->dropIfExists($table);
+        $dropAll();
         echo json_encode(['cleaned' => true]);
     } else {
         try {

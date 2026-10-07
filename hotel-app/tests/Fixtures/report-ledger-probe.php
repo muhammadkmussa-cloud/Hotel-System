@@ -105,7 +105,7 @@ try {
     }
     DB::table('adjustments')->insert([
         ['id' => '01990000-0000-7000-8000-000000000031', 'charge_id' => $chargeIds['sale'], 'allocation_id' => '01990000-0000-7000-8000-000000000041', 'kind' => 'discount', 'amount_minor' => 1000, 'reason' => 'Fixture discount', 'approved_by' => $ids['actor'], 'business_date' => $date, 'created_at' => $now],
-        ['id' => '01990000-0000-7000-8000-000000000032', 'charge_id' => $chargeIds['cancelled'], 'kind' => 'cancellation', 'amount_minor' => 20000, 'reason' => 'Fixture cancellation', 'approved_by' => $ids['actor'], 'business_date' => $date, 'created_at' => $now],
+        ['id' => '01990000-0000-7000-8000-000000000032', 'charge_id' => $chargeIds['cancelled'], 'allocation_id' => null, 'kind' => 'cancellation', 'amount_minor' => 20000, 'reason' => 'Fixture cancellation', 'approved_by' => $ids['actor'], 'business_date' => $date, 'created_at' => $now],
     ]);
     DB::table('charge_allocations')->insert([
         ['id' => '01990000-0000-7000-8000-000000000041', 'charge_id' => $chargeIds['sale'], 'guest_id' => '01990000-0000-7000-8000-000000000051', 'amount_minor' => 4000, 'state' => 'open', 'reason' => 'shared', 'created_at' => $now, 'updated_at' => $now],

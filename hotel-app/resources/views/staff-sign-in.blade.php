@@ -4,7 +4,7 @@
 <section class="card auth-card">
     <h1>Staff sign in</h1>
     <p class="muted">Use the email and password your manager gave you.</p>
-    <form method="post" action="/staff/sign-in">@csrf
+    <form method="post" action="/staff/sign-in" data-single-submit>@csrf
         <div class="field">
             <label for="email">Email</label>
             <input id="email" name="email" type="email" autocomplete="username" required autofocus value="{{ old('email') }}" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
@@ -14,7 +14,8 @@
             <label for="password">Password</label>
             <input id="password" name="password" type="password" autocomplete="current-password" required>
         </div>
-        <button class="btn-large btn-block" data-pending-label="Signing in…">Sign in</button>
+        <button class="btn-large btn-block" type="submit" data-pending-label="Signing in…">Sign in</button>
+        <p class="visually-hidden" role="status" aria-live="polite" data-submit-status></p>
     </form>
     @php
         try { $demoInstall = \App\Domain\Hotel::testMode() && \Illuminate\Support\Facades\DB::table('staff_users')->where('email', 'owner@demo.test')->exists(); } catch (\Throwable) { $demoInstall = false; }
@@ -27,3 +28,10 @@
     <p class="small muted">Setting up a tablet, kiosk or kitchen screen? <a href="/device/pair">Pair a device</a>.</p>
 </section>
 @endsection
+
+@push('scripts')
+<script type="module">
+    import { initSingleSubmit } from '/assets/js/lib/single-submit.js';
+    document.querySelectorAll('form[data-single-submit]').forEach(initSingleSubmit);
+</script>
+@endpush

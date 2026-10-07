@@ -7,6 +7,8 @@ document.querySelector('[data-error-focus]')?.focus();
 document.addEventListener('submit', (event) => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement) || form.method.toLowerCase() !== 'post') return;
+  // Forms using the accessible single-submit module manage their own busy state.
+  if (form.hasAttribute('data-single-submit')) return;
   if (form.dataset.submitting === '1') { event.preventDefault(); return; }
   if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) { event.preventDefault(); return; }
   form.dataset.submitting = '1';

@@ -8,7 +8,7 @@ This project contains the specifications, the build plan and a **working [Larave
 
 ## Build progress
 
-**The first-release application (P00–P28) is built and runs end to end on a local demo.** PHPUnit passes (132 tests, 705 assertions) and the HTTP end-to-end suite covering table ordering, kitchen, bills, shared dishes, cash/card/M-PESA checkout, discounts, refunds, kiosk and reports passes with 0 failures. Verification used PHP 8.4 with SQLite; **MySQL, the real host, payment/tax providers and hardware have not been tested.** Phases P08–P28 were implemented in one pass with the reviewer-agent gate waived by the owner, so their build-plan checkboxes are not individually ticked; the [implementation status](delivery/09-implementation-status.md) records evidence and gaps instead.
+**A working first-release application is present in code, but the P00–P28 completion claim is being re-verified.** On 7 October 2026 the Foundation PHPUnit suite passed on **PHP 8.3 (181 tests, 760 assertions)** and the JS unit suite **15/15**; the real-MySQL suite passed **11 of 19 files** and the browser suite **81 passed / 3 failed (stale UI expectations)**. The remaining MySQL failures are real defects in the P06/P07/P08 code (visit open, guest binding, transfer validation, media edit, report query) and are being fixed inside a strict independent re-review that started at **P05**. Earlier claims of "P00–P28 built" came from a single broad pass built with the reviewer-agent gate **waived by the owner**; that claim is not independently verified. **MySQL, the real host, payment/tax providers and hardware have not been production-tested.** See [execution evidence](delivery/08-execution-evidence.md) and [implementation status](delivery/09-implementation-status.md).
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
@@ -21,44 +21,44 @@ This project contains the specifications, the build plan and a **working [Larave
 
 | Current status | Value |
 |---|---|
-| Current phase | P29 — DirectAdmin staging and physical installation (needs a host, domain and hardware) |
-| Built | P00–P28 (see the checklist below) |
-| Blockers | MySQL server and DirectAdmin host for P29/P30; Safaricom Daraja credentials; certified eTIMS route; receipt/kitchen printers; a hotel for the pilot |
-| Last verified update | 7 October 2026 — tax snapshotted on each paid checkout; `hotel:restore` command; receipt layout; meal editor rule grid; README and status docs |
+| Current phase | Strict independent re-review from P05 (started 7 October 2026); P05 re-approved after fixes |
+| Built | P00–P28 exist in code; independently **re-verified** only through P05 |
+| Blockers | Real-MySQL defects in P06/P07/P08 being fixed in review; MySQL/DirectAdmin host for P29/P30; Safaricom Daraja credentials; certified eTIMS route; receipt/kitchen printers; a hotel for the pilot |
+| Last verified update | 7 October 2026 — strict re-review baseline executed (Foundation 181/760, JS 15/15, real-MySQL 11/19, browser 81/3); P05 re-reviewed and approved after 2 HIGH fixes |
 
 ### Feature and phase checklist
 
-Phases P00–P06 passed independent review. P07–P28 are marked built on the strength of the executed suites in the implementation status, without independent per-step review. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
+Phases P00–P04 passed independent review, and **P05 was independently re-reviewed and approved on 7 October 2026** after two HIGH fixes. P06–P28 exist in code but were NOT independently phase-reviewed (the broad pass waived the gate), and 7 October testing found real defects in P06/P07/P08, so their boxes are unchecked pending the strict re-review now in progress. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
 - [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
 - [x] [P02 — Database foundation and exact money](delivery/01-build-plan.md#p02) — 10/10 steps
 - [x] [P03 — HTTP contracts and request safeguards](delivery/01-build-plan.md#p03) — 10/10 steps
 - [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
-- [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
-- [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps
-- [x] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (now exercised by the E2E suite)
-- [x] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — built (see implementation status)
-- [x] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — built (see implementation status)
-- [x] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — built (see implementation status)
-- [x] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — built (see implementation status)
-- [x] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — built (see implementation status)
-- [x] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — built (see implementation status)
-- [x] [P14 — Availability and preparation review](delivery/01-build-plan.md#p14) — built (see implementation status)
-- [x] [P15 — Polling, durable jobs, and recovery](delivery/01-build-plan.md#p15) — built (see implementation status)
-- [x] [P16 — Kitchen, order status, and waiter assistance](delivery/01-build-plan.md#p16) — built (see implementation status)
-- [x] [P17 — Print jobs and hotel-side bridge](delivery/01-build-plan.md#p17) — built (see implementation status)
-- [x] [P18 — Guest bills and shared dishes](delivery/01-build-plan.md#p18) — built (see implementation status)
-- [x] [P19 — Guest checkout and payment ledger](delivery/01-build-plan.md#p19) — built (see implementation status)
-- [x] [P20 — Cash, waiter custody, and drawers](delivery/01-build-plan.md#p20) — built (see implementation status)
-- [x] [P21 — External card records and receipts](delivery/01-build-plan.md#p21) — built (see implementation status)
-- [x] [P22 — M-PESA initiation and verification](delivery/01-build-plan.md#p22) — built (see implementation status)
-- [x] [P23 — Closure, cancellations, discounts, and refunds](delivery/01-build-plan.md#p23) — built (see implementation status)
-- [x] [P24 — Kiosk journey and prepaid release](delivery/01-build-plan.md#p24) — built (see implementation status)
-- [x] [P25 — Fiscal invoices and credit notes](delivery/01-build-plan.md#p25) — built (see implementation status)
-- [x] [P26 — Reports, audit, and operational exceptions](delivery/01-build-plan.md#p26) — built (see implementation status)
-- [x] [P27 — Complete every screen and accessibility state](delivery/01-build-plan.md#p27) — built (see implementation status)
-- [x] [P28 — Backups, restore, and maintenance tooling](delivery/01-build-plan.md#p28) — built (see implementation status)
+- [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps (re-reviewed and approved 7 October 2026)
+- [ ] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — code present; strict re-review pending (visit-open defect)
+- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — code present; strict re-review pending (guest binding/transfer defects)
+- [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — code present; strict re-review pending (media edit defect)
+- [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — code present; strict re-review pending
+- [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — code present; strict re-review pending
+- [ ] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — code present; strict re-review pending
+- [ ] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — code present; strict re-review pending
+- [ ] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — code present; strict re-review pending
+- [ ] [P14 — Availability and preparation review](delivery/01-build-plan.md#p14) — code present; strict re-review pending
+- [ ] [P15 — Polling, durable jobs, and recovery](delivery/01-build-plan.md#p15) — code present; strict re-review pending
+- [ ] [P16 — Kitchen, order status, and waiter assistance](delivery/01-build-plan.md#p16) — code present; strict re-review pending
+- [ ] [P17 — Print jobs and hotel-side bridge](delivery/01-build-plan.md#p17) — code present; strict re-review pending
+- [ ] [P18 — Guest bills and shared dishes](delivery/01-build-plan.md#p18) — code present; strict re-review pending
+- [ ] [P19 — Guest checkout and payment ledger](delivery/01-build-plan.md#p19) — code present; strict re-review pending
+- [ ] [P20 — Cash, waiter custody, and drawers](delivery/01-build-plan.md#p20) — code present; strict re-review pending
+- [ ] [P21 — External card records and receipts](delivery/01-build-plan.md#p21) — code present; strict re-review pending
+- [ ] [P22 — M-PESA initiation and verification](delivery/01-build-plan.md#p22) — code present; strict re-review pending
+- [ ] [P23 — Closure, cancellations, discounts, and refunds](delivery/01-build-plan.md#p23) — code present; strict re-review pending
+- [ ] [P24 — Kiosk journey and prepaid release](delivery/01-build-plan.md#p24) — code present; strict re-review pending
+- [ ] [P25 — Fiscal invoices and credit notes](delivery/01-build-plan.md#p25) — code present; strict re-review pending
+- [ ] [P26 — Reports, audit, and operational exceptions](delivery/01-build-plan.md#p26) — code present; strict re-review pending (report query prefix defect)
+- [ ] [P27 — Complete every screen and accessibility state](delivery/01-build-plan.md#p27) — code present; strict re-review pending
+- [ ] [P28 — Backups, restore, and maintenance tooling](delivery/01-build-plan.md#p28) — code present; strict re-review pending
 - [ ] [P29 — DirectAdmin staging and physical installation](delivery/01-build-plan.md#p29) — 0/10 steps
 - [ ] [P30 — End-to-end integrity and capacity gates](delivery/01-build-plan.md#p30) — 0/10 steps
 - [ ] [P31 — Staff rehearsal, controlled pilot, and release](delivery/01-build-plan.md#p31) — 0/10 steps

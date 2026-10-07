@@ -13,6 +13,13 @@ try {
     $schema = $db->getSchemaBuilder();
     $action = $argv[1] ?? 'inspect';
     $owned = ['guest_bindings', 'guests', 'staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'visits', 'device_sessions', 'device_pairing_codes', 'devices', 'tables', 'stations', 'printer_destinations', 'roles', 'staff_users', 'hotel_settings', 'idempotent_commands', 'audit_events', 'probe_migrations'];
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
 
     if ($action === 'empty') {
         foreach ($owned as $table) { if ($schema->hasTable($table)) { echo json_encode(['empty' => false, 'table' => $table]); exit(0); } }
@@ -20,13 +27,13 @@ try {
         exit(0);
     }
     if ($action === 'cleanup') {
-        foreach (['guest_bindings', 'guests', 'staff_sessions', 'staff_role_grants', 'installation_bootstrap', 'staff_users', 'roles', 'hotel_settings', 'visits', 'tables', 'stations', 'printer_destinations', 'device_sessions', 'device_pairing_codes', 'devices', 'idempotent_commands', 'probe_migrations'] as $table) { $schema->dropIfExists($table); }
+        $dropAll();
         echo json_encode(['cleaned' => true]);
         exit(0);
     }
     if ($action === 'migrate') {
-        // Drop all owned tables in FK-safe order (children before parents).
-        foreach ($owned as $table) { $schema->dropIfExists($table); }
+        // Drop all base tables in FK-safe order via the shared reset helper.
+        $dropAll();
         $output = new Symfony\Component\Console\Output\BufferedOutput;
         $status = $kernel->call('app:migrate', ['--no-interaction' => true], $output);
         echo json_encode(['status' => $status]);

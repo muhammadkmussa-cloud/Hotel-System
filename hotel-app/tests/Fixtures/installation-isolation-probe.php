@@ -11,6 +11,13 @@ try {
     $kernel->bootstrap();
     $db = $app['db']->connection('mysql');
     $schema = $db->getSchemaBuilder();
+    $dropAll = static function () use ($db, $schema): void {
+        $db->statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'") as $row) {
+            $schema->dropIfExists((string) $row->name);
+        }
+        $db->statement('SET FOREIGN_KEY_CHECKS=1');
+    };
     $action = $argv[1];
     if ($action === 'empty') {
         echo json_encode(['empty' => $schema->getTableListing($db->getDatabaseName(), false) === []]);
@@ -46,8 +53,7 @@ try {
             echo json_encode(['denied' => true]);
         }
     } elseif ($action === 'cleanup') {
-        $schema->dropIfExists('hotel_settings');
-        $schema->dropIfExists('migrations');
+        $dropAll();
         echo json_encode(['cleaned' => true]);
     } else {
         throw new RuntimeException;

@@ -17,6 +17,24 @@ final class ExceptionHandler extends Handler
             return response()->json(['error' => ['code' => 'unauthenticated', 'message' => 'Authentication required.']], 401);
         }
 
+        // A live-but-idle staff session (the server-side row is still active)
+        // must re-verify the password on the unlock screen rather than being
+        // bounced to a full sign-in. Revoked or expired rows fall through.
+        if ($request->hasSession()) {
+            $session = $request->session();
+            $staffId = $session->get('staff_user_id');
+            $sessionRowId = $session->get('staff_session_id');
+            if (is_string($staffId) && $staffId !== '' && is_string($sessionRowId) && $sessionRowId !== '') {
+                try {
+                    if ($this->container->make(\App\Support\StaffSessions::class)->active($sessionRowId, $session->getId(), $staffId)) {
+                        return redirect()->guest('/staff/lock');
+                    }
+                } catch (Throwable) {
+                    // Fall through to the sign-in redirect below.
+                }
+            }
+        }
+
         return redirect()->guest('/staff/sign-in');
     }
 

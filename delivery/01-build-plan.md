@@ -8,21 +8,21 @@ Confirmed stack: **PHP with Laravel · HTML/CSS/JavaScript · MySQL · DirectAdm
 
 | Field | Current value |
 |---|---|
-| First-release steps complete | **84 / 320** |
+| First-release steps complete | **84 / 320** (checkbox count; verification status is tracked separately below and in [execution evidence](08-execution-evidence.md)) |
 | Optional steps complete | **0 / 15**; excluded from first-release totals |
-| Phase gates complete | **7 / 32** |
-| Current phase | P08 — Safe meal and ingredient images |
-| Active task / owner | None |
-| Last completed implementation task | P08.01 — media metadata (ownership, rights, checksum, alt text, crop, publication state) |
-| Next task | **P08.02 — Implement authorized upload parsing with file-size limits; reject oversized input before processing** |
-| Next action | P08.02 — bounded upload parsing. P07 cumulative review still requires PHP/MySQL/browser evidence (see handoff); P08.01 is recorded complete on implementer self-review only. |
-| Current blocker | No runtime verification environment in this sandbox (PHP/Composer/MySQL/Chromium absent; apt mirrors and the Playwright CDN are network-blocked). Local code work continues using JS/Python/static checks; PHPUnit/MySQL/Playwright verification must run in a PHP 8.3 + MySQL 26.7 environment before cumulative phase reviews. |
-| Working branch/revision | `arena/01a10ae0-hotel-system` from main at 6b4252bc695ab768b27915dbaf04b979d92a1396; uncommitted P07/P08 work in the working tree |
-| Uncommitted changes | README.md, delivery/01-build-plan.md, delivery/08-execution-evidence.md updated. Code (P08.01): `database/migrations/2026_10_05_000020_create_media_table.php`, `app/Models/Media.php`, `app/Support/MediaMetadata.php`, `app/Support/SecurityAudit.php` (two new audit events), `tests/Feature/MediaMetadataValidationTest.php`, `tests/Database/MediaMetadataTest.php`, `tests/Fixtures/media-metadata-probe.php`. |
-| Application verification | Executed this session: `node --test tests/js/*.test.mjs` 14/14; `python3 api/validate_contract.py` 16 examples; `python3 -m unittest discover -s api` 13/13; 265 Markdown links 0 missing; `node --check` across all JS. PHPUnit (foundation and MySQL suites, including new MediaMetadataValidationTest/MediaMetadataTest), Playwright and http-smoke were NOT executed — no PHP/Composer/MySQL/Chromium in the sandbox. P07 evidence from the earlier environment (PHP 8.3.30/MySQL 26.7.1/Chromium) remains the last full battery. |
-| Checks not executed | `php vendor/bin/phpunit --testdox`, the `phpunit.mysql.xml.dist` suites (VisitServiceTest, GuestServiceTest, GuestBindingTest, VisitOverviewTest, VisitTransferTest, MediaMetadataTest), `npm run test:browser`, `php tests/http-smoke.php`, and one signed-in staff flow through `/staff/tables` and `/staff/visits/{id}`. These remain mandatory before cumulative P07 review and again before P08 cumulative review. Per-step detail in [delivery/08-execution-evidence.md](08-execution-evidence.md). |
-| Latest step review | P07.04 repairs, P07.05–P07.10 and P08.01 recorded complete on **implementer self-review** (5 October 2026): no independent reviewer ran and no PHP/MySQL/Playwright suite executed. Under the mandatory gate each is **Blocked: evidence missing**; checkboxes are ticked only under this session's relaxed gate. P07.01–P07.04 approved by code_review with executed evidence; P06.10 evidence and cumulative P06 review approved 5 October 2026. |
-| Latest phase review | Cumulative P06 approved; P07.01–P07.04 individually approved by an independent reviewer; P07.04 repairs, P07.05–P07.10 and P08.01 have **no individual approval** (implementer self-review only, no executed evidence); cumulative P07 cannot start until the battery in [delivery/08-execution-evidence.md](08-execution-evidence.md) runs green and each of those steps has its own reviewer outcome |
+| Phase gates complete | **7 / 32** recorded (P00–P07); a strict re-review from P05 is in progress and may reopen any of P05–P28 |
+| Current phase | Strict independent re-review from P05 (started 7 October 2026) |
+| Active task / owner | P05 strict re-review — **completed** |
+| Last completed implementation task | P05 re-review: 10/10 steps approved after fixes (2 HIGH fixed: P05.06 single-submit contract, P05.08 idle→unlock routing) |
+| Next task | **P06 strict re-review** against current `main` (then P07, P08, … P28) |
+| Next action | Re-review P06 step-by-step, fix blocking findings, and record outcomes in [document review](06-document-review.md) and [execution evidence](08-execution-evidence.md) |
+| Current blocker | Real defects found in the P06/P07/P08 real-MySQL tests (visit open returns no id; guest binding reports `guest_not_found`; transfer validation returns `unchanged`; media `edit` returns `failed`; report query is prefix-sensitive) — each to be fixed and re-reviewed inside its phase review. External provider/hardware gates are unchanged. |
+| Working branch/revision | `main` at `f92e9cf` (merge PR #4); 7 October re-review fixes are in the working tree |
+| Uncommitted changes | 10 `hotel-app/tests/Fixtures/*.php` probes (drop-all reset), `media-metadata-probe.php` paths, `report-ledger-probe.php` `allocation_id`, `resources/views/staff-sign-in.blade.php`, `public/assets/js/apps/staff.js`, `app/Http/ExceptionHandler.php`; docs `06-document-review.md`, `08-execution-evidence.md`, this file |
+| Application verification | Executed 7 October 2026: Foundation PHPUnit **181/760 OK**; `npm run test:js` **15/15**; real-MySQL per-file **11/19**; `npx playwright test` **81 passed / 3 failed (pre-existing drift)**; `staff-sign-in.spec.js` 4/4. No `php tests/http-smoke.php` run yet. |
+| Checks not executed | The 7 remaining real-MySQL defects and 3 browser-drift specs listed in [execution evidence](08-execution-evidence.md); `php tests/http-smoke.php`; cumulative P06–P28 reviews |
+| Latest step review | P05.01–P05.10 independently re-reviewed and approved after fixes (7 October 2026) |
+| Latest phase review | P05 re-review approved after fixes; P06 onward not yet re-reviewed |
 
 ## Frontend/UX verification rule
 

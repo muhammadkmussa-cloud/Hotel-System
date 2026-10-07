@@ -135,3 +135,56 @@ Until that evidence exists, treat the 80 / 320 count as "80 steps built and reco
 ## Maintenance rule
 
 Update this log in the same change as any step: add the executed command with its result and date, move the check from *Not executed* to *Executed*, and record the reviewer outcome in the *Independent reviewer* column. Never delete a row — a step's history of what did and did not run is the review boundary for the next reviewer.
+
+## Strict re-review baseline — 7 October 2026
+
+A full independent re-review from P05 onward was started on 7 October 2026. This section records the executed baseline that all later phase reviews run against. Unlike the 5 October records, this environment has PHP, Composer, MySQL and Chromium.
+
+### Environment
+
+| Capability | Status |
+|---|---|
+| PHP | 8.3.30 (cli) |
+| Composer | 2.10.2 |
+| MySQL | 26.7.1 (container `hotel-mysql-p06`, `127.0.0.1:13306`), databases `hotel_test` (user `hotel_user`) and `hotel_test_b` (user `hotel_user_b`) |
+| Node / npm | v24.18.0 / 11.16.0 |
+| Browser | Playwright 1.63.0, Chromium |
+
+Bare `hotel_test` alone is insufficient: `MySqlIsolationTest` needs two scoped accounts, so `hotel_test_b`/`hotel_user_b` were provisioned.
+
+### Executed battery (7 October 2026)
+
+| Check | Command | Result |
+|---|---|---|
+| Foundation PHPUnit | `php vendor/bin/phpunit` | **OK (181 tests, 760 assertions)** |
+| JS unit | `npm run test:js` | **15 pass, 0 fail** |
+| Real-MySQL suite, per file from a fresh schema | `php vendor/bin/phpunit -c phpunit.mysql.xml.dist tests/Database/<File>.php` | **11 / 19 files pass** (see below) |
+| Browser suite | `npx playwright test` | **81 passed, 3 failed** (pre-existing drift) |
+
+Real-MySQL per-file results: **pass** — HotelSettingsTest, IdempotentCommandTest, InstallationSetupTest, MySqlConnectionTest, MySqlIsolationTest, MySqlMigrationTest, OwnerBootstrapTest, StaffAuthenticatorTest, StaffIdentityTest, VersionedUpdateTest, VisitOverviewTest, VisitServiceTest. **fail** — DemoResetTest, GuestBindingTest, GuestServiceTest, MediaMetadataTest, ReportLedgerTest, StaffAdminTest, VisitTransferTest.
+
+### Test-harness regression (fixed this pass)
+
+The broad P08–P28 pass added ~60 tables and changed columns, but the P05–P08 fixture probes still dropped a **hardcoded subset** of tables in `migrate`/`cleanup`. After `app:migrate` created the full schema, teardown hit foreign-key errors (`Cannot drop table 'guests' referenced by 'order_submissions.guest_id'`), so most DB tests failed in `finally` and left debris that cascaded into later tests. Fixes applied:
+
+- All base-schema probes (`visit-service`, `staff-auth`, `owner-bootstrap`, `installation-setup`, `staff-identity`, `idempotency`, `media-metadata`, `installation-isolation`, `versioned-update`, `demo-reset`) now reset by dropping **every base table with `FOREIGN_KEY_CHECKS=0`** instead of a fixed list.
+- `media-metadata-probe.php` used wrong require paths (`__DIR__.'/../../vendor/...'`) and fatally exited (255); corrected to `__DIR__.'/vendor/...'`.
+- `report-ledger-probe.php` second `adjustments` row omitted `allocation_id` (added by migration `000031`), so its bulk insert had 9 columns / 8 values; set to `null`.
+- Provisioned `hotel_test_b` + scoped `hotel_user_b` for `MySqlIsolationTest`.
+
+This raised the DB suite from 5/19 to 11/19 files passing. The remaining failures are **product or fixture defects**, not the drop list.
+
+### Remaining failures (blocking, attributed to phases)
+
+| Phase | Test | Observed failure (7 October 2026) |
+|---|---|---|
+| P07 | `GuestBindingTest:169` | expected `visit_closed`, got `guest_not_found` |
+| P07 | `GuestServiceTest:126` | `assertTrue(false)` (guest number/replacement invariant) |
+| P07 | `VisitTransferTest:148` | transfer with no destination expected `invalid_input`, got `unchanged` |
+| P06/P07 | `StaffAdminTest:169` | opening a visit returned no `visitId` |
+| P08 | `MediaMetadataTest:80` | metadata `edit` returned `failed`, not `updated` |
+| P26/reports | `ReportLedgerTest:54` | probe output not JSON; root cause `ReportService` uses `selectRaw('order_items.meal_name …')` (unprefixed) while the isolated table is prefixed → `Unknown column 'order_items.meal_name'` |
+| P03/demo | `DemoResetTest:66` | expected status `0`, got `1` |
+| — | browser `home.spec.js` (×2), `device-pair.spec.js` | stale UI expectations from the broad pass |
+
+All of the above are to be fixed and independently re-reviewed inside their phase review.
