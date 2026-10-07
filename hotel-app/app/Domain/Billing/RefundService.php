@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class RefundService
 {
-    public function __construct(private readonly FiscalService $fiscal) {}
+    public function __construct(private readonly FiscalService $fiscal, private readonly CashService $cash) {}
 
     public function request(string $paymentId, int $amountMinor, string $reason, string $staffId): string
     {
@@ -64,9 +64,9 @@ final class RefundService
         });
     }
 
-    public function complete(string $refundId, ?string $externalReference, string $staffId): void
+    public function complete(string $refundId, ?string $externalReference, ?string $cashSource, string $staffId): void
     {
-        Tx::run(function () use ($refundId, $externalReference, $staffId): void {
+        Tx::run(function () use ($refundId, $externalReference, $cashSource, $staffId): void {
             $r = Tx::lock('refunds', $refundId);
             if ($r === null || $r->state !== 'approved') {
                 throw DomainError::conflict('REFUND_NOT_APPROVED', 'Only approved refunds can be completed.');
@@ -76,12 +76,55 @@ final class RefundService
             if ($p->method !== 'cash' && preg_match('/^[A-Z0-9\-]{4,40}$/', $ref) !== 1) {
                 throw DomainError::invalid('Enter the '.($p->method === 'card' ? 'card terminal refund' : 'M-PESA reversal').' reference.');
             }
-            DB::table('refunds')->where('id', $refundId)->update(['state' => 'completed', 'completed_by' => $staffId, 'external_reference' => $ref === '' ? null : $ref,
-                'business_date' => Hotel::businessDate(), 'completed_at' => now('UTC'), 'updated_at' => now('UTC')]);
+            $source = ['cash_source_type' => null, 'cash_drawer_session_id' => null, 'cash_custody_staff_user_id' => null];
+            if ($p->method === 'cash') {
+                [$type, $sourceId] = $this->cashSource((string) $cashSource);
+                if ($type === 'drawer') {
+                    $drawer = DB::table('drawer_sessions')->where('id', $sourceId)->lockForUpdate()->first();
+                    if ($drawer === null || $drawer->state !== 'open') {
+                        throw DomainError::conflict('CASH_SOURCE_CLOSED', 'The selected drawer is not open. Choose an available cash source.');
+                    }
+                    if ($this->cash->expected($sourceId)['expected'] < (int) $r->amount_minor) {
+                        throw DomainError::conflict('INSUFFICIENT_SOURCE_CASH', 'The selected drawer does not have enough recorded cash for this refund.');
+                    }
+                    $source = ['cash_source_type' => 'drawer', 'cash_drawer_session_id' => $sourceId, 'cash_custody_staff_user_id' => null];
+                } else {
+                    if (Tx::lock('staff_users', $sourceId) === null) {
+                        throw DomainError::notFound('Cash custodian not found.');
+                    }
+                    if ($sourceId !== $staffId && array_intersect(Staff::roles($staffId), ['manager', 'owner']) === []) {
+                        throw DomainError::forbidden('Only a manager can record a payout from another staff member’s cash custody.');
+                    }
+                    if ($this->cash->custody($sourceId)['amountMinor'] < (int) $r->amount_minor) {
+                        throw DomainError::conflict('INSUFFICIENT_SOURCE_CASH', 'The selected custodian does not have enough recorded cash for this refund.');
+                    }
+                    $source = ['cash_source_type' => 'custodian', 'cash_drawer_session_id' => null, 'cash_custody_staff_user_id' => $sourceId];
+                }
+                $ref = '';
+            } elseif (trim((string) $cashSource) !== '') {
+                throw DomainError::invalid('Cash source is only valid for a cash refund.');
+            }
+            DB::table('refunds')->where('id', $refundId)->update(array_merge($source, [
+                'state' => 'completed', 'completed_by' => $staffId, 'external_reference' => $ref === '' ? null : $ref,
+                'business_date' => Hotel::businessDate(), 'completed_at' => now('UTC'), 'updated_at' => now('UTC'),
+            ]));
             DB::table('payments')->where('id', $p->id)->update(['refunded_minor' => (int) $p->refunded_minor + (int) $r->amount_minor, 'updated_at' => now('UTC')]);
             $this->fiscal->queueCreditNote($refundId);
-            Audit::record('refund_completed', $staffId, ['refund_id' => $refundId, 'amount_minor' => (int) $r->amount_minor, 'method' => $p->method]);
+            Audit::record('refund_completed', $staffId, ['refund_id' => $refundId, 'amount_minor' => (int) $r->amount_minor,
+                'method' => $p->method, 'cash_source_type' => $source['cash_source_type'],
+                'cash_source_id' => $source['cash_drawer_session_id'] ?? $source['cash_custody_staff_user_id']]);
         });
+    }
+
+    /** @return array{0:'drawer'|'custodian',1:string} */
+    private function cashSource(string $value): array
+    {
+        $parts = explode(':', $value, 2);
+        if (count($parts) !== 2 || ! in_array($parts[0], ['drawer', 'custodian'], true) || ! Ids::valid($parts[1])) {
+            throw DomainError::invalid('Choose the drawer or staff custodian that will pay out this cash refund.');
+        }
+
+        return [$parts[0], $parts[1]];
     }
 
     /** @return list<object> */

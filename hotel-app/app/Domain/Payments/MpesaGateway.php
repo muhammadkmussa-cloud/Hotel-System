@@ -8,6 +8,9 @@ interface MpesaGateway
 {
     public function environment(): string;
 
+    /** Merchant/shortcode scope used by this configured adapter. */
+    public function merchantReference(): string;
+
     /**
      * Initiate an STK push.
      *

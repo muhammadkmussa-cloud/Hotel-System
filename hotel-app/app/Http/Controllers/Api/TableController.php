@@ -71,7 +71,7 @@ final class TableController
 
     public function addLine(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['mealId', 'removed', 'extras', 'quantity', 'note']);
         $this->carts->add('guest', $this->guest($request)['bindingId'], (string) Input::id($b, 'mealId'), Input::ids($b, 'removed'), Input::ids($b, 'extras'), Input::int($b, 'quantity', 1), Input::str($b, 'note', false, 200));
 
         return $this->cart($request);
@@ -79,7 +79,7 @@ final class TableController
 
     public function updateLine(Request $request, string $lineId): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['quantity', 'removed', 'extras', 'note']);
         $this->carts->update('guest', $this->guest($request)['bindingId'], $lineId, Input::int($b, 'quantity'),
             array_key_exists('removed', $b) ? Input::ids($b, 'removed') : null, array_key_exists('extras', $b) ? Input::ids($b, 'extras') : null,
             array_key_exists('note', $b) ? (string) Input::str($b, 'note', false, 200) : null);
@@ -103,7 +103,7 @@ final class TableController
 
     public function submit(Request $request, DeviceContext $devices): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['quoteDigest', 'allergyNote']);
         $device = $devices->resolve($request);
         $result = $this->orders->submitTable($this->guest($request), $device['sessionId'], (string) $request->header('Idempotency-Key', ''),
             (string) Input::str($b, 'quoteDigest', true, 64), Input::str($b, 'allergyNote', false, 500));
@@ -142,7 +142,7 @@ final class TableController
 
     public function serviceRequest(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['kind', 'note', 'submissionId']);
         $id = $this->requests->create($this->guest($request), (string) Input::str($b, 'kind', true, 32), Input::str($b, 'note', false, 300), Input::id($b, 'submissionId', false));
 
         return ApiResponse::success($request, ['id' => $id], 201);
@@ -150,7 +150,7 @@ final class TableController
 
     public function shareProposal(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['chargeId', 'guestIds']);
         $g = $this->guest($request);
         $guestIds = array_values(array_unique(array_merge([$g['guestId']], Input::ids($b, 'guestIds'))));
         $id = $this->bills->proposeShare((string) Input::id($b, 'chargeId'), $guestIds, $g['guestId'], null);
@@ -183,7 +183,7 @@ final class TableController
     public function mpesa(Request $request, string $checkoutId): JsonResponse
     {
         $this->ownCheckout($request, $checkoutId);
-        $b = Input::body($request);
+        $b = Input::body($request, ['phone']);
 
         return ApiResponse::success($request, $this->payments->start($checkoutId, (string) Input::str($b, 'phone', true, 20), null), 201);
     }

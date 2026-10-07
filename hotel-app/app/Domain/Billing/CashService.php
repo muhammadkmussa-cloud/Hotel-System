@@ -44,9 +44,8 @@ final class CashService
         $sales = (int) DB::table('payments')->where('drawer_session_id', $drawerId)->where('method', 'cash')->where('state', 'applied')->sum('amount_minor');
         $handovers = (int) DB::table('cash_handovers')->where('drawer_session_id', $drawerId)->where('state', 'accepted')->sum('counted_minor');
         $handoverSales = (int) DB::table('cash_handovers')->where('drawer_session_id', $drawerId)->where('state', 'accepted')->sum('declared_minor');
-        $refunds = (int) DB::table('refunds')->join('payments', 'payments.id', '=', 'refunds.payment_id')
-            ->where('refunds.state', 'completed')->where('payments.method', 'cash')->where('refunds.completed_at', '>=', $d->opened_at)
-            ->when($d->closed_at, fn ($q) => $q->where('refunds.completed_at', '<=', $d->closed_at))->sum('refunds.amount_minor');
+        $refunds = (int) DB::table('refunds')->where('state', 'completed')
+            ->where('cash_source_type', 'drawer')->where('cash_drawer_session_id', $drawerId)->sum('amount_minor');
         $expected = (int) $d->opening_float_minor + $sales + $handovers - $refunds;
 
         return ['float' => (int) $d->opening_float_minor, 'sales' => $sales, 'handovers' => $handovers, 'handoverDeclared' => $handoverSales,
@@ -83,23 +82,36 @@ final class CashService
     public function custody(string $staffId): array
     {
         $q = DB::table('payments')->where('custody_staff_user_id', $staffId)->where('method', 'cash')->where('state', 'applied');
+        $refunds = (int) DB::table('refunds')->where('state', 'completed')->where('cash_source_type', 'custodian')
+            ->where('cash_custody_staff_user_id', $staffId)->whereNull('cash_handover_id')->sum('amount_minor');
+        $amount = (int) $q->sum('amount_minor') - $refunds;
 
-        return ['amountMinor' => (int) $q->sum('amount_minor'), 'count' => $q->count()];
+        return ['amountMinor' => $amount, 'count' => $q->count(), 'refundsMinor' => $refunds];
     }
 
     /** @return list<array> all staff currently holding cash */
     public function custodians(): array
     {
-        return DB::table('payments')->join('staff_users', 'staff_users.id', '=', 'payments.custody_staff_user_id')
+        $holders = DB::table('payments')->join('staff_users', 'staff_users.id', '=', 'payments.custody_staff_user_id')
             ->where('payments.method', 'cash')->where('payments.state', 'applied')->whereNotNull('payments.custody_staff_user_id')
             ->groupBy('payments.custody_staff_user_id', 'staff_users.name')
-            ->selectRaw('payments.custody_staff_user_id as staff_id, staff_users.name, SUM(payments.amount_minor) as amount, COUNT(*) as n')->get()
-            ->map(static fn ($r) => ['staffId' => $r->staff_id, 'name' => $r->name, 'amountMinor' => (int) $r->amount, 'amount' => Money::format((int) $r->amount), 'count' => (int) $r->n])->all();
+            ->get(['payments.custody_staff_user_id as staff_id', 'staff_users.name']);
+
+        return $holders->map(function ($row): ?array {
+            $held = $this->custody($row->staff_id);
+            if ($held['amountMinor'] <= 0) return null;
+
+            return ['staffId' => $row->staff_id, 'name' => $row->name, 'amountMinor' => $held['amountMinor'],
+                'amount' => Money::format($held['amountMinor']), 'count' => $held['count']];
+        })->filter()->values()->all();
     }
 
     public function proposeHandover(string $waiterId, ?string $note): string
     {
         return Tx::run(function () use ($waiterId, $note): string {
+            if (Tx::lock('staff_users', $waiterId) === null) {
+                throw DomainError::notFound('Staff member not found.');
+            }
             $held = $this->custody($waiterId);
             if ($held['amountMinor'] === 0) {
                 throw DomainError::conflict('NO_CASH_HELD', 'You are not holding any recorded cash.');
@@ -133,7 +145,18 @@ final class CashService
 
                 return;
             }
-            $drawer = $this->openDrawer();
+            if (Tx::lock('staff_users', $h->waiter_id) === null) {
+                throw DomainError::notFound('Staff member not found.');
+            }
+            $eligiblePayments = DB::table('payments')->where('custody_staff_user_id', $h->waiter_id)->where('method', 'cash')
+                ->where('state', 'applied')->where('created_at', '<=', $h->created_at)->lockForUpdate()->get();
+            $eligibleRefunds = DB::table('refunds')->where('state', 'completed')->where('cash_source_type', 'custodian')
+                ->where('cash_custody_staff_user_id', $h->waiter_id)->whereNull('cash_handover_id')->lockForUpdate()->get();
+            $eligible = (int) $eligiblePayments->sum('amount_minor') - (int) $eligibleRefunds->sum('amount_minor');
+            if ($eligible !== (int) $h->declared_minor) {
+                throw DomainError::conflict('HANDOVER_CHANGED', 'Cash custody changed after this handover was proposed. Reject it and create a fresh handover.');
+            }
+            $drawer = DB::table('drawer_sessions')->where('state', 'open')->lockForUpdate()->first();
             if ($drawer === null) {
                 throw DomainError::conflict('NO_DRAWER', 'Open a drawer session before accepting cash.');
             }
@@ -144,8 +167,10 @@ final class CashService
             if ($difference !== 0 && trim((string) $note) === '') {
                 throw DomainError::invalid('Record why the counted cash differs by '.Money::format(abs($difference)).'.');
             }
-            DB::table('payments')->where('custody_staff_user_id', $h->waiter_id)->where('method', 'cash')->where('created_at', '<=', $h->created_at)
+            DB::table('payments')->whereIn('id', $eligiblePayments->pluck('id')->all())
                 ->update(['custody_staff_user_id' => null, 'updated_at' => $now]);
+            DB::table('refunds')->whereIn('id', $eligibleRefunds->pluck('id')->all())
+                ->update(['cash_handover_id' => $handoverId, 'updated_at' => $now]);
             DB::table('cash_handovers')->where('id', $handoverId)->update(['state' => 'accepted', 'cashier_id' => $cashierId, 'counted_minor' => $countedMinor,
                 'difference_minor' => $difference, 'drawer_session_id' => $drawer->id, 'note' => $note !== null ? mb_substr($note, 0, 300) : $h->note, 'accepted_at' => $now, 'updated_at' => $now]);
             Audit::record('cash_handover_accepted', $cashierId, ['handover_id' => $handoverId, 'counted_minor' => $countedMinor, 'difference_minor' => $difference]);

@@ -6,8 +6,60 @@ use App\Support\DatabaseConnectionCheck;
 use App\Support\DemoReset;
 use App\Support\InstallationConfiguration;
 use App\Support\OwnerBootstrap;
+use App\Domain\Ids;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\Console\Output\NullOutput;
+
+Artisan::command('hotel:create-print-bridge {name} {destinations : Comma-separated printer destination IDs}', function (): int {
+    $destinations = array_values(array_unique(array_filter(array_map('trim', explode(',', (string) $this->argument('destinations'))))));
+    if ($destinations === [] || count($destinations) > 50 || DB::table('printer_destinations')->whereIn('id', $destinations)->count() !== count($destinations)) {
+        $this->error('Every destination ID must exist.');
+        return 1;
+    }
+    $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    $id = Ids::new();
+    DB::transaction(function () use ($id, $token, $destinations): void {
+        DB::table('print_bridges')->insert(['id' => $id, 'name' => mb_substr((string) $this->argument('name'), 0, 100),
+            'token_hash' => hash('sha256', $token), 'active' => 1, 'created_at' => now('UTC'), 'updated_at' => now('UTC')]);
+        DB::table('print_bridge_destinations')->insert(array_map(static fn (string $destination): array => [
+            'bridge_id' => $id, 'printer_destination_id' => $destination,
+        ], $destinations));
+    });
+    $this->warn('Store this token in the bridge secret store now; it will not be shown again:');
+    $this->line($token);
+    return 0;
+})->purpose('Provision a destination-scoped print bridge credential');
+
+Artisan::command('hotel:assign-kitchen-station {principal : staff|device} {id} {station} {--remove}', function (): int {
+    $principal = (string) $this->argument('principal');
+    $id = (string) $this->argument('id');
+    $station = (string) $this->argument('station');
+    if (! in_array($principal, ['staff', 'device'], true) || ! Ids::valid($id) || ! Ids::valid($station)) {
+        $this->error('Use staff|device and valid IDs.');
+        return 1;
+    }
+    $column = $principal === 'staff' ? 'staff_user_id' : 'device_id';
+    $table = $principal === 'staff' ? 'staff_users' : 'devices';
+    if (! DB::table($table)->where('id', $id)->exists() || ! DB::table('stations')->where('id', $station)->where('active', 1)->exists()) {
+        $this->error('The principal or active station was not found.');
+        return 1;
+    }
+    if ($principal === 'device' && DB::table('devices')->where('id', $id)->value('mode') !== 'kitchen') {
+        $this->error('Only kitchen devices can receive station assignments.');
+        return 1;
+    }
+    if ($this->option('remove')) {
+        DB::table('kitchen_station_assignments')->where($column, $id)->where('station_id', $station)->delete();
+        $this->info('Kitchen station assignment removed.');
+        return 0;
+    }
+    DB::table('kitchen_station_assignments')->insertOrIgnore([
+        'id' => Ids::new(), $column => $id, 'station_id' => $station, 'created_at' => now('UTC'), 'updated_at' => now('UTC'),
+    ]);
+    $this->info('Kitchen station assigned.');
+    return 0;
+})->purpose('Assign a staff member or kitchen device to an active station');
 
 Artisan::command('app:check-config', function (InstallationConfiguration $configuration): int {
     $errors = $configuration->errors();
@@ -173,6 +225,11 @@ Artisan::command('hotel:restore {path : Backup zip path (absolute, or a file nam
         $this->warn('Dry run only. Re-run with --force to replace ALL current data with this backup. Take a fresh backup first.');
 
         return 0;
+    }
+    if (! filter_var(config('app.recovery_mode', false), FILTER_VALIDATE_BOOL)
+        || config('services.mpesa.mode') !== 'simulator' || filter_var(config('services.fiscal.enabled', false), FILTER_VALIDATE_BOOL)) {
+        $this->error('Forced restore is allowed only in an isolated RECOVERY_MODE installation with M-PESA simulator and fiscal output disabled.');
+        return 1;
     }
     $safety = $backups->create('pre-restore');
     $this->line('Safety backup of current data: '.basename($safety));

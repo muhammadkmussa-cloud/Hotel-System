@@ -92,7 +92,7 @@ final class KioskController
 
     public function addLine(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['mealId', 'removed', 'extras', 'quantity', 'note']);
         $this->carts->add('kiosk', $this->draftId($request), (string) Input::id($b, 'mealId'), Input::ids($b, 'removed'), Input::ids($b, 'extras'), Input::int($b, 'quantity', 1), Input::str($b, 'note', false, 200));
 
         return $this->cart($request);
@@ -100,7 +100,7 @@ final class KioskController
 
     public function updateLine(Request $request, string $lineId): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['quantity']);
         $this->carts->update('kiosk', $this->draftId($request), $lineId, Input::int($b, 'quantity'));
 
         return $this->cart($request);
@@ -122,7 +122,7 @@ final class KioskController
 
     public function submit(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['quoteDigest', 'allergyNote', 'route', 'dining', 'name']);
         $order = $this->order($request);
         $result = $this->orders->submitKiosk($order->id, $this->session($request), (string) $request->header('Idempotency-Key', ''),
             (string) Input::str($b, 'quoteDigest', true, 64), Input::str($b, 'allergyNote', false, 500),
@@ -152,7 +152,7 @@ final class KioskController
 
     public function mpesa(Request $request): JsonResponse
     {
-        $b = Input::body($request);
+        $b = Input::body($request, ['phone']);
         $order = $this->order($request);
         if ($order->state !== 'pending_payment') {
             throw DomainError::conflict('KIOSK_NOT_PAYABLE', 'This order is not waiting for payment.');

@@ -87,7 +87,9 @@ check(flash(r)[0] == 'Refund approved.', f'refund approved {flash(r)}')
 r = owner.get('/staff/refunds')
 cid = ids(r'/staff/refunds/([0-9a-f-]{36})/complete', r.text)
 if cid:
-    r = owner.post(f'/staff/refunds/{cid[0]}/complete', {'reference': 'CASH-OUT'})
+    source = re.search(r'value="(drawer:[0-9a-f-]{36})"', r.text)
+    check(source is not None, 'cash refund requires an attributed open drawer source')
+    r = owner.post(f'/staff/refunds/{cid[0]}/complete', {'cash_source': source.group(1)})
     check(flash(r)[0] == 'Refund completed and recorded.', f'refund completed {flash(r)}')
 
 r = waiter.get(f'/staff/visits/{vid}')

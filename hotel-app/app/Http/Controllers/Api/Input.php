@@ -11,9 +11,17 @@ use Illuminate\Http\Request;
 /** Small strict readers for JSON bodies. */
 final class Input
 {
-    public static function body(Request $request): array
+    /** @param list<string> $allowed */
+    public static function body(Request $request, array $allowed): array
     {
-        return $request->json()->all();
+        $body = $request->json()->all();
+        foreach (array_keys($body) as $key) {
+            if (! is_string($key) || ! in_array($key, $allowed, true)) {
+                throw new DomainError('VALIDATION_FAILED', 'The request contains an unexpected field.', 422);
+            }
+        }
+
+        return $body;
     }
 
     public static function str(array $body, string $key, bool $required = true, int $max = 500): ?string

@@ -19,6 +19,11 @@ final class SimulatedMpesaGateway implements MpesaGateway
         return 'simulator';
     }
 
+    public function merchantReference(): string
+    {
+        return 'simulator';
+    }
+
     public function stkPush(int $amountShillings, string $msisdn, string $accountReference, string $description): array
     {
         if ($amountShillings > 250000) {

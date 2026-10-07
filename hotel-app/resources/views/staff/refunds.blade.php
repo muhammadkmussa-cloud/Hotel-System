@@ -34,14 +34,25 @@
     <tr>
         <td>{{ \App\Domain\Hotel::localTime($r->created_at, 'd M H:i') }}<br><span class="small muted">{{ $r->requested_by_name }}</span></td>
         <td>{{ $r->receipt_number }}</td><td>{{ $r->method }}</td><td class="num">{{ \App\Domain\Money::format((int) $r->amount_minor) }}</td>
-        <td>{{ $r->reason }}</td><td><span class="pill">{{ $r->state }}</span> {{ $r->external_reference }}</td>
+        <td>{{ $r->reason }}</td><td><span class="pill">{{ $r->state }}</span> {{ $r->external_reference }}
+            @if ($r->method === 'cash' && $r->state === 'completed')<br><span class="small muted">Source: {{ $r->cash_source_type === 'drawer' ? 'drawer' : ($r->cash_source_type === 'custodian' ? 'staff custody' : 'unattributed — reconcile') }}</span>@endif
+        </td>
         <td>
             @if ($r->state === 'requested' && $canApprove)
                 <form method="post" action="/staff/refunds/{{ $r->id }}/decide" class="inline-form">@csrf<button name="decision" value="approve" class="btn-small">Approve</button><button name="decision" value="reject" class="btn-small btn-secondary">Reject</button></form>
             @elseif ($r->state === 'approved' && $canComplete)
                 <form method="post" action="/staff/refunds/{{ $r->id }}/complete" class="inline-form">@csrf
-                    @if ($r->method !== 'cash')<input name="reference" placeholder="{{ $r->method === 'card' ? 'Terminal refund ref' : 'M-PESA reversal ref' }}" required maxlength="40">@endif
-                    <button class="btn-small">{{ $r->method === 'cash' ? 'Paid out cash' : 'Mark completed' }}</button></form>
+                    @if ($r->method === 'cash')
+                        <label for="source-{{ $r->id }}" class="visually-hidden">Cash payout source</label>
+                        <select id="source-{{ $r->id }}" name="cash_source" required>
+                            <option value="">Choose payout source</option>
+                            @if ($cashDrawer)<option value="drawer:{{ $cashDrawer->id }}">Open drawer</option>@endif
+                            @foreach ($cashCustodians as $holder)<option value="custodian:{{ $holder['staffId'] }}">{{ $holder['name'] }} custody ({{ $holder['amount'] }})</option>@endforeach
+                        </select>
+                    @else
+                        <input name="reference" placeholder="{{ $r->method === 'card' ? 'Terminal refund ref' : 'M-PESA reversal ref' }}" required maxlength="40">
+                    @endif
+                    <button class="btn-small">{{ $r->method === 'cash' ? 'Record cash payout' : 'Mark completed' }}</button></form>
             @endif
         </td>
     </tr>

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Domain\DomainError;
 use App\Http\ApplicationRequest;
+use App\Http\Controllers\Api\Input;
 use App\Http\Middleware\ParseJsonInput;
 use App\Http\Requests\InvalidJsonInput;
 use App\Http\Requests\JsonInput;
@@ -94,6 +96,19 @@ final class JsonInputTest extends TestCase
                 self::assertSame(422, $error->getResponse()->getStatusCode());
                 self::assertStringNotContainsString('secret-marker', $error->getResponse()->getContent());
             }
+        }
+    }
+
+    public function testApiReaderRejectsTopLevelFieldsOutsideItsOperationAllowlist(): void
+    {
+        self::assertSame(['quantity' => 2], Input::body($this->parse('{"quantity":2}'), ['quantity']));
+        try {
+            Input::body($this->parse('{"quantity":2,"priceMinor":1}'), ['quantity']);
+            self::fail('An undeclared API field was accepted.');
+        } catch (DomainError $error) {
+            self::assertSame('VALIDATION_FAILED', $error->errorCode);
+            self::assertSame(422, $error->status);
+            self::assertStringNotContainsString('priceMinor', $error->getMessage());
         }
     }
 

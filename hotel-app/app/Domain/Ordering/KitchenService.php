@@ -22,7 +22,7 @@ final class KitchenService
     ];
 
     /** @return list<array> */
-    public function board(?string $stationId = null): array
+    public function board(array $stationIds): array
     {
         $q = DB::table('kitchen_tickets')->join('order_submissions', 'order_submissions.id', '=', 'kitchen_tickets.submission_id')
             ->leftJoin('kiosk_orders', 'kiosk_orders.id', '=', 'order_submissions.kiosk_order_id')
@@ -31,9 +31,7 @@ final class KitchenService
                     ->orWhere(fn ($r) => $r->where('kitchen_tickets.state', 'served')->where('kitchen_tickets.served_at', '>', now('UTC')->subMinutes(10)));
             })
             ->orderBy('kitchen_tickets.created_at');
-        if ($stationId !== null) {
-            $q->where('kitchen_tickets.station_id', $stationId);
-        }
+        $q->whereIn('kitchen_tickets.station_id', $stationIds);
         $rows = $q->get(['kitchen_tickets.*', 'order_submissions.reference', 'order_submissions.channel', 'order_submissions.table_label',
             'order_submissions.guest_label', 'order_submissions.allergy_note', 'order_submissions.review_note', 'order_submissions.review_state',
             'kiosk_orders.collection_number', 'kiosk_orders.dining', 'kiosk_orders.collection_name']);

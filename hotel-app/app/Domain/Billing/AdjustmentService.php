@@ -41,7 +41,7 @@ final class AdjustmentService
                 DB::table('charge_allocations')->insert(['id' => Ids::new(), 'charge_id' => $a->charge_id, 'guest_id' => $a->guest_id, 'kiosk_order_id' => $a->kiosk_order_id,
                     'amount_minor' => $rest, 'state' => 'open', 'reason' => 'discounted', 'created_at' => $now, 'updated_at' => $now]);
             }
-            DB::table('adjustments')->insert(['id' => Ids::new(), 'charge_id' => $a->charge_id, 'kind' => 'discount', 'amount_minor' => $amountMinor,
+            DB::table('adjustments')->insert(['id' => Ids::new(), 'charge_id' => $a->charge_id, 'allocation_id' => $a->id, 'kind' => 'discount', 'amount_minor' => $amountMinor,
                 'reason' => $reason, 'approved_by' => $actorId, 'business_date' => Hotel::businessDate(), 'created_at' => $now]);
             if ($a->guest_id) {
                 Outbox::emit('bill.updated', 'visit:'.DB::table('guests')->where('id', $a->guest_id)->value('visit_id'));

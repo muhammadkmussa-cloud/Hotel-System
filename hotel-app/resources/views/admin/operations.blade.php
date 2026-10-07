@@ -30,7 +30,7 @@
 @endif</td></tr>
 @empty<tr><td colspan="6" class="muted">No print jobs yet.</td></tr>@endforelse
 </tbody></table></div>
-<p class="small muted">A print bridge on the hotel network leases jobs from <code>/bridge/v1/print-jobs/lease</code> with the bridge token and reports results. Reprints are always marked COPY.</p>
+<p class="small muted">A print bridge on the hotel network leases jobs from <code>/bridge/v1/print-jobs/lease</code> with its destination-scoped bridge token and reports results. Reprints are always marked COPY.</p>
 </section>
 
 <section class="card"><h2>Fiscal documents</h2>

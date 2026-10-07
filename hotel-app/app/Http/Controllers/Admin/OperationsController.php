@@ -97,7 +97,7 @@ final class OperationsController
             'outboxCount' => DB::table('outbox_events')->count(),
             'canBackup' => Staff::can($request, 'backups.manage'), 'canPrint' => Staff::can($request, 'printing.manage'),
             'canFiscal' => Staff::can($request, 'fiscal.manage'), 'canSettings' => Staff::can($request, 'settings.manage'), 'settings' => Hotel::settings(),
-            'bridgeConfigured' => (string) config('services.print_bridge.token', '') !== '',
+            'bridgeConfigured' => DB::table('print_bridges')->where('active', 1)->exists(),
         ]);
     }
 

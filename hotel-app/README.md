@@ -50,7 +50,9 @@ tests/e2e/run.sh                      # with the server running: resets + seeds 
 | Migrations | `php artisan app:migrate --force` |
 | First owner (production) | `php artisan app:bootstrap-owner` or the one-time `/setup` page |
 
-Production settings: `DB_DRIVER=mysql`, `MPESA_MODE=daraja` with Daraja credentials only after sandbox testing, `FISCAL_ENABLED=false` until a certified eTIMS integration exists. The sections below document the foundation steps in detail.
+Backup format 2 archives are authenticated with this installation's private `APP_KEY`; preserve that key separately with the recovery material or the archive cannot be trusted/restored. Never replace or regenerate an existing installation key during routine maintenance. Legacy unsigned format 1 archives are intentionally rejected and must not be treated as recovery evidence. Archive table names, media paths, entry counts and expanded sizes are bounded before restore.
+
+Production settings: `DB_DRIVER=mysql`; use `MPESA_MODE=sandbox` only for Safaricom sandbox verification and `MPESA_MODE=production` only after that verification and an approved live cutover; keep `FISCAL_ENABLED=false` until a certified eTIMS integration exists. The sections below document the foundation steps in detail.
 
 ## Reproduce the dependency foundation
 
@@ -498,3 +500,20 @@ P07.10 closes the phase with device replacement. `GuestBindingService::revokeWit
 **Defect repaired across P07.04–P07.10 (5 October 2026):** `StaffVisitController` read the acting staff id from `$request->attributes->get('principal.id', '')` in nine places, but `RequirePrincipal` populates only `hotel.principal` (`RequirePrincipal::ATTRIBUTE`). Every actor id was therefore empty, so opening or closing a visit, adding a guest, binding a tablet, revoking a binding and transferring a visit would all have returned `invalid_input` at runtime even though the screens rendered. All nine reads now go through a single `actorId(Request $request)` helper that reads `RequirePrincipal::ATTRIBUTE` and takes `Principal::identifier()`, matching `StaffAdminController`. No other controller had the defect.
 
 Verification status: `VisitOverviewTest`, `VisitTransferTest` and the replacement test in `GuestBindingTest` (all real MySQL), plus the extended `tests/browser/visit-guests.spec.js`, were written but **not executed** — this session's environment has no PHP, Composer, MySQL server or downloadable Chromium. What was executed here: a PHP-parser syntax check of every changed PHP file, `node --check` on the extended Playwright spec, `node --test tests/js/*.test.mjs` 14/14, `python3 api/validate_contract.py` 16 examples, `python3 -m unittest discover -s api` 13/13, a 247-link Markdown check, and a Blade open/close tag balance check on both screens. The repair above additionally needs one signed-in staff flow through `/staff/tables` and `/staff/visits/{id}` before the cumulative P07 review. The per-step split between what was executed and what was not, together with the exact re-run battery, is in [../../delivery/08-execution-evidence.md](../delivery/08-execution-evidence.md); under the project's mandatory reviewer gate the P07.05–P07.10 records count as *Blocked: evidence missing* until that battery runs and an independent reviewer has seen each step.
+
+## Post-audit operational provisioning
+
+Kitchen access is fail-closed by station. Assign each kitchen staff identity or kitchen device before use:
+
+```sh
+php artisan hotel:assign-kitchen-station staff <staff-uuid> <station-uuid>
+php artisan hotel:assign-kitchen-station device <device-uuid> <station-uuid>
+```
+
+Print bridges use separate hashed credentials and may lease jobs only for explicitly assigned destinations. Provision each bridge once and immediately store the one-time token it prints:
+
+```sh
+php artisan hotel:create-print-bridge "Kitchen bridge" <destination-uuid>[,<destination-uuid>...]
+```
+
+There is no installation-wide print bearer token. Forced restore is refused unless the destination is an isolated installation with `RECOVERY_MODE=true`, `MPESA_MODE=simulator`, and fiscal output disabled. Verify restored totals/assets and provider exceptions there before a separately controlled cutover. Historical cash payouts and discounts that predate source/beneficiary attribution remain explicit reconciliation exceptions rather than being guessed.
