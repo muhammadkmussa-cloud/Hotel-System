@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Illuminate\Database\DatabaseManager;
-use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Throwable;
@@ -89,7 +89,7 @@ final class GuestService
         } catch (QueryException $error) {
             // The unique (visit_id, display_number)/(visit_id, label) indexes
             // are the final guard if the lock is ever bypassed.
-            return ($error->errorInfo[1] ?? null) === 1062 ? ['result' => 'duplicate_label'] : ['result' => 'failed'];
+            return \App\Domain\Operations\JobRunner::isDuplicate($error) ? ['result' => 'duplicate_label'] : ['result' => 'failed'];
         } catch (Throwable) {
             return ['result' => 'failed'];
         }
@@ -173,7 +173,7 @@ final class GuestService
     }
 
     /** Exposed for fixture probes that must not bypass the service. */
-    public function connection(): MySqlConnection
+    public function connection(): Connection
     {
         return $this->database->connection('mysql');
     }

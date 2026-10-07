@@ -18,7 +18,8 @@ final class HotelSettingsController
 {
     public function show(HotelSettingsEditor $editor, TableConfig $tables, StationConfig $stations, PrinterDestinationConfig $printers, IntegrationStatus $integrations): View
     {
-        return view('hotel-settings', [
+        return view('admin.settings', [
+            'hotel' => \Illuminate\Support\Facades\DB::table('hotel_settings')->first(),
             'settings' => $editor->current(),
             'timezones' => HotelSettingsEditor::ALLOWED_TIMEZONES,
             'tables' => $tables->list(),
@@ -36,7 +37,7 @@ final class HotelSettingsController
             'printer_id' => ['nullable', 'string', 'uuid'],
         ]);
 
-        if ($validated['printer_id'] !== null) {
+        if (($validated['printer_id'] ?? null) !== null) {
             $result = $printers->deactivate($validated['printer_id']);
         } else {
             if (($validated['name'] ?? null) === null || ($validated['destination'] ?? null) === null) {
@@ -63,7 +64,7 @@ final class HotelSettingsController
             'station_id' => ['nullable', 'string', 'uuid'],
         ]);
 
-        if ($validated['station_id'] !== null) {
+        if (($validated['station_id'] ?? null) !== null) {
             $result = $stations->deactivate($validated['station_id']);
         } else {
             if (($validated['name'] ?? null) === null || ($validated['kind'] ?? null) === null) {
@@ -89,11 +90,11 @@ final class HotelSettingsController
             'table_id' => ['nullable', 'string', 'uuid'],
         ]);
 
-        if ($validated['table_id'] === null && ($validated['label'] ?? null) === null) {
+        if (($validated['table_id'] ?? null) === null && ($validated['label'] ?? null) === null) {
             return back()->withInput()->withErrors(['label' => 'Provide a table label or choose a table to deactivate.']);
         }
 
-        $result = $validated['table_id'] !== null
+        $result = ($validated['table_id'] ?? null) !== null
             ? $tables->deactivate($validated['table_id'])
             : $tables->create($validated['label']);
 
@@ -113,7 +114,7 @@ final class HotelSettingsController
             'receipt_header' => ['nullable', 'string', 'max:150'],
             'receipt_footer' => ['nullable', 'string', 'max:150'],
         ]);
-        $expected = ResourceVersion::fromIfMatch($request->header('If-Match'));
+        $expected = $this->expectedVersion($request);
         $result = $editor->update($expected, [
             'receipt_header' => $validated['receipt_header'] ?? null,
             'receipt_footer' => $validated['receipt_footer'] ?? null,
@@ -135,7 +136,7 @@ final class HotelSettingsController
             'business_day_cutoff' => ['nullable', 'string', 'date_format:H:i'],
         ]);
 
-        $expected = ResourceVersion::fromIfMatch($request->header('If-Match'));
+        $expected = $this->expectedVersion($request);
         $result = $editor->update($expected, [
             'name' => $validated['name'],
             'timezone' => $validated['timezone'],
@@ -148,5 +149,20 @@ final class HotelSettingsController
             'invalid_input' => back()->withInput()->withErrors(['name' => 'Check the settings and try again.']),
             default => back()->withInput()->withErrors(['name' => 'Settings update failed. Private details withheld.']),
         };
+    }
+
+    /** Forms post `expected_version`; API-style clients may send If-Match. */
+    private function expectedVersion(Request $request): int
+    {
+        $header = $request->header('If-Match');
+        if (is_string($header) && $header !== '') {
+            return ResourceVersion::fromIfMatch($header);
+        }
+        $version = filter_var($request->input('expected_version'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($version === false) {
+            throw new \Symfony\Component\HttpKernel\Exception\HttpException(428);
+        }
+
+        return $version;
     }
 }

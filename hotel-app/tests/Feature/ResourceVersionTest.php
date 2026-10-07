@@ -17,7 +17,7 @@ final class ResourceVersionTest extends TestCase
 
     public function testProtectedColumnsCannotBeOverridden(): void
     {
-        $connection = new \Illuminate\Database\MySqlConnection(fn () => throw new \RuntimeException('Database must not be opened'));
+        $connection = new \Illuminate\Database\Connection(fn () => throw new \RuntimeException('Database must not be opened'));
         foreach (['id', 'resource_version', 'created_at', 'updated_at', 'name; DELETE'] as $column) {
             try {
                 \App\Support\VersionedUpdate::apply($connection, 'hotel_settings', '0199ac1a-0000-7000-8000-000000000001', 1, [$column => 2]);

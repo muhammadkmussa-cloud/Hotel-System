@@ -54,7 +54,7 @@ final class PrinterDestinationConfig
 
             return 'created';
         } catch (QueryException $error) {
-            return ($error->errorInfo[1] ?? null) === 1062 ? 'duplicate' : 'failed';
+            return \App\Domain\Operations\JobRunner::isDuplicate($error) ? 'duplicate' : 'failed';
         } catch (Throwable) {
             return 'failed';
         }

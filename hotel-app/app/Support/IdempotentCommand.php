@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Closure;
-use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -16,9 +16,9 @@ final class IdempotentCommand
     /**
      * Authenticate/authorize before calling. Scope and operation are server-owned, including resource identity.
      * Work must use this connection only: no DDL, manual transactions, or external side effects.
-     * @param Closure(MySqlConnection): CommandResult $work
+     * @param Closure(Connection): CommandResult $work
      */
-    public static function run(MySqlConnection $connection, string $scope, string $operation, string $key, string $body, Closure $work): CommandResult
+    public static function run(Connection $connection, string $scope, string $operation, string $key, string $body, Closure $work): CommandResult
     {
         if ($scope === '' || strlen($scope) > 255 || $operation === '' || strlen($operation) > 255
             || ! preg_match('/\A[A-Za-z0-9_-]{16,128}\z/', $key) || strlen($body) > 65536) {
@@ -33,7 +33,7 @@ final class IdempotentCommand
                     'identity_hash' => $identity, 'body_hash' => $bodyHash, 'created_at' => gmdate('Y-m-d H:i:s'),
                 ]);
             } catch (QueryException $error) {
-                if (($error->errorInfo[0] ?? null) !== '23000' || ($error->errorInfo[1] ?? null) !== 1062) throw $error;
+                if (! \App\Domain\Operations\JobRunner::isDuplicate($error)) throw $error;
                 $created = false;
             }
             $record = $connection->table('idempotent_commands')->where('identity_hash', $identity)->lockForUpdate()->first();

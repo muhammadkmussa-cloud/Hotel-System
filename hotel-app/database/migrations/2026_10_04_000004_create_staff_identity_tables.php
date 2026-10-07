@@ -48,7 +48,7 @@ return new class extends Migration
         Schema::create('staff_sessions', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->uuid('staff_user_id');
-            $table->char('token_hash', 64)->charset('ascii')->collation('ascii_bin')->unique();
+            $table->char('token_hash', 64)->when(\Illuminate\Support\Facades\Schema::getConnection()->getDriverName() === 'mysql', fn ($column) => $column->charset('ascii')->collation('ascii_bin'))->unique();
             $table->timestamp('issued_at');
             $table->timestamp('expires_at');
             $table->timestamp('revoked_at')->nullable();

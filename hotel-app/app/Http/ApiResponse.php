@@ -67,6 +67,16 @@ final class ApiResponse
         ], $status, $safeHeaders);
     }
 
+    /** Domain refusal with a stable code and a message safe for the caller. */
+    public static function problem(Request $request, int $status, string $code, string $message, array $fields = [], array $details = []): JsonResponse
+    {
+        if ($status < 400 || $status > 599) $status = 409;
+        return new JsonResponse([
+            'error' => ['code' => $code, 'message' => $message, 'fields' => $fields, 'retryable' => in_array($status, [429, 503], true)] + ($details === [] ? [] : ['details' => $details]),
+            'requestId' => self::requestId($request),
+        ], $status, self::headers($request));
+    }
+
     private static function headers(Request $request): array
     {
         return ['Cache-Control' => 'no-store', 'X-Request-ID' => self::requestId($request)];

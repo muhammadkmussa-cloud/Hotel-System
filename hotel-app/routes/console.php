@@ -100,3 +100,56 @@ Artisan::command('app:demo-reset {--confirm-database= : Exact isolated demo data
     $this->info('Isolated demo settings reset. This is not a live hotel.');
     return 0;
 })->purpose('Reset only a separately provisioned and marked demo database');
+
+Artisan::command('hotel:run-jobs {--loop : Keep running, ticking every few seconds} {--seconds=55 : Loop duration when --loop is set}', function (\App\Domain\Operations\JobRunner $jobs): int {
+    $until = time() + max(1, (int) $this->option('seconds'));
+    do {
+        $summary = $jobs->tick(50);
+        if ($this->output->isVerbose()) {
+            $this->line(json_encode($summary));
+        }
+        if (! $this->option('loop')) {
+            break;
+        }
+        sleep(3);
+    } while (time() < $until);
+
+    return 0;
+})->purpose('Run background jobs: M-PESA reconciliation, fiscal submissions, kiosk expiry and print lease expiry');
+
+Artisan::command('hotel:backup {--keep=14 : Number of backups to retain}', function (\App\Domain\Operations\BackupService $backups): int {
+    $path = $backups->create('scheduled');
+    $check = $backups->verify($path);
+    if (! ($check['ok'] ?? false)) {
+        $this->error('Backup written but verification failed: '.implode('; ', $check['problems'] ?? []));
+
+        return 1;
+    }
+    $pruned = $backups->prune((int) $this->option('keep'));
+    $this->info('Backup '.basename($path).' verified ('.$check['tables'].' tables, '.$check['rows'].' rows). Pruned '.$pruned.'.');
+
+    return 0;
+})->purpose('Create, verify and rotate a database backup');
+
+Artisan::command('hotel:demo-seed', function (\App\Support\DemoSeeder $seeder): int {
+    try {
+        $result = $seeder->seed();
+    } catch (\RuntimeException $e) {
+        $this->error($e->getMessage());
+
+        return 1;
+    }
+    $this->info('Demo data created (TEST MODE). Staff password for every account: '.\App\Support\DemoSeeder::PASSWORD);
+    foreach ($result['staff'] as $s) {
+        $this->line(sprintf('  %-14s %s', $s['role'], $s['email']));
+    }
+    $this->info('Device pairing codes (valid 15 minutes; issue new ones in Admin → Devices):');
+    foreach ($result['devices'] as $d) {
+        $this->line(sprintf('  %-20s %-10s %s', $d['name'], $d['mode'], $d['code']));
+    }
+
+    return 0;
+})->purpose('Seed a demonstration installation (refuses if staff already exist)');
+
+\Illuminate\Support\Facades\Schedule::command('hotel:run-jobs --loop --seconds=55')->everyMinute()->withoutOverlapping();
+\Illuminate\Support\Facades\Schedule::command('hotel:backup')->dailyAt('03:30');

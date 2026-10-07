@@ -130,7 +130,7 @@ final class VisitService
             });
         } catch (QueryException $error) {
             // The active-table unique index is the final occupancy guard.
-            return ($error->errorInfo[1] ?? null) === 1062
+            return \App\Domain\Operations\JobRunner::isDuplicate($error)
                 ? ['result' => 'destination_occupied', 'version' => null]
                 : ['result' => 'failed', 'version' => null];
         } catch (Throwable) {
@@ -262,26 +262,41 @@ final class VisitService
         $connection = $this->database->connection('mysql');
         $visit = $connection->table('visits')->where('id', $visitId)->first(['state', 'version']);
         if ($visit === null) {
-            return ['success' => false, 'version' => null];
+            return ['success' => false, 'version' => null, 'blockers' => []];
         }
         if ($visit->state === 'closed') {
-            return ['success' => true, 'version' => (int) $visit->version];
+            return ['success' => true, 'version' => (int) $visit->version, 'blockers' => []];
         }
 
-        $now = now('UTC');
-        $query = $connection->table('visits')->where('id', $visitId)->where('state', 'open');
-        if ($expectedVersion !== null) {
-            $query->where('version', $expectedVersion);
-        }
-        $affected = $query->update([
-            'state' => 'closed', 'closed_at' => $now,
-            'version' => $visit->version + 1, 'updated_at' => $now,
-        ]);
+        return DatabaseTransaction::run($connection, function () use ($connection, $visitId, $visit, $expectedVersion, $actorId): array {
+            $connection->table('visits')->where('id', $visitId)->lockForUpdate()->first();
+            $blockers = \App\Domain\Ordering\VisitGuards::blockers($visitId);
+            if ($blockers !== []) {
+                return ['success' => false, 'version' => (int) $visit->version, 'blockers' => $blockers];
+            }
+            $now = now('UTC');
+            $query = $connection->table('visits')->where('id', $visitId)->where('state', 'open');
+            if ($expectedVersion !== null) {
+                $query->where('version', $expectedVersion);
+            }
+            $affected = $query->update([
+                'state' => 'closed', 'closed_at' => $now,
+                'version' => $visit->version + 1, 'updated_at' => $now,
+            ]);
+            if ($affected !== 1) {
+                return ['success' => false, 'version' => (int) $visit->version, 'blockers' => []];
+            }
+            // Closing ends every guest identity on every tablet.
+            $guestIds = $connection->table('guests')->where('visit_id', $visitId)->pluck('id')->all();
+            $connection->table('guest_bindings')->whereIn('guest_id', $guestIds)->whereNull('revoked_at')->update(['revoked_at' => $now, 'updated_at' => $now]);
+            $connection->table('guests')->whereIn('id', $guestIds)->update(['state' => 'settled', 'updated_at' => $now]);
+            $connection->table('service_requests')->where('visit_id', $visitId)->where('state', '!=', 'resolved')
+                ->update(['state' => 'resolved', 'resolved_by' => $actorId, 'resolution' => 'Visit closed', 'updated_at' => $now]);
+            \App\Domain\Audit::record('visit_closed', $actorId, ['visit_id' => $visitId]);
+            \App\Domain\Outbox::emit('visit.closed', 'visit:'.$visitId);
+            \App\Domain\Outbox::emit('visit.closed', 'staff', ['visit_id' => $visitId]);
 
-        if ($affected !== 1) {
-            return ['success' => false, 'version' => (int) $visit->version];
-        }
-
-        return ['success' => true, 'version' => (int) $visit->version + 1];
+            return ['success' => true, 'version' => (int) $visit->version + 1, 'blockers' => []];
+        });
     }
 }

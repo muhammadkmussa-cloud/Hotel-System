@@ -35,17 +35,29 @@ final class StaffVisitController
     public function index(): View
     {
         $overview = $this->visits->overview();
+        $bills = app(\App\Domain\Billing\BillService::class);
+        foreach ($overview as &$table) {
+            $table['balanceMinor'] = 0;
+            $table['ready'] = 0;
+            $table['requests'] = 0;
+            $table['held'] = 0;
+            if ($table['visitId'] !== null) {
+                foreach ($bills->visitBills($table['visitId']) as $g) {
+                    $table['balanceMinor'] += $g['bill']['balanceMinor'];
+                }
+                $table['ready'] = \Illuminate\Support\Facades\DB::table('kitchen_tickets')->join('order_submissions', 'order_submissions.id', '=', 'kitchen_tickets.submission_id')
+                    ->where('order_submissions.visit_id', $table['visitId'])->where('kitchen_tickets.state', 'ready')->count();
+                $table['requests'] = \Illuminate\Support\Facades\DB::table('service_requests')->where('visit_id', $table['visitId'])->whereIn('state', ['open', 'acknowledged'])->count();
+                $table['held'] = \Illuminate\Support\Facades\DB::table('order_submissions')->where('visit_id', $table['visitId'])->where('state', 'review_hold')->count();
+            }
+        }
+        unset($table);
 
-        return view('staff-tables', [
+        return view('staff.tables', [
             'tables' => $overview,
-            'availableTables' => array_values(array_filter(
-                $overview,
-                static fn (array $table): bool => $table['visitId'] === null,
-            )),
-            'occupiedCount' => count(array_filter(
-                $overview,
-                static fn (array $table): bool => $table['visitId'] !== null,
-            )),
+            'availableTables' => array_values(array_filter($overview, static fn (array $table): bool => $table['visitId'] === null)),
+            'occupiedCount' => count(array_filter($overview, static fn (array $table): bool => $table['visitId'] !== null)),
+            'requests' => app(\App\Domain\Ordering\ServiceRequestService::class)->open(),
         ]);
     }
 
@@ -63,8 +75,19 @@ final class StaffVisitController
         $guests = $this->guests->list($visitId);
         $bindings = $this->bindings->forGuests(array_column($guests, 'id'));
 
-        return view('staff-visit', [
+        $orders = app(\App\Domain\Ordering\OrderService::class);
+        $submissionIds = \Illuminate\Support\Facades\DB::table('order_submissions')->where('visit_id', $visitId)->orderByDesc('created_at')->pluck('id')->all();
+
+        return view('staff.visit', [
             'visit' => $visit,
+            'bills' => collect(app(\App\Domain\Billing\BillService::class)->visitBills($visitId))->keyBy('guestId')->all(),
+            'orders' => array_map(fn ($id) => $orders->summary($id, true), $submissionIds),
+            'requests' => app(\App\Domain\Ordering\ServiceRequestService::class)->open($visitId),
+            'proposals' => app(\App\Domain\Billing\BillService::class)->pendingProposals($visitId),
+            'blockers' => $visit['state'] === 'open' ? \App\Domain\Ordering\VisitGuards::blockers($visitId) : [],
+            'canAdjust' => $principal instanceof Principal && $authorizer->allows($principal, 'orders.adjust', $request),
+            'canAllocate' => $principal instanceof Principal && $authorizer->allows($principal, 'bills.allocate', $request),
+            'canCash' => $principal instanceof Principal && $authorizer->allows($principal, 'payments.cash', $request),
             'guests' => array_map(
                 static fn (array $guest): array => $guest + ['devices' => $bindings[$guest['id']] ?? []],
                 $guests,
@@ -259,10 +282,13 @@ final class StaffVisitController
         $result = $this->visits->close(
             $visitId,
             $this->actorId($request),
-            $validated['expected_version'] ?? null,
+            isset($validated['expected_version']) ? (int) $validated['expected_version'] : null,
         );
 
         if (!$result['success']) {
+            if (($result['blockers'] ?? []) !== []) {
+                return redirect('/staff/visits/'.$visitId)->withErrors(['close' => 'The visit cannot close yet: '.implode(' ', $result['blockers'])]);
+            }
             return redirect('/staff/visits/'.$visitId)->with('status', 'Visit changed. Reload and try again.');
         }
 

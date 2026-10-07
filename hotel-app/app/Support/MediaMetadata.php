@@ -309,6 +309,7 @@ final class MediaMetadata
             }
         }
 
-        return $clean;
+        // An edit with no recognised editable field is not an edit.
+        return $clean === [] ? null : $clean;
     }
 }

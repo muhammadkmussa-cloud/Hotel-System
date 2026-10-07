@@ -15,7 +15,7 @@ final class StaffAdminController
 {
     public function show(StaffAdmin $admin): View
     {
-        return view('staff-admin', [
+        return view('admin.staff', [
             'staff' => $admin->list(),
             'roles' => ['owner', 'manager', 'cashier', 'waiter', 'kitchen_lead', 'kitchen_staff', 'menu_editor', 'auditor'],
         ]);
