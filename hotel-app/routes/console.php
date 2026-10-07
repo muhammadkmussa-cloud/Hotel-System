@@ -151,5 +151,42 @@ Artisan::command('hotel:demo-seed', function (\App\Support\DemoSeeder $seeder): 
     return 0;
 })->purpose('Seed a demonstration installation (refuses if staff already exist)');
 
+Artisan::command('hotel:restore {path : Backup zip path (absolute, or a file name in the backup directory)} {--force : Required; replaces ALL current data}', function (\App\Domain\Operations\BackupService $backups): int {
+    $path = (string) $this->argument('path');
+    if (! is_file($path)) {
+        $candidate = storage_path('app/private/backups/'.basename($path));
+        $path = is_file($candidate) ? $candidate : $path;
+    }
+    if (! is_file($path)) {
+        $this->error('Backup file not found.');
+
+        return 1;
+    }
+    $check = $backups->verify($path);
+    if (! ($check['ok'] ?? false)) {
+        $this->error('Backup failed verification: '.implode('; ', $check['problems'] ?? []));
+
+        return 1;
+    }
+    $this->info('Backup verified: '.$check['tables'].' tables, '.$check['rows'].' rows.');
+    if (! $this->option('force')) {
+        $this->warn('Dry run only. Re-run with --force to replace ALL current data with this backup. Take a fresh backup first.');
+
+        return 0;
+    }
+    $safety = $backups->create('pre-restore');
+    $this->line('Safety backup of current data: '.basename($safety));
+    try {
+        $backups->restore($path);
+    } catch (\Throwable $e) {
+        $this->error('Restore failed: '.$e->getMessage());
+
+        return 1;
+    }
+    $this->info('Restore complete. Sign in again on every staff device and re-check open visits.');
+
+    return 0;
+})->purpose('Verify and restore a backup (dry run unless --force; takes a safety backup first)');
+
 \Illuminate\Support\Facades\Schedule::command('hotel:run-jobs --loop --seconds=55')->everyMinute()->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('hotel:backup')->dailyAt('03:30');

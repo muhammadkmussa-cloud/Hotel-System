@@ -28,6 +28,9 @@ final class ReportService
         $unapplied = (int) DB::table('payments')->where('state', 'unapplied')->whereBetween('business_date', [$from, $to])->sum('amount_minor');
         $refunds = (int) DB::table('refunds')->where('state', 'completed')->whereBetween('business_date', [$from, $to])->sum('amount_minor');
         $rate = Hotel::settings()->tax_rate_basis_points;
+        $taxRows = DB::table('checkouts')->where('state', 'paid')->whereBetween('business_date', [$from, $to]);
+        $taxSnapshot = (int) (clone $taxRows)->sum('tax_minor');
+        $taxKnown = (clone $taxRows)->whereNotNull('tax_minor')->exists();
         $orders = DB::table('order_submissions')->whereNotNull('released_at')->whereBetween(DB::raw('date(released_at)'), [$from, $to]);
         $orderCount = (clone $orders)->count();
         $kiosk = (clone $orders)->where('channel', 'kiosk')->count();
@@ -42,7 +45,7 @@ final class ReportService
         return [
             'from' => $from, 'to' => $to,
             'gross' => $gross, 'discounts' => $discounts, 'cancellations' => $cancellations, 'net' => $net,
-            'tax' => $rate === null ? null : Money::includedTax(max(0, $net), (int) $rate), 'taxConfigured' => $rate !== null,
+            'tax' => $taxKnown ? $taxSnapshot : null, 'taxConfigured' => $taxKnown || $rate !== null,
             'payments' => $byMethod, 'collected' => array_sum($byMethod), 'unapplied' => $unapplied, 'refunds' => $refunds,
             'orders' => $orderCount, 'kioskOrders' => $kiosk, 'tableOrders' => $orderCount - $kiosk,
             'top' => $top->map(static fn ($t) => ['name' => $t->name, 'qty' => (int) $t->qty, 'gross' => (int) $t->gross])->all(),

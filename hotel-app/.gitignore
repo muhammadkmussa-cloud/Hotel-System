@@ -17,3 +17,4 @@
 !/storage/**/
 !/storage/**/.gitignore
 /public/media/
+__pycache__/

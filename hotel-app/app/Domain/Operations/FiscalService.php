@@ -35,7 +35,7 @@ final class FiscalService
             ->join('order_items', 'order_items.id', '=', 'charges.order_item_id')->where('charge_allocations.checkout_id', $checkoutId)
             ->get(['order_items.meal_name', 'order_items.quantity', 'charge_allocations.amount_minor'])
             ->map(static fn ($l) => ['description' => $l->meal_name, 'quantity' => (int) $l->quantity, 'amount_minor' => (int) $l->amount_minor])->all();
-        $rate = Hotel::settings()->tax_rate_basis_points;
+        $rate = $c->tax_rate_basis_points;
         $id = Ids::new();
         DB::table('fiscal_documents')->insert([
             'id' => $id, 'kind' => 'invoice', 'checkout_id' => $checkoutId, 'request_reference' => 'INV-'.$checkoutId,

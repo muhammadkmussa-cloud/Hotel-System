@@ -71,6 +71,7 @@ check('/staff/receipts/' in r2.url, f'card checkout paid ({flash(r2)} {r2.status
 
 # Refund: cashier/manager requests, owner approves, completes
 r = manager.get(f'/staff/receipts/{coid}')
+check('VAT 16% (included)' in r.text and 'SIMULATED' in r.text, 'receipt shows tax snapshot and simulated fiscal label')
 link = re.search(r'href="(/staff/refunds\?receipt=[^"]+)"', r.text)
 check(link is not None, 'receipt links to refunds')
 r = manager.get(link.group(1).replace('&amp;', '&'))

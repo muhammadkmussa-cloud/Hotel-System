@@ -23,7 +23,7 @@
     <dt>Card (terminal)</dt><dd>{{ $m($r['payments']['card']) }}</dd>
     <dt>M-PESA</dt><dd>{{ $m($r['payments']['mpesa']) }}</dd>
     <dt>Unapplied M-PESA</dt><dd>{{ $m($r['unapplied']) }}</dd>
-    <dt>Tax included</dt><dd>{{ $r['taxConfigured'] ? $m($r['tax']) : 'Not configured' }}</dd>
+    <dt>Tax included</dt><dd>{{ $r['tax'] !== null ? $m($r['tax']) : ($r['taxConfigured'] ? $m(0) : 'Not configured') }}</dd>
     <dt>Drawer variance</dt><dd>{{ $m($r['drawerVariance']) }} over {{ $r['drawerCount'] }} session(s)</dd>
     <dt>Unpaid on open bills (now)</dt><dd>{{ $m($r['openBalances']) }}</dd>
 </dl>

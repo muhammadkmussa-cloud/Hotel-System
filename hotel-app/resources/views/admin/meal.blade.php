@@ -35,18 +35,19 @@
 
 <section class="card"><h2>Ingredients and choices</h2>
 <p class="hint">Fixed: always in the dish. Removable: guest may ask to leave it out. Extra: guest may add it for the price shown.</p>
+<div class="rule-row rule-head" aria-hidden="true"><span>Ingredient</span><span>Rule</span><span>Extra price (KSh)</span></div>
 <form method="post" action="/admin/meals/{{ $meal->id }}/ingredients">@csrf
     <input type="hidden" name="version" value="{{ $meal->version }}">
     @foreach ($rules as $i => $r)
-        <div class="form-grid" style="align-items:end;border-bottom:1px solid var(--color-border);padding:.4rem 0">
+        <div class="rule-row">
             <div><b>{{ $r->name }}</b> @unless($r->active)<span class="pill pill-danger">archived</span>@endunless
                 @if($r->allergen_notes)<br><span class="small muted">{{ $r->allergen_notes }}</span>@endif</div>
             <input type="hidden" name="rules[{{ $i }}][ingredient_id]" value="{{ $r->ingredient_id }}">
-            <div class="field" style="margin:0"><label for="rule-{{ $i }}">Rule</label>
+            <div class="field"><label for="rule-{{ $i }}" class="visually-hidden">Rule for {{ $r->name }}</label>
                 <select id="rule-{{ $i }}" name="rules[{{ $i }}][rule]">
                     @foreach (['fixed' => 'Fixed', 'removable' => 'Removable', 'extra' => 'Extra (paid)', 'none' => 'Remove from meal'] as $k => $label)<option value="{{ $k }}" @selected($r->rule === $k)>{{ $label }}</option>@endforeach
                 </select></div>
-            <div class="field" style="margin:0"><label for="xp-{{ $i }}">Extra price</label><input id="xp-{{ $i }}" name="rules[{{ $i }}][extra_price]" inputmode="decimal" value="{{ number_format($r->extra_price_minor / 100, 2, '.', '') }}"></div>
+            <div class="field"><label for="xp-{{ $i }}" class="visually-hidden">Extra price for {{ $r->name }} (KSh)</label><input id="xp-{{ $i }}" placeholder="Extra KSh" name="rules[{{ $i }}][extra_price]" inputmode="decimal" value="{{ number_format($r->extra_price_minor / 100, 2, '.', '') }}"></div>
         </div>
     @endforeach
     <div class="field" style="margin-top:.75rem"><label for="add">Add ingredient</label>

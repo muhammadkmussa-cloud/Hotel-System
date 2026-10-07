@@ -185,7 +185,15 @@ final class CheckoutService
         Hotel::forget();
         $receipt = (Hotel::testMode() ? 'TEST-' : 'R-').str_pad((string) $number, 6, '0', STR_PAD_LEFT);
         $now = now('UTC');
-        DB::table('checkouts')->where('id', $checkoutId)->update(['state' => 'paid', 'paid_at' => $now, 'receipt_number' => $receipt, 'updated_at' => $now]);
+        $amount = (int) DB::table('checkouts')->where('id', $checkoutId)->value('amount_minor');
+        $rate = $settings->tax_rate_basis_points ?? null;
+        DB::table('checkouts')->where('id', $checkoutId)->update([
+            'state' => 'paid', 'paid_at' => $now, 'receipt_number' => $receipt, 'updated_at' => $now,
+            // Snapshot the tax that applied at payment time for receipts, fiscal and reports.
+            'tax_rate_basis_points' => $rate, 'tax_label' => $rate !== null ? ($settings->tax_label ?: 'VAT') : null,
+            'tax_minor' => $rate !== null ? Money::includedTax($amount, (int) $rate) : null,
+            'business_date' => Hotel::businessDate(),
+        ]);
         DB::table('charge_allocations')->where('checkout_id', $checkoutId)->where('state', 'frozen')->update(['state' => 'paid', 'updated_at' => $now]);
         $c = DB::table('checkouts')->where('id', $checkoutId)->first();
         if ($c->kiosk_order_id !== null) {
@@ -263,7 +271,7 @@ final class CheckoutService
             ->where('charge_allocations.checkout_id', $checkoutId)->orderBy('order_items.created_at')
             ->get(['order_items.meal_name', 'order_items.quantity', 'order_items.removed', 'order_items.extras', 'charge_allocations.amount_minor', 'charges.gross_minor', 'charge_allocations.reason']);
         $total = (int) $c->amount_minor;
-        $rate = $settings->tax_rate_basis_points;
+        $rate = $c->tax_rate_basis_points;
         $context = '';
         if ($c->guest_id) {
             $g = DB::table('guests')->join('visits', 'visits.id', '=', 'guests.visit_id')->join('tables', 'tables.id', '=', 'visits.table_id')
@@ -286,7 +294,7 @@ final class CheckoutService
                 'discounted' => $l->reason === 'discounted',
             ])->all(),
             'total' => Money::format($total),
-            'tax' => $rate === null ? null : ['label' => ($settings->tax_label ?: 'VAT').' '.rtrim(rtrim(number_format($rate / 100, 2), '0'), '.').'% (included)', 'amount' => Money::format(Money::includedTax($total, (int) $rate))],
+            'tax' => $rate === null ? null : ['label' => ($c->tax_label ?: 'VAT').' '.rtrim(rtrim(number_format($rate / 100, 2), '0'), '.').'% (included)', 'amount' => Money::format((int) $c->tax_minor)],
             'payments' => DB::table('payments')->where('checkout_id', $checkoutId)->orderBy('created_at')->get()->map(static fn ($p) => [
                 'method' => ['cash' => 'Cash', 'card' => 'Card (terminal)', 'mpesa' => 'M-PESA'][$p->method], 'amount' => Money::format((int) $p->amount_minor),
                 'reference' => $p->reference, 'tendered' => $p->tendered_minor !== null ? Money::format((int) $p->tendered_minor) : null,

@@ -1,19 +1,56 @@
-# Local Laravel foundation
+# Hotel System application
 
-The local foundation includes Laravel 13.34.0, locked dependencies and private installation configuration. A plain HTML home page confirms the foundation runs; all hotel business features are later steps. This is not a usable hotel application yet.
+Laravel 13 restaurant ordering and POS for **one hotel per installation**: table tablets with a per-guest menu and ingredient customiser, a walk-in kiosk, kitchen board, collection display, waiter tools, cashier checkout (cash, external card terminal record, M-PESA), drawers, discounts, refunds, receipts, reports, audit, backups and administration. What is built, how it was verified and what remains before a pilot are recorded in [delivery/09-implementation-status.md](../delivery/09-implementation-status.md).
 
-Keep this entire directory private on DirectAdmin. Expose **only `public/`** through the provider-supported domain document root or public_html mapping described in [the deployment specification](../architecture/05-directadmin-layout.md). Neither `private_html` nor the repository root is safe for private application storage. No production domain is hardcoded; each owner supplies their own configuration during setup.
+Keep this entire directory private on DirectAdmin. Expose **only `public/`** through the provider-supported domain document root or public_html mapping described in [the deployment specification](../architecture/05-directadmin-layout.md).
 
-- `bootstrap/`: Laravel application construction and provider registration.
-- `routes/`: a read-only home page and private configuration-check command; no business endpoints yet.
-- `config/`: private per-installation settings, read through Laravel configuration.
-- `resources/views/`: escaped Blade HTML for the first home page.
-- `storage/` and `bootstrap/cache/`: private writable runtime paths, generated contents ignored.
-- `artisan`: private CLI entry; never expose it as a web endpoint.
+## Run the demo
 
-No public_html copy or symlink is created locally; every installer must verify their actual HTTP/HTTPS roots before deployment. Do not serve the repository or this private root with a web server.
+Requirements: PHP 8.3+ (pdo_sqlite, gd, zip, intl, mbstring), Composer 2.
 
-Bootstrap/entry layout follows the [Laravel 13 application skeleton](https://github.com/laravel/laravel/tree/13.x); the domain business features remain unbuilt.
+```sh
+cd hotel-app
+scripts/dev-demo.sh --serve     # creates .env (SQLite), installs vendor, resets + seeds, serves on 0.0.0.0:8000
+```
+
+The demo is in **TEST MODE**: receipts say so, M-PESA uses the built-in simulator and fiscal documents are labelled “SIMULATED — not a tax invoice”.
+
+| Who | Sign in at `/staff/sign-in` | Password |
+|---|---|---|
+| Owner, manager, cashier, waiter, kitchen lead, kitchen staff, menu editor, auditor | `owner@demo.test`, `manager@demo.test`, `cashier@demo.test`, `waiter@demo.test`, `kitchen-lead@demo.test`, `kitchen-staff@demo.test`, `menu-editor@demo.test`, `auditor@demo.test` | `demo-password-2026` |
+
+Devices (tablets, kiosk, kitchen screen, collection display) are paired by opening `/device/pair` on the device and entering a code. The seeder prints codes valid for 15 minutes; issue new ones in **Admin → Devices**.
+
+A typical walkthrough:
+
+1. Pair a tablet, then as **waiter** open a visit on *Table 1*, add a guest and bind the tablet to that guest.
+2. On the tablet, pick a dish, remove or add ingredients, add to cart and send the order. Add a note to see the allergy review hold.
+3. Pair a kitchen screen and move the ticket through *preparing → ready → served*.
+4. As **cashier**, open a drawer, check the guest out with cash/card/M-PESA and print the receipt.
+5. As **waiter**, close the visit once every balance is zero.
+6. Pair a kiosk for the walk-in prepaid journey; simulated M-PESA phones ending `111` (insufficient funds), `222` (cancelled) and `333` (timeout) fail on purpose, any other number succeeds.
+
+The simple built-in server must use the router so static assets bypass Laravel: `php -S 0.0.0.0:8000 -t public scripts/dev-router.php`.
+
+## Tests
+
+```sh
+php vendor/bin/phpunit                # 132 tests (feature suite); tests/Database/* need MySQL
+tests/e2e/run.sh                      # with the server running: resets + seeds the demo DB, drives every HTTP flow (python3 + requests)
+```
+
+## Operating an installation
+
+| Task | Command |
+|---|---|
+| Background jobs (M-PESA reconciliation, fiscal queue, kiosk expiry, print leases) | cron: `* * * * * cd /path/to/hotel-app && php artisan schedule:run >> /dev/null 2>&1` |
+| Run jobs once, verbosely | `php artisan hotel:run-jobs -v` |
+| Backup now (also scheduled daily 03:30, keeps 14) | `php artisan hotel:backup` |
+| Verify / restore a backup | `php artisan hotel:restore <file>` (dry run) then `--force` (takes a safety backup first) |
+| Migrations | `php artisan app:migrate --force` |
+| First owner (production) | `php artisan app:bootstrap-owner` or the one-time `/setup` page |
+
+Production settings: `DB_DRIVER=mysql`, `MPESA_MODE=daraja` with Daraja credentials only after sandbox testing, `FISCAL_ENABLED=false` until a certified eTIMS integration exists. The sections below document the foundation steps in detail.
 
 ## Reproduce the dependency foundation
 
