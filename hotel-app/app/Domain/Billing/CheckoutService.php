@@ -108,8 +108,12 @@ final class CheckoutService
         }
 
         return Tx::run(function () use ($checkoutId, $amountMinor, $tenderedMinor, $staffId): array {
-            $drawer = DB::table('drawer_sessions')->where('state', 'open')->first();
-            $atDrawer = $drawer !== null && array_intersect(Staff::roles($staffId), ['cashier', 'manager', 'owner']) !== [];
+            $usesDrawer = array_intersect(Staff::roles($staffId), ['cashier', 'manager', 'owner']) !== [];
+            $drawer = $usesDrawer ? DB::table('drawer_sessions')->where('state', 'open')->lockForUpdate()->first() : null;
+            $atDrawer = $drawer !== null;
+            if (! $atDrawer && Tx::lock('staff_users', $staffId) === null) {
+                throw DomainError::notFound('Staff member not found.');
+            }
 
             return $this->applyPayment($checkoutId, 'cash', $amountMinor, [
                 'tendered_minor' => $tenderedMinor, 'change_minor' => $tenderedMinor - $amountMinor,
@@ -153,8 +157,8 @@ final class CheckoutService
                 throw DomainError::conflict('CHECKOUT_CLOSED', $c->state === 'paid' ? 'This bill is already paid.' : 'This checkout was cancelled. Start a new one.');
             }
             $remaining = (int) $c->amount_minor - (int) $c->paid_minor;
-            if ($amountMinor <= 0 || $amountMinor > $remaining) {
-                throw DomainError::invalid('Enter an amount between KSh 0.01 and '.Money::format($remaining).'.');
+            if ($amountMinor !== $remaining || $remaining <= 0) {
+                throw DomainError::invalid('First-release checkout requires one payment for the full remaining amount of '.Money::format($remaining).'.');
             }
             if (isset($extra['reference']) && DB::table('payments')->where('method', $method)->where('reference', $extra['reference'])->exists()) {
                 throw DomainError::conflict('DUPLICATE_REFERENCE', 'That '.$method.' reference has already been recorded.');
@@ -207,8 +211,14 @@ final class CheckoutService
     private function paidKiosk(string $kioskOrderId): void
     {
         $order = Tx::lock('kiosk_orders', $kioskOrderId);
-        $next = (int) DB::table('kiosk_orders')->where('business_date', $order->business_date)->max('collection_number');
-        $number = $next >= 999 ? 1 : $next + 1;
+        $now = now('UTC');
+        DB::table('kiosk_collection_sequences')->insertOrIgnore([
+            'business_date' => $order->business_date, 'next_number' => 1, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $sequence = DB::table('kiosk_collection_sequences')->where('business_date', $order->business_date)->lockForUpdate()->first();
+        $number = (int) $sequence->next_number;
+        DB::table('kiosk_collection_sequences')->where('business_date', $order->business_date)
+            ->update(['next_number' => $number + 1, 'updated_at' => $now]);
         DB::table('kiosk_orders')->where('id', $kioskOrderId)->update([
             'state' => 'paid', 'paid_at' => now('UTC'), 'collection_number' => $number, 'version' => (int) $order->version + 1, 'updated_at' => now('UTC'),
         ]);

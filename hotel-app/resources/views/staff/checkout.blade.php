@@ -25,7 +25,7 @@
 <details class="disclosure" open><summary>Cash</summary>
     <form method="post" action="/staff/checkouts/{{ $c['id'] }}/cash" data-change-calc>@csrf
         <div class="form-grid">
-            <div class="field"><label for="cash-amount">Amount to pay</label><input id="cash-amount" name="amount" inputmode="decimal" value="{{ number_format($c['remainingMinor'] / 100, 2, '.', '') }}"></div>
+            <div class="field"><label for="cash-amount">Amount to pay in full</label><input id="cash-amount" name="amount" inputmode="decimal" value="{{ number_format($c['remainingMinor'] / 100, 2, '.', '') }}" readonly></div>
             <div class="field"><label for="tendered">Cash received</label><input id="tendered" name="tendered" inputmode="decimal" required autocomplete="off"></div>
         </div>
         <p data-change-output class="small" aria-live="polite"></p>
@@ -37,7 +37,7 @@
     <p class="small muted">Run the card on the separate card terminal first. This system never takes card numbers.</p>
     <form method="post" action="/staff/checkouts/{{ $c['id'] }}/card">@csrf
         <div class="form-grid">
-            <div class="field"><label for="card-amount">Amount charged</label><input id="card-amount" name="amount" inputmode="decimal" value="{{ number_format($c['remainingMinor'] / 100, 2, '.', '') }}"></div>
+            <div class="field"><label for="card-amount">Amount charged in full</label><input id="card-amount" name="amount" inputmode="decimal" value="{{ number_format($c['remainingMinor'] / 100, 2, '.', '') }}" readonly></div>
             <div class="field"><label for="card-ref">Terminal approval / receipt ref</label><input id="card-ref" name="reference" required maxlength="32" autocomplete="off"></div>
         </div>
         <label class="check"><input type="checkbox" name="confirmed" value="1" required> The terminal printed APPROVED for this amount</label>

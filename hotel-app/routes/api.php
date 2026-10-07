@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 // Mounted under /api/v1 with session, CSRF (X-CSRF-TOKEN), rate limits and strict JSON.
 
 Route::get('/health/live', [HealthController::class, 'live']);
-Route::get('/health/ready', [HealthController::class, 'ready']);
+Route::get('/health/ready', [HealthController::class, 'ready'])->middleware('capability:integrations.manage');
 Route::get('/events', EventsController::class);
 
 // Customer tablet: the guest is derived from the device's live binding.

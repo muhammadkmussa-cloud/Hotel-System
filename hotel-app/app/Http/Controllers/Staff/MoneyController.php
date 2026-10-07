@@ -70,7 +70,7 @@ final class MoneyController
         return back()->with('status', $accept ? 'Cash accepted into the drawer.' : 'Handover rejected.');
     }
 
-    public function refunds(Request $request, RefundService $refunds): View
+    public function refunds(Request $request, RefundService $refunds, CashService $cash): View
     {
         $q = trim((string) $request->query('receipt', ''));
         $payments = [];
@@ -80,11 +80,17 @@ final class MoneyController
                 ->get(['payments.*', 'checkouts.receipt_number'])->all();
         }
 
+        $me = (string) Staff::id($request);
+        $cashCustodians = $cash->custodians();
+        if (array_intersect(Staff::roles($me), ['manager', 'owner']) === []) {
+            $cashCustodians = array_values(array_filter($cashCustodians, static fn (array $holder): bool => $holder['staffId'] === $me));
+        }
+
         return view('staff.refunds', [
             'q' => $q, 'payments' => $payments, 'refunds' => $refunds->list(),
             'unapplied' => DB::table('payments')->where('state', 'unapplied')->orderByDesc('created_at')->get()->all(),
             'canApprove' => Staff::can($request, 'refunds.approve'), 'canComplete' => Staff::can($request, 'refunds.complete'),
-            'me' => Staff::id($request),
+            'cashDrawer' => $cash->openDrawer(), 'cashCustodians' => $cashCustodians, 'me' => $me,
         ]);
     }
 
@@ -104,7 +110,9 @@ final class MoneyController
 
     public function completeRefund(Request $request, string $refundId, RefundService $refunds): RedirectResponse
     {
-        $refunds->complete($refundId, $request->input('reference'), (string) Staff::id($request));
+        $reference = $request->input('reference');
+        $cashSource = $request->input('cash_source');
+        $refunds->complete($refundId, is_string($reference) ? $reference : null, is_string($cashSource) ? $cashSource : null, (string) Staff::id($request));
 
         return back()->with('status', 'Refund completed and recorded.');
     }

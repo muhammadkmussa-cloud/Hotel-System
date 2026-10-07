@@ -18,6 +18,16 @@ final class DarajaMpesaGateway implements MpesaGateway
         return $this->config['mode'] === 'production' ? 'production' : 'sandbox';
     }
 
+    public function merchantReference(): string
+    {
+        $merchant = trim((string) ($this->config['party_b'] ?: $this->config['shortcode']));
+        if ($merchant === '' || strlen($merchant) > 80 || preg_match('/^[A-Za-z0-9._-]+$/', $merchant) !== 1) {
+            throw new \RuntimeException('M-PESA merchant configuration is invalid.');
+        }
+
+        return $merchant;
+    }
+
     private function base(): string
     {
         return $this->environment() === 'production' ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke';

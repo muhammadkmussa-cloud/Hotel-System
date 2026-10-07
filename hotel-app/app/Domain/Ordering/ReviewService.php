@@ -93,6 +93,9 @@ final class ReviewService
                 throw DomainError::conflict('ALREADY_CANCELLED', 'This item is already cancelled.');
             }
             $charge = DB::table('charges')->where('order_item_id', $itemId)->lockForUpdate()->first();
+            if ($charge === null || ! in_array($charge->state, ['proposed', 'posted'], true)) {
+                throw DomainError::conflict('ITEM_NOT_CANCELLABLE', 'This item is no longer cancellable.');
+            }
             $allocs = DB::table('charge_allocations')->where('charge_id', $charge->id)->where('state', '!=', 'voided')->get();
             foreach ($allocs as $a) {
                 if ($a->state !== 'open') {
@@ -102,11 +105,15 @@ final class ReviewService
             $now = now('UTC');
             $open = (int) $allocs->sum('amount_minor');
             DB::table('charge_allocations')->where('charge_id', $charge->id)->where('state', 'open')->update(['state' => 'voided', 'updated_at' => $now]);
-            DB::table('charges')->where('id', $charge->id)->update(['state' => 'voided', 'updated_at' => $now]);
-            DB::table('order_items')->where('id', $itemId)->update(['cancelled' => 1, 'cancel_reason' => $reason, 'updated_at' => $now]);
-            if ($charge->state === 'posted') {
+            if ($charge->state === 'proposed') {
+                // Never-released demand is not a sale and can be voided outright.
+                DB::table('charges')->where('id', $charge->id)->update(['state' => 'voided', 'updated_at' => $now]);
+            } else {
+                // Preserve the posted sale as gross history. Its cancellation is
+                // a separate ledger adjustment, so reports show gross and reversal once.
                 DB::table('adjustments')->insert(['id' => Ids::new(), 'charge_id' => $charge->id, 'kind' => 'cancellation', 'amount_minor' => $open, 'reason' => $reason, 'approved_by' => $actorId, 'business_date' => Hotel::businessDate(), 'created_at' => $now]);
             }
+            DB::table('order_items')->where('id', $itemId)->update(['cancelled' => 1, 'cancel_reason' => $reason, 'updated_at' => $now]);
             if ($item->ticket_id && DB::table('order_items')->where('ticket_id', $item->ticket_id)->where('cancelled', 0)->count() === 0) {
                 DB::table('kitchen_tickets')->where('id', $item->ticket_id)->update(['state' => 'cancelled', 'cancelled_at' => $now, 'cancel_reason' => $reason, 'version' => DB::raw('version + 1'), 'updated_at' => $now]);
             }

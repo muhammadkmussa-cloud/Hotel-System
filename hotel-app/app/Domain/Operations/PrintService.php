@@ -78,29 +78,35 @@ final class PrintService
     }
 
     /** @return list<array{id:string,kind:string,destination:?string,payload:string,leaseToken:string}> */
-    public function lease(int $limit = 5): array
+    public function lease(string $bridgeId, int $limit = 5): array
     {
-        return Tx::run(function () use ($limit): array {
-            $rows = DB::table('print_jobs')->where('state', 'queued')->orderBy('created_at')->limit(max(1, min(20, $limit)))->lockForUpdate()->get();
+        return Tx::run(function () use ($bridgeId, $limit): array {
+            $destinations = DB::table('print_bridge_destinations')->where('bridge_id', $bridgeId)->pluck('printer_destination_id')->all();
+            $rows = DB::table('print_jobs')->where('state', 'queued')->whereIn('printer_destination_id', $destinations)
+                ->orderBy('created_at')->limit(max(1, min(20, $limit)))->lockForUpdate()->get();
             $out = [];
             foreach ($rows as $job) {
                 $token = bin2hex(random_bytes(24));
                 DB::table('print_jobs')->where('id', $job->id)->update(['state' => 'leased', 'lease_token_hash' => hash('sha256', $token), 'lease_expires_at' => now('UTC')->addSeconds(90),
-                    'attempts' => (int) $job->attempts + 1, 'updated_at' => now('UTC')]);
+                    'attempts' => (int) $job->attempts + 1, 'leased_by_bridge_id' => $bridgeId, 'updated_at' => now('UTC')]);
                 $dest = $job->printer_destination_id ? DB::table('printer_destinations')->where('id', $job->printer_destination_id)->value('destination') : null;
                 $out[] = ['id' => $job->id, 'kind' => $job->kind, 'destination' => $dest, 'payload' => $job->payload, 'leaseToken' => $token, 'copy' => (bool) $job->is_copy];
             }
-            DB::table('system_heartbeats')->upsert([['name' => 'print_bridge', 'last_seen_at' => now('UTC'), 'detail' => json_encode(['leased' => count($out)])]], ['name'], ['last_seen_at', 'detail']);
+            DB::table('print_bridges')->where('id', $bridgeId)->update(['last_seen_at' => now('UTC'), 'updated_at' => now('UTC')]);
+            DB::table('system_heartbeats')->upsert([
+                ['name' => 'print_bridge', 'last_seen_at' => now('UTC'), 'detail' => json_encode(['leased' => count($out)])],
+                ['name' => 'print_bridge:'.$bridgeId, 'last_seen_at' => now('UTC'), 'detail' => json_encode(['leased' => count($out)])],
+            ], ['name'], ['last_seen_at', 'detail']);
 
             return $out;
         });
     }
 
-    public function report(string $jobId, string $leaseToken, bool $printed, ?string $error, bool $simulated = false): void
+    public function report(string $bridgeId, string $jobId, string $leaseToken, bool $printed, ?string $error, bool $simulated = false): void
     {
-        Tx::run(function () use ($jobId, $leaseToken, $printed, $error, $simulated): void {
+        Tx::run(function () use ($bridgeId, $jobId, $leaseToken, $printed, $error, $simulated): void {
             $job = Tx::lock('print_jobs', $jobId);
-            if ($job === null || $job->lease_token_hash === null || ! hash_equals($job->lease_token_hash, hash('sha256', $leaseToken))) {
+            if ($job === null || $job->leased_by_bridge_id !== $bridgeId || $job->lease_token_hash === null || ! hash_equals($job->lease_token_hash, hash('sha256', $leaseToken))) {
                 throw DomainError::forbidden('Lease token not valid for this job.');
             }
             if ($job->state !== 'leased') {
@@ -108,7 +114,7 @@ final class PrintService
             }
             DB::table('print_jobs')->where('id', $jobId)->update([
                 'state' => $printed ? 'sent' : 'failed', 'last_error' => $printed ? null : mb_substr((string) $error, 0, 300),
-                'lease_token_hash' => null, 'lease_expires_at' => null, 'reported_at' => now('UTC'), 'simulated' => $simulated ? 1 : 0, 'updated_at' => now('UTC'),
+                'lease_token_hash' => null, 'lease_expires_at' => null, 'leased_by_bridge_id' => null, 'reported_at' => now('UTC'), 'simulated' => $simulated ? 1 : 0, 'updated_at' => now('UTC'),
             ]);
             Outbox::emit('print.updated', 'staff', ['job_id' => $jobId, 'state' => $printed ? 'sent' : 'failed']);
         });
@@ -118,7 +124,7 @@ final class PrintService
     public function expireLeases(): int
     {
         return DB::table('print_jobs')->where('state', 'leased')->where('lease_expires_at', '<', now('UTC'))
-            ->update(['state' => 'unknown', 'lease_token_hash' => null, 'last_error' => 'Bridge did not report a result in time', 'updated_at' => now('UTC')]);
+            ->update(['state' => 'unknown', 'lease_token_hash' => null, 'leased_by_bridge_id' => null, 'last_error' => 'Bridge did not report a result in time', 'updated_at' => now('UTC')]);
     }
 
     /** @return list<object> */

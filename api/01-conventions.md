@@ -36,7 +36,7 @@ Required domain codes include ITEM_UNAVAILABLE, PRICE_CHANGED, REMOVAL_NOT_ALLOW
 
 Bound string lengths, quantities, item counts, upload dimensions, and payload size in schemas. Rate-limit login by staff/device/IP and payment prompts by checkout/phone/device; avoid blocking a whole hotel solely because devices share an IP. Exact thresholds are load/pilot configuration, not hardcoded assumptions.
 
-The [P03.01 OpenAPI contract](openapi.json) now defines health endpoints and reusable errors; [validation instructions](README.md) record its checks and limits. Other Markdown endpoints remain semantic specifications. Expand the OpenAPI schemas/security/responses as each surface is built, then generate browser-compatible JavaScript client contracts in P03.10. No health endpoint or error middleware is implemented by the contract alone.
+The [OpenAPI contract](openapi.json) now defines all shipped health, polling, table, kiosk, kitchen, and collection operations plus reusable errors; [validation instructions](README.md) record its checks and limits. The browser-compatible JavaScript operation catalogue is generated deterministically from that contract. Markdown endpoints remain semantic specifications and do not supersede the runtime/contract drift check.
 
 Foundation contract limits: requestId 1–128 ASCII letters/digits/underscore/hyphen, error code 1–64 uppercase letters/digits/underscore, safe message 1–320 characters, up to 50 field errors with 1–128-character field paths. Field errors contain field/code/message only. Health data is a status only; responses are not cacheable. These D19 implementation conventions do not define financial payload limits.
 

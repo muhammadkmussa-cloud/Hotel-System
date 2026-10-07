@@ -55,7 +55,12 @@ final class PaymentService
         if ($msisdn === null) {
             throw DomainError::invalid('Enter a Safaricom number like 0712 345 678.');
         }
-        $attemptId = Tx::run(function () use ($checkoutId, $msisdn, $staffId): string {
+        // Snapshot the configured provider scope with the attempt. This also
+        // fails before creating a pending row when Daraja configuration is
+        // incomplete or malformed.
+        $environment = $this->gateway->environment();
+        $merchantReference = $this->gateway->merchantReference();
+        $attemptId = Tx::run(function () use ($checkoutId, $msisdn, $staffId, $environment, $merchantReference): string {
             $c = Tx::lock('checkouts', $checkoutId);
             if ($c === null || $c->state !== 'open') {
                 throw DomainError::conflict('CHECKOUT_CLOSED', 'This bill is no longer open for payment.');
@@ -72,7 +77,8 @@ final class PaymentService
             }
             $id = Ids::new();
             DB::table('payment_attempts')->insert([
-                'id' => $id, 'checkout_id' => $checkoutId, 'method' => 'mpesa', 'environment' => $this->gateway->environment(),
+                'id' => $id, 'checkout_id' => $checkoutId, 'method' => 'mpesa', 'environment' => $environment,
+                'merchant_reference' => $merchantReference, 'currency' => 'KES',
                 'amount_minor' => $remaining, 'phone_masked' => self::maskPhone($msisdn), 'phone_hash' => hash_hmac('sha256', $msisdn, (string) config('app.key')),
                 'state' => 'pending', 'next_query_at' => now('UTC')->addSeconds(5), 'created_at' => now('UTC'), 'updated_at' => now('UTC'),
             ]);
@@ -112,20 +118,21 @@ final class PaymentService
         $a = DB::table('payment_attempts')->where('id', $attemptId)->first();
         if ($a !== null && $a->state === 'pending' && $a->checkout_request_id !== null
             && ($force || $a->next_query_at === null || strtotime($a->next_query_at.' UTC') <= time())) {
-            $this->reconcile($a->checkout_request_id, null);
+            $this->reconcile($a->checkout_request_id);
         }
 
         return $this->view($attemptId);
     }
 
-    /**
-     * Apply the provider's verified outcome. $callbackReceipt is the receipt
-     * claimed by a callback; it is used only if the query confirms success.
-     */
-    public function reconcile(string $checkoutRequestId, ?string $callbackReceipt): void
+    /** Apply a provider outcome only when query and persisted evidence agree. */
+    public function reconcile(string $checkoutRequestId): void
     {
+        // The query is made with the configured merchant credentials. Its
+        // successful result must still match the merchant/currency snapshot
+        // and independently captured amount/receipt evidence below.
+        $currentMerchant = $this->gateway->merchantReference();
         $result = $this->gateway->query($checkoutRequestId);
-        Tx::run(function () use ($checkoutRequestId, $callbackReceipt, $result): void {
+        Tx::run(function () use ($checkoutRequestId, $result, $currentMerchant): void {
             $a = DB::table('payment_attempts')->where('checkout_request_id', $checkoutRequestId)->lockForUpdate()->first();
             if ($a === null || ! in_array($a->state, ['pending', 'unknown'], true)) {
                 return;
@@ -152,8 +159,36 @@ final class PaymentService
 
                 return;
             }
-            $receipt = $result['receipt'] ?? $callbackReceipt;
-            $receipt = is_string($receipt) && preg_match('/^[A-Z0-9]{6,20}$/', $receipt) === 1 ? $receipt : 'CR-'.substr($checkoutRequestId, -16);
+            $queryAmount = is_int($result['amountShillings'] ?? null)
+                && $result['amountShillings'] > 0
+                && $result['amountShillings'] <= intdiv(PHP_INT_MAX, 100)
+                ? $result['amountShillings'] * 100
+                : null;
+            $callbackAmount = $a->callback_amount_minor !== null ? (int) $a->callback_amount_minor : null;
+            $receipt = $result['receipt'] ?? $a->callback_receipt;
+            $receipt = is_string($receipt) ? strtoupper(trim($receipt)) : '';
+            $isSimulator = $a->environment === 'simulator';
+            $amountEvidence = $isSimulator ? $queryAmount : $callbackAmount;
+            $evidenceMatches = $a->merchant_reference !== null
+                && hash_equals((string) $a->merchant_reference, $currentMerchant)
+                && $a->currency === 'KES'
+                && $amountEvidence === (int) $a->amount_minor
+                && ($queryAmount === null || $queryAmount === (int) $a->amount_minor)
+                && ($callbackAmount === null || $callbackAmount === (int) $a->amount_minor)
+                && preg_match('/^[A-Z0-9]{6,20}$/', $receipt) === 1
+                && ($isSimulator || ($a->callback_received_at !== null && $a->callback_receipt === $receipt));
+            if (! $evidenceMatches) {
+                DB::table('payment_attempts')->where('id', $a->id)->update([
+                    'state' => 'unknown', 'result_code' => 'EVIDENCE_FAIL',
+                    'result_desc' => 'Provider success could not be matched to the expected merchant, currency, amount and receipt.',
+                    'next_query_at' => null, 'updated_at' => $now,
+                ]);
+                Outbox::emit('payment.evidence_mismatch', 'staff', ['attempt_id' => $a->id]);
+                Audit::record('mpesa_evidence_mismatch', null, ['attempt_id' => $a->id, 'checkout_id' => $a->checkout_id]);
+                $this->checkouts->notify($a->checkout_id);
+
+                return;
+            }
             DB::table('payment_attempts')->where('id', $a->id)->update([
                 'state' => 'succeeded', 'provider_receipt' => $receipt, 'result_code' => '0', 'result_desc' => mb_substr((string) $result['resultDesc'], 0, 200),
                 'completed_at' => $now, 'next_query_at' => null, 'updated_at' => $now,
@@ -176,21 +211,139 @@ final class PaymentService
         });
     }
 
-    /** Handle a provider callback body; only identifiers are taken from it. */
+    /**
+     * Capture amount/receipt evidence from the secret callback route before
+     * querying Daraja. Callback data alone never applies money.
+     */
     public function callback(array $body): void
     {
         $cb = $body['Body']['stkCallback'] ?? null;
         $id = is_array($cb) ? ($cb['CheckoutRequestID'] ?? null) : null;
-        if (! is_string($id) || strlen($id) > 80) {
+        if (! is_string($id) || $id === '' || strlen($id) > 80) {
             return;
         }
-        $receipt = null;
-        foreach ($cb['CallbackMetadata']['Item'] ?? [] as $item) {
-            if (($item['Name'] ?? null) === 'MpesaReceiptNumber') {
-                $receipt = (string) ($item['Value'] ?? '');
+        $metadata = [];
+        foreach (is_array($cb['CallbackMetadata']['Item'] ?? null) ? $cb['CallbackMetadata']['Item'] : [] as $item) {
+            if (is_array($item) && is_string($item['Name'] ?? null) && array_key_exists('Value', $item)) {
+                $metadata[$item['Name']] = $item['Value'];
             }
         }
-        $this->reconcile($id, $receipt);
+        $amountMinor = self::callbackAmountMinor($metadata['Amount'] ?? null);
+        $receipt = strtoupper(trim(is_string($metadata['MpesaReceiptNumber'] ?? null) ? $metadata['MpesaReceiptNumber'] : ''));
+        $receipt = preg_match('/^[A-Z0-9]{6,20}$/', $receipt) === 1 ? $receipt : null;
+
+        // Persist only the evidence needed for reconciliation (never the
+        // callback phone number or raw payload). insertOrIgnore makes provider
+        // retries idempotent while the pending inbox survives process crashes.
+        $payloadHash = hash('sha256', json_encode([$id, $amountMinor, $receipt], JSON_THROW_ON_ERROR));
+        $inboxId = Ids::new();
+        DB::table('mpesa_callback_inbox')->insertOrIgnore([
+            'id' => $inboxId,
+            'payload_hash' => $payloadHash,
+            'checkout_request_id' => $id,
+            'amount_minor' => $amountMinor,
+            'receipt' => $receipt,
+            'state' => 'pending',
+            'attempts' => 0,
+            'created_at' => now('UTC'),
+            'updated_at' => now('UTC'),
+        ]);
+        $inboxId = (string) DB::table('mpesa_callback_inbox')->where('payload_hash', $payloadHash)->value('id');
+        if ($inboxId === '') {
+            throw new \RuntimeException('M-PESA callback could not be persisted.');
+        }
+        $this->processCallbackInbox($inboxId);
+    }
+
+    /** Process one durable callback. Safe to retry after a crash. */
+    public function processCallbackInbox(string $inboxId): bool
+    {
+        $capture = Tx::run(function () use ($inboxId): array {
+            $inbox = Tx::lock('mpesa_callback_inbox', $inboxId);
+            if ($inbox === null || $inbox->state === 'processed') {
+                return ['done' => true, 'checkoutRequestId' => null];
+            }
+            DB::table('mpesa_callback_inbox')->where('id', $inboxId)->update([
+                'attempts' => (int) $inbox->attempts + 1,
+                'updated_at' => now('UTC'),
+            ]);
+            $attempt = DB::table('payment_attempts')->where('checkout_request_id', $inbox->checkout_request_id)->lockForUpdate()->first();
+            if ($attempt === null) {
+                DB::table('mpesa_callback_inbox')->where('id', $inboxId)->update([
+                    'last_error' => 'Payment attempt is not available yet.',
+                    'updated_at' => now('UTC'),
+                ]);
+
+                return ['done' => false, 'checkoutRequestId' => null];
+            }
+            if (! in_array($attempt->state, ['pending', 'unknown'], true)) {
+                return ['done' => true, 'checkoutRequestId' => null];
+            }
+            $conflict = ($attempt->callback_amount_minor !== null && $inbox->amount_minor !== null
+                    && (int) $attempt->callback_amount_minor !== (int) $inbox->amount_minor)
+                || ($attempt->callback_receipt !== null && $inbox->receipt !== null
+                    && ! hash_equals((string) $attempt->callback_receipt, (string) $inbox->receipt));
+            if ($conflict) {
+                DB::table('payment_attempts')->where('id', $attempt->id)->update([
+                    'state' => 'unknown', 'result_code' => 'EVIDENCE_FAIL',
+                    'result_desc' => 'Conflicting provider callback evidence requires staff investigation.',
+                    'next_query_at' => null, 'updated_at' => now('UTC'),
+                ]);
+                Outbox::emit('payment.evidence_mismatch', 'staff', ['attempt_id' => $attempt->id]);
+                Audit::record('mpesa_evidence_mismatch', null, ['attempt_id' => $attempt->id, 'checkout_id' => $attempt->checkout_id]);
+                $this->checkouts->notify($attempt->checkout_id);
+
+                return ['done' => true, 'checkoutRequestId' => null];
+            }
+            DB::table('payment_attempts')->where('id', $attempt->id)->update([
+                'callback_amount_minor' => $attempt->callback_amount_minor ?? $inbox->amount_minor,
+                'callback_receipt' => $attempt->callback_receipt ?? $inbox->receipt,
+                'callback_received_at' => now('UTC'),
+                'updated_at' => now('UTC'),
+            ]);
+
+            return ['done' => false, 'checkoutRequestId' => (string) $inbox->checkout_request_id];
+        });
+
+        if ($capture['checkoutRequestId'] !== null) {
+            $this->reconcile($capture['checkoutRequestId']);
+        }
+        if ($capture['done'] || $capture['checkoutRequestId'] !== null) {
+            DB::table('mpesa_callback_inbox')->where('id', $inboxId)->update([
+                'state' => 'processed', 'last_error' => null,
+                'processed_at' => now('UTC'), 'updated_at' => now('UTC'),
+            ]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /** Convert a whole-shilling callback amount to exact minor units. */
+    public static function callbackAmountMinor(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value > 0 && $value <= intdiv(PHP_INT_MAX, 100) ? $value * 100 : null;
+        }
+        if (is_float($value)) {
+            if (! is_finite($value) || $value <= 0 || floor($value) !== $value || $value > intdiv(PHP_INT_MAX, 100)) {
+                return null;
+            }
+
+            return (int) $value * 100;
+        }
+        if (! is_string($value) || preg_match('/^[1-9][0-9]*(?:\.0{1,2})?$/', $value) !== 1) {
+            return null;
+        }
+        $whole = strstr($value, '.', true);
+        $whole = $whole === false ? $value : $whole;
+        if (strlen($whole) > strlen((string) intdiv(PHP_INT_MAX, 100))) {
+            return null;
+        }
+        $amount = (int) $whole;
+
+        return $amount <= intdiv(PHP_INT_MAX, 100) ? $amount * 100 : null;
     }
 
     /** Staff resolution of an unknown attempt after checking the M-PESA statement. */
@@ -201,7 +354,7 @@ final class PaymentService
             throw DomainError::conflict('ATTEMPT_RESOLVED', 'This attempt already has a final result.');
         }
         if ($a->checkout_request_id !== null) {
-            $this->reconcile($a->checkout_request_id, $receipt);
+            $this->reconcile($a->checkout_request_id);
             $a = DB::table('payment_attempts')->where('id', $attemptId)->first();
             if (! in_array($a->state, ['unknown', 'pending'], true)) {
                 return;

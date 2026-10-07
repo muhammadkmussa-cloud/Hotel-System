@@ -47,8 +47,8 @@ final class BillService
             ];
         }
         $balance = $totals['open'] + $totals['frozen'];
-        $discounts = (int) DB::table('adjustments')->join('charge_allocations', 'charge_allocations.charge_id', '=', 'adjustments.charge_id')
-            ->where('charge_allocations.'.$column, $ownerId)->where('adjustments.kind', 'discount')->distinct()->sum('adjustments.amount_minor');
+        $discounts = (int) DB::table('adjustments')->join('charge_allocations', 'charge_allocations.id', '=', 'adjustments.allocation_id')
+            ->where('charge_allocations.'.$column, $ownerId)->where('adjustments.kind', 'discount')->sum('adjustments.amount_minor');
 
         return [
             'lines' => $lines,

@@ -28,6 +28,13 @@ test('all contract operations are represented', () => {
   assert.equal(contractVersion, contract.info.version);
 });
 
+test('authentication metadata distinguishes public, optional and protected operations', () => {
+  assert.equal(findOperation('getLiveness').requiresAuth, false);
+  assert.equal(findOperation('pollEvents').requiresAuth, false);
+  assert.equal(findOperation('getReadiness').requiresAuth, true);
+  assert.equal(findOperation('getTableContext').requiresAuth, true);
+});
+
 test('buildPath expands and encodes parameters', () => {
   assert.equal(buildPath('/tables/{id}/guests', { id: 'a b' }), '/tables/a%20b/guests');
   assert.throws(() => buildPath('/a/{id}', {}), /Missing path parameter/);

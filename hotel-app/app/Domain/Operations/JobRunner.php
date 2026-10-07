@@ -43,9 +43,22 @@ final class JobRunner
     /** Run periodic sweeps and due jobs. Returns a short summary. */
     public function tick(int $limit = 20): array
     {
-        $summary = ['jobs' => 0, 'failed' => 0, 'mpesa' => 0, 'kiosk_expired' => 0, 'print_unknown' => 0];
+        $summary = ['jobs' => 0, 'failed' => 0, 'mpesa' => 0, 'mpesa_callbacks' => 0, 'kiosk_expired' => 0, 'print_unknown' => 0];
         $summary['print_unknown'] = app(PrintService::class)->expireLeases();
         $summary['kiosk_expired'] = app(KioskService::class)->expireDue();
+        foreach (DB::table('mpesa_callback_inbox')->where('state', 'pending')->orderBy('created_at')->limit(10)->pluck('id') as $id) {
+            try {
+                if (app(\App\Domain\Payments\PaymentService::class)->processCallbackInbox($id)) {
+                    $summary['mpesa_callbacks']++;
+                }
+            } catch (Throwable $e) {
+                report($e);
+                DB::table('mpesa_callback_inbox')->where('id', $id)->update([
+                    'last_error' => mb_substr('Callback processing failed', 0, 200),
+                    'updated_at' => now('UTC'),
+                ]);
+            }
+        }
         foreach (DB::table('payment_attempts')->where('state', 'pending')->where('next_query_at', '<=', now('UTC'))->whereNotNull('checkout_request_id')->limit(10)->pluck('id') as $id) {
             try {
                 app(\App\Domain\Payments\PaymentService::class)->refresh($id);

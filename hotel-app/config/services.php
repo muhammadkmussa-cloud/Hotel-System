@@ -25,7 +25,8 @@ return [
         'endpoint' => env('FISCAL_ENDPOINT'),
     ],
     'print_bridge' => [
-        'token' => env('PRINT_BRIDGE_TOKEN'),
+        // Bridge credentials are hashed database identities provisioned with
+        // hotel:create-print-bridge; no installation-wide bearer token exists.
         'receipt_destination' => env('PRINT_RECEIPT_DESTINATION'),
     ],
 ];

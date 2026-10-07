@@ -1,6 +1,6 @@
 # Endpoint catalogue
 
-Health and shared errors have an initial validated [OpenAPI design contract](openapi.json); runtime endpoints remain unimplemented. All paths are relative to `/api/v1`. All commands follow [conventions](01-conventions.md). 'Own guest' means server-derived binding, not a supplied guest ID. Staff scope also includes visit/station assignment where applicable.
+The shipped health, polling, table, kiosk, kitchen, and collection routes have a validated [OpenAPI contract](openapi.json). All paths are relative to `/api/v1`. This catalogue supplies broader design context; the OpenAPI document and `hotel-app/routes/api.php` define the currently implemented API. All commands follow [conventions](01-conventions.md). 'Own guest' means server-derived binding, not a supplied guest ID. Staff scope also includes visit/station assignment where applicable.
 
 | Method | Path | Authorized caller | Behaviour |
 |---|---|---|---|

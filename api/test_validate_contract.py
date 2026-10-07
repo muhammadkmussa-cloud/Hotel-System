@@ -1,6 +1,7 @@
 """Negative checks ensure contract validation rejects meaningful regressions."""
 
 import copy
+import re
 import unittest
 
 from jsonschema import Draft202012Validator, SchemaError, ValidationError
@@ -27,7 +28,37 @@ class ContractValidationTest(unittest.TestCase):
         return value
 
     def test_current_contract_passes(self) -> None:
-        self.assertEqual(16, validate(self.document))
+        self.assertEqual(28, validate(self.document))
+
+    def test_contract_covers_every_registered_runtime_route(self) -> None:
+        source = (ROOT.parent / 'hotel-app/routes/api.php').read_text(encoding='utf-8')
+        table_start = source.index("->prefix('table')")
+        kiosk_start = source.index("->prefix('kiosk')")
+        kitchen_start = source.index("staff_or_device:kitchen.view,kitchen")
+        runtime: set[tuple[str, str]] = set()
+        route_pattern = re.compile(r"Route::(get|post|patch|delete)\('([^']+)'")
+        for match in route_pattern.finditer(source):
+            prefix = '/table' if table_start < match.start() < kiosk_start else ''
+            if kiosk_start < match.start() < kitchen_start:
+                prefix = '/kiosk'
+            runtime.add((match.group(1), prefix + match.group(2)))
+        contract = {
+            (method, path)
+            for path, item in self.document['paths'].items()
+            for method in item
+            if method in {'get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'}
+        }
+        self.assertEqual(runtime, contract)
+
+    def test_every_operation_declares_authentication_and_mutation_csrf(self) -> None:
+        for path, item in self.document['paths'].items():
+            for method, operation in item.items():
+                if method not in {'get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'}:
+                    continue
+                self.assertIn('security', operation, f'{method.upper()} {path}')
+                if method not in {'get', 'head', 'options'}:
+                    refs = {parameter.get('$ref') for parameter in operation.get('parameters', [])}
+                    self.assertIn('#/components/parameters/Csrf', refs, f'{method.upper()} {path}')
 
     def test_resource_version_tags_match_runtime_integer_boundaries(self) -> None:
         validator = Draft202012Validator(self.object_at('#/components/schemas/ResourceVersionTag'))

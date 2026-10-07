@@ -26,7 +26,7 @@ This file records what the application in [`hotel-app/`](../hotel-app/README.md)
 | End-to-end integrity and capacity gates on target stack | P30 | Partly: HTTP E2E suite passes on SQLite; **MySQL and load tests not run** |
 | Staff rehearsal, pilot, release | P31 | **Not done** — requires a hotel |
 
-The application has 155 routes, 27 migrations and eight staff roles (owner, manager, cashier, waiter, kitchen lead, kitchen staff, menu editor, auditor).
+The application has 155 routes, 35 migrations and eight staff roles (owner, manager, cashier, waiter, kitchen lead, kitchen staff, menu editor, auditor).
 
 ## Verification evidence (7 October 2026)
 
@@ -38,8 +38,8 @@ All of the following were executed in the development sandbox (PHP 8.4, SQLite s
   - `flow_table.py` — open visit → add guests → bind tablets → per-guest menu, cart and order submission with idempotent replay → kitchen ticket transitions → bill → checkout → receipt → visit close.
   - `flow_money.py` — drawer open, allergy-note review hold and manager approval, shared-dish split, manager discount (waiter refused), cash with change and card record at the cashier, receipt with tax snapshot and simulated fiscal label, refund request → approve → complete, visit close blocked until food served, kiosk pay-at-cashier with collection number, kiosk M-PESA simulator (insufficient funds, then success), drawer close.
   - Result: **0 failures**.
-- **Not yet covered by automated tests** (add before the pilot): M-PESA cancelled/timeout outcomes, item cancellation, print bridge leasing, media upload/crop.
-- `php artisan hotel:run-jobs -v`, `hotel:backup` (51 tables verified), `hotel:restore` (dry run and `--force` with automatic safety backup), `schedule:list` — all succeed.
+- **Not covered by the historical executed suite**: M-PESA cancelled/timeout outcomes, print bridge leasing, and media upload/crop. The post-audit item-cancellation, report-ledger, and attributed cash-refund/handover fixture exists but still requires MySQL and concurrency execution.
+- Historical pre-audit run: `php artisan hotel:run-jobs -v`, unsigned-format `hotel:backup` (51 tables verified), `hotel:restore` (dry run and `--force` with automatic safety backup), `schedule:list` all succeeded. The hardened authenticated format 2 archive/restore added on 7 October 2026 still requires a fresh PHP/MySQL execution; legacy unsigned format 1 archives are now intentionally rejected.
 - Headless Chromium screenshots of sign-in, lock, pairing, welcome, staff home, tables, visit, kitchen board, collection display, cashier, checkout, receipt, refunds, all admin screens, the table tablet (menu, customiser, cart, bill) and the kiosk journey — no JavaScript errors.
 
 ## Design decisions made during implementation
@@ -53,8 +53,8 @@ All of the following were executed in the development sandbox (PHP 8.4, SQLite s
 
 ## Known gaps and risks before a real pilot
 
-1. **MySQL**: all features were exercised on SQLite. The MySQL-only suites in `tests/Database/` and the full E2E suite must be run against MySQL 8+ on the target host before go-live.
-2. **M-PESA**: switch `MPESA_MODE=daraja` only after Safaricom sandbox credentials are issued and the callback URL is reachable over HTTPS; test every result code.
+1. **MySQL**: the historical feature pass used SQLite, and post-audit fixes have not had PHP runtime execution here. The MySQL-only suites in `tests/Database/` and the full E2E suite must be run against MySQL 8+ on the target host before go-live.
+2. **M-PESA**: use `MPESA_MODE=sandbox` only after Safaricom sandbox credentials are issued and the callback URL is reachable over HTTPS; test every result code before a separately approved `MPESA_MODE=production` cutover.
 3. **Fiscal/eTIMS**: the simulator must be replaced by a certified integration (or an approved VSCU/OSCU device) before issuing real tax invoices. Keep `FISCAL_ENABLED=false` until then.
 4. **Printers**: the bridge API is implemented; a hotel-side bridge program and real receipt/kitchen printers still need to be installed and tested (P17/P29).
 5. **Load**: polling intervals and request limits were sized for one hotel; run a capacity test on the real host (P30).

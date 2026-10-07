@@ -18,5 +18,7 @@ return [
     'fallback_locale' => 'en',
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
+    // Forced restore is permitted only in an isolated recovery installation.
+    'recovery_mode' => env('RECOVERY_MODE', false),
     'previous_keys' => [],
 ];

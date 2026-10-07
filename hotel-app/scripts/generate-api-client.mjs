@@ -28,7 +28,7 @@ for (const path of Object.keys(openapi.paths).sort()) {
       path,
       tags: [...(op.tags ?? [])].sort(),
       summary: op.summary ?? '',
-      requiresAuth: Array.isArray(op.security) ? op.security.some((rule) => Object.keys(rule).length > 0) : true,
+      requiresAuth: Array.isArray(op.security) ? op.security.length > 0 && op.security.every((rule) => Object.keys(rule).length > 0) : true,
       hasJsonBody: Boolean(op.requestBody?.content?.['application/json']),
       successCodes: Object.keys(op.responses).filter((code) => code.startsWith('2')).sort(),
     });
