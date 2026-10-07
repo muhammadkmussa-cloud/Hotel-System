@@ -70,11 +70,13 @@ final class BoundMediaUpload
         if ($request->request->count() !== 0) {
             throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Send only the file field; metadata endpoints arrive later.');
         }
-        if ($request->files->count() !== 1 || ! $request->hasFile($field)) {
+        if ($request->files->count() !== 1 || ! $request->files->has($field)) {
             throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Attach exactly one file under the "'.$field.'" field.');
         }
 
-        $file = $request->file($field);
+        // Read the raw file bag: Laravel's file() helper hides entries that
+        // carry a PHP upload error, which would mask a 413 as a generic 400.
+        $file = $request->files->get($field);
         if (! $file instanceof UploadedFile) {
             throw new InvalidUpload(400, 'MALFORMED_INPUT', 'Uploaded file could not be read.');
         }

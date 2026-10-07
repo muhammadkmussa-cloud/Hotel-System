@@ -29,7 +29,7 @@ final class MediaStorageTest extends TestCase
     private string $root;
 
     /** @var list<array{event:string, actor:?string, ctx:array}> */
-    private array $auditEvents = [];
+    public array $auditEvents = [];
 
     protected function setUp(): void
     {
@@ -80,7 +80,7 @@ final class MediaStorageTest extends TestCase
         };
         // Anonymous class audit closure-free bucket using $this reference.
         $bucket = $this;
-        $audit = new class($bucket) {
+        $audit = new class($bucket) extends \App\Support\SecurityAudit {
             public function __construct(private object $bucket) {}
             public function record(string $event, ?string $actor = null, ?string $ip = null, array $ctx = []): void
             {
@@ -92,46 +92,8 @@ final class MediaStorageTest extends TestCase
         $storage = new MediaStorage($validator, $audit);
 
         // Fake disk — backed by $this->root.
-        $fakeDisk = new class($this->root) {
-            private string $root;
-            public function __construct(string $root) { $this->root = $root; }
-            private function abs(string $path): string {
-                $rel = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
-                return $this->root.DIRECTORY_SEPARATOR.$rel;
-            }
-            private function mkdir(string $path): void {
-                $d = dirname($this->abs($path));
-                if (!is_dir($d)) @mkdir($d, 0700, true);
-            }
-            public function put(string $path, string $contents) {
-                $this->mkdir($path);
-                file_put_contents($this->abs($path), $contents);
-                return true;
-            }
-            public function get(string $path): ?string {
-                $p = $this->abs($path);
-                return file_exists($p) ? (string)file_get_contents($p) : null;
-            }
-            public function exists(string $path): bool {
-                return file_exists($this->abs($path));
-            }
-            public function size(string $path): int {
-                $p = $this->abs($path);
-                return file_exists($p) ? (int)filesize($p) : 0;
-            }
-            public function delete(string $path): bool {
-                $p = $this->abs($path);
-                if (file_exists($p)) { @unlink($p); return true; }
-                return false;
-            }
-            public function move(string $from, string $to): bool {
-                $this->mkdir($to);
-                return @rename($this->abs($from), $this->abs($to));
-            }
-            public function path(string $path): string {
-                return $this->abs($path);
-            }
-        };
+        $adapter = new \League\Flysystem\Local\LocalFilesystemAdapter($this->root);
+        $fakeDisk = new \Illuminate\Filesystem\FilesystemAdapter(new \League\Flysystem\Filesystem($adapter), $adapter, ['root' => $this->root]);
 
         $storage->overrideDisk($fakeDisk);
         return $storage;

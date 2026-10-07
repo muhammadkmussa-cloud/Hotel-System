@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Support\DatabaseTransaction;
-use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\Connection;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +17,7 @@ final class DatabaseTransactionTest extends TestCase
         foreach ([['HY000', 2006], ['23000', 1062], ['40001', 9999]] as $info) {
             $pdo = $this->createStub(PDO::class);
             $pdo->method('inTransaction')->willReturn(false);
-            $connection = $this->createMock(MySqlConnection::class);
+            $connection = $this->createMock(Connection::class);
             $connection->method('getPdo')->willReturn($pdo);
             $connection->method('transactionLevel')->willReturn(0);
             $error = new PDOException('Private diagnostic');

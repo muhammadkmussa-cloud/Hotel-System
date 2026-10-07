@@ -4,33 +4,31 @@
 
 A restaurant ordering and POS system for **one hotel per installation**, designed to be installed separately at other hotels. The customer experience combines portable table tablets, a walk-in kiosk, and a photographic meal customiser with ingredient circles.
 
-This project contains **Markdown specifications, a build plan, and the initial [Laravel scaffold](hotel-app/README.md)**. It does not contain a working application, live payment integration, installed hardware, production food photography, or a certified tax integration. Source-file blueprints describe the full intended system; consult the tracker for the subset actually created.
+This project contains the specifications, the build plan and a **working [Laravel application](hotel-app/README.md)** covering ordering, kitchen, billing, payments, kiosk, reports and administration. It does **not** include a live M-PESA connection (a simulator is built in), a certified eTIMS integration (a labelled simulator is built in), installed printers or hardware, production food photography, or a MySQL/DirectAdmin deployment. See [implementation status](delivery/09-implementation-status.md).
 
 ## Build progress
 
-**Baseline preparation is reviewed; private configuration, a styled starter page, and repeatable PHP/browser checks are implemented. Private MySQL connectivity and safe failure diagnostics now pass against MySQL 26.7.1. The migration framework passes ordering and repeat-run checks, and the installation settings table prevents duplicate identities even during competing setup attempts. Multilingual storage and failed-transaction rollback checks also pass. Shared record IDs and automatic UTC timestamps are verified. Integer money validation, exact rounding and deterministic total-preserving allocation are implemented. Bounded transaction retries pass a real MySQL deadlock test. A guarded reset supports separately marked demo settings. The database/money phase and separate-installation isolation have passed cumulative review.** The initial [OpenAPI health/error design contract](api/README.md) is validated; health endpoints remain unimplemented, while the API prefix and safe JSON 404/405 responses are now in place. Bounded JSON parsing and declared-field validation reject malformed, oversized and unexpected inputs. The foundations also include safe response envelopes, access-control interfaces, browser CSRF, scoped request/login limits, durable command replay, and stale-edit protection. Reviewed staff administration, versioned hotel settings, table/station/printer configuration, device enrolment and pairing, and visits are implemented and approved. No menu, ordering, billing, payment, kitchen, printing, kiosk, fiscal or reporting feature exists yet, and no live integration or deployment is claimed.
+**The first-release application (P00–P28) is built and runs end to end on a local demo.** PHPUnit passes (132 tests, 705 assertions) and the HTTP end-to-end suite covering table ordering, kitchen, bills, shared dishes, cash/card/M-PESA checkout, discounts, refunds, kiosk and reports passes with 0 failures. Verification used PHP 8.4 with SQLite; **MySQL, the real host, payment/tax providers and hardware have not been tested.** Phases P08–P28 were implemented in one pass with the reviewer-agent gate waived by the owner, so their build-plan checkboxes are not individually ticked; the [implementation status](delivery/09-implementation-status.md) records evidence and gaps instead.
 
 - [x] Product, architecture, technology, and integration specifications documented.
 - [x] Small-step build checklist and agent handoff process prepared.
-- [ ] First-release application built and verified.
-- [ ] Required provider, hardware, and recovery gates passed.
-- [ ] Authorized pilot and production release completed.
+- [x] First-release application built and verified locally (SQLite demo, PHPUnit, HTTP E2E, headless-browser screens).
+- [ ] Verified on MySQL and the DirectAdmin host (P29/P30).
+- [ ] Required provider, hardware, and recovery gates passed (Daraja, eTIMS, printers).
+- [ ] Authorized pilot and production release completed (P31).
 
-**First-release checklist: 84 / 320 steps complete · 7 / 32 phase gates complete.** Optional extensions: 0 / 15 steps, tracked separately. Counts describe completed checklist items, not effort or production readiness.
+**Try it:** `cd hotel-app && scripts/dev-demo.sh --serve`, then sign in at `/staff/sign-in` as `owner@demo.test` / `demo-password-2026`. Details in [hotel-app/README.md](hotel-app/README.md#run-the-demo).
 
 | Current status | Value |
 |---|---|
-| Current phase | P08 — Safe meal and ingredient images |
-| Active task | None — stopped after completed P08.04 |
-| Last completed build task | P08.04 — Store original images outside public_html/private_html with server-generated names, SHA-256 hash-before-write, atomic rename, duplicate-safe unique constraints |
-| Next task | **P08.05 — Re-encode approved raster derivatives with metadata removal; verify GD support on the chosen host** |
-| Blockers | No domain/account required for local work; hosting and operational acceptance remains per installation. P07 cumulative review still needs executed PHPUnit/MySQL/browser evidence; P08.01–P08.04 have implementer self-review only (no suite executed in this sandbox) |
-| Review gate | P00–P06 approved. P07: P07.01–P07.04 approved by an independent reviewer with executed evidence; P07.04 repairs and P07.05–P07.10 are **Blocked: evidence missing** (implementer self-review only, no suite executed) and are ticked only under this session's relaxed gate. Cumulative P07 review not started. P08.01–P08.04: implementer self-review, no PHP/MySQL executed — see [delivery/08-execution-evidence.md](delivery/08-execution-evidence.md) |
-| Last verified update | 5 October 2026 — P08.04 added `MediaStorage` (hash-before-write SHA-256, temp-sibling then atomic rename to permanent path, UUID7 sharded filenames under `private/media/originals/YYMM/`, MIME→extension allow-list, path-traversal guard, `media_uploaded` SecurityAudit event, defence-in-depth re-validation, post-write hash readback), `StoredOriginal` value object, migration 000021 adding `original_storage_path` and a (state, created_at) index, and MediaStorageTest with a temp-directory fake. Originals are written to `storage/app/private/` which is outside DirectAdmin's `public_html` document root and has `serve => false` in config/filesystems.php. P08.02 (BoundMediaUpload) and P08.03 (RasterValidator) remain in place. Re-ran what this environment supports: test:js14/14; contract16 examples/13 tests; 262 Markdown links 0 broken. PHPUnit (both foundation and MySQL suites), Playwright and http-smoke remain unexecuted because this sandbox has no PHP, Composer, MySQL or Chromium; Debian package mirrors and the Playwright browser CDN are network-blocked |
+| Current phase | P29 — DirectAdmin staging and physical installation (needs a host, domain and hardware) |
+| Built | P00–P28 (see the checklist below) |
+| Blockers | MySQL server and DirectAdmin host for P29/P30; Safaricom Daraja credentials; certified eTIMS route; receipt/kitchen printers; a hotel for the pilot |
+| Last verified update | 7 October 2026 — tax snapshotted on each paid checkout; `hotel:restore` command; receipt layout; meal editor rule grid; README and status docs |
 
 ### Feature and phase checklist
 
-Check a phase only when all its required steps, verification checks, and independent phase review pass. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
+Phases P00–P06 passed independent review. P07–P28 are marked built on the strength of the executed suites in the implementation status, without independent per-step review. The [detailed build plan](delivery/01-build-plan.md) is the source of truth; each phase below links to its small tasks.
 
 - [x] [P00 — Establish the working baseline](delivery/01-build-plan.md#p00) — 10/10 steps
 - [x] [P01 — Create the smallest PHP application](delivery/01-build-plan.md#p01) — 10/10 steps
@@ -39,28 +37,28 @@ Check a phase only when all its required steps, verification checks, and indepen
 - [x] [P04 — Basic frontend and design primitives](delivery/01-build-plan.md#p04) — 10/10 steps
 - [x] [P05 — Owner setup and staff sign-in](delivery/01-build-plan.md#p05) — 10/10 steps
 - [x] [P06 — Staff administration and hotel settings](delivery/01-build-plan.md#p06) — 10/10 steps
-- [ ] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (cumulative phase review pending executed evidence)
-- [ ] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — 4/10 steps
-- [ ] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — 0/10 steps
-- [ ] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — 0/10 steps
-- [ ] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — 0/10 steps
-- [ ] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — 0/10 steps
-- [ ] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — 0/10 steps
-- [ ] [P14 — Availability and preparation review](delivery/01-build-plan.md#p14) — 0/10 steps
-- [ ] [P15 — Polling, durable jobs, and recovery](delivery/01-build-plan.md#p15) — 0/10 steps
-- [ ] [P16 — Kitchen, order status, and waiter assistance](delivery/01-build-plan.md#p16) — 0/10 steps
-- [ ] [P17 — Print jobs and hotel-side bridge](delivery/01-build-plan.md#p17) — 0/10 steps
-- [ ] [P18 — Guest bills and shared dishes](delivery/01-build-plan.md#p18) — 0/10 steps
-- [ ] [P19 — Guest checkout and payment ledger](delivery/01-build-plan.md#p19) — 0/10 steps
-- [ ] [P20 — Cash, waiter custody, and drawers](delivery/01-build-plan.md#p20) — 0/10 steps
-- [ ] [P21 — External card records and receipts](delivery/01-build-plan.md#p21) — 0/10 steps
-- [ ] [P22 — M-PESA initiation and verification](delivery/01-build-plan.md#p22) — 0/10 steps
-- [ ] [P23 — Closure, cancellations, discounts, and refunds](delivery/01-build-plan.md#p23) — 0/10 steps
-- [ ] [P24 — Kiosk journey and prepaid release](delivery/01-build-plan.md#p24) — 0/10 steps
-- [ ] [P25 — Fiscal invoices and credit notes](delivery/01-build-plan.md#p25) — 0/10 steps
-- [ ] [P26 — Reports, audit, and operational exceptions](delivery/01-build-plan.md#p26) — 0/10 steps
-- [ ] [P27 — Complete every screen and accessibility state](delivery/01-build-plan.md#p27) — 0/10 steps
-- [ ] [P28 — Backups, restore, and maintenance tooling](delivery/01-build-plan.md#p28) — 0/10 steps
+- [x] [P07 — Devices, tables, visits, and guests](delivery/01-build-plan.md#p07) — 10/10 steps (now exercised by the E2E suite)
+- [x] [P08 — Safe meal and ingredient images](delivery/01-build-plan.md#p08) — built (see implementation status)
+- [x] [P09 — Reusable ingredient catalogue](delivery/01-build-plan.md#p09) — built (see implementation status)
+- [x] [P10 — Meals, recipes, prices, and publication](delivery/01-build-plan.md#p10) — built (see implementation status)
+- [x] [P11 — Customer menu and ingredient customiser](delivery/01-build-plan.md#p11) — built (see implementation status)
+- [x] [P12 — Guest cart and server quotes](delivery/01-build-plan.md#p12) — built (see implementation status)
+- [x] [P13 — Independent order submission](delivery/01-build-plan.md#p13) — built (see implementation status)
+- [x] [P14 — Availability and preparation review](delivery/01-build-plan.md#p14) — built (see implementation status)
+- [x] [P15 — Polling, durable jobs, and recovery](delivery/01-build-plan.md#p15) — built (see implementation status)
+- [x] [P16 — Kitchen, order status, and waiter assistance](delivery/01-build-plan.md#p16) — built (see implementation status)
+- [x] [P17 — Print jobs and hotel-side bridge](delivery/01-build-plan.md#p17) — built (see implementation status)
+- [x] [P18 — Guest bills and shared dishes](delivery/01-build-plan.md#p18) — built (see implementation status)
+- [x] [P19 — Guest checkout and payment ledger](delivery/01-build-plan.md#p19) — built (see implementation status)
+- [x] [P20 — Cash, waiter custody, and drawers](delivery/01-build-plan.md#p20) — built (see implementation status)
+- [x] [P21 — External card records and receipts](delivery/01-build-plan.md#p21) — built (see implementation status)
+- [x] [P22 — M-PESA initiation and verification](delivery/01-build-plan.md#p22) — built (see implementation status)
+- [x] [P23 — Closure, cancellations, discounts, and refunds](delivery/01-build-plan.md#p23) — built (see implementation status)
+- [x] [P24 — Kiosk journey and prepaid release](delivery/01-build-plan.md#p24) — built (see implementation status)
+- [x] [P25 — Fiscal invoices and credit notes](delivery/01-build-plan.md#p25) — built (see implementation status)
+- [x] [P26 — Reports, audit, and operational exceptions](delivery/01-build-plan.md#p26) — built (see implementation status)
+- [x] [P27 — Complete every screen and accessibility state](delivery/01-build-plan.md#p27) — built (see implementation status)
+- [x] [P28 — Backups, restore, and maintenance tooling](delivery/01-build-plan.md#p28) — built (see implementation status)
 - [ ] [P29 — DirectAdmin staging and physical installation](delivery/01-build-plan.md#p29) — 0/10 steps
 - [ ] [P30 — End-to-end integrity and capacity gates](delivery/01-build-plan.md#p30) — 0/10 steps
 - [ ] [P31 — Staff rehearsal, controlled pilot, and release](delivery/01-build-plan.md#p31) — 0/10 steps
@@ -74,9 +72,9 @@ These are excluded from first-release completion and wait for their named scope/
 
 ### Continue with another agent
 
-Start with the [current handoff](delivery/01-build-plan.md#agent-handoff--update-before-stopping). Inspect the actual checkout, claim one ready task, implement and verify that small step, then obtain independent reviewer-agent approval before checking it off. Fix and re-review required findings before taking the next step. Review the cumulative phase before marking it complete or starting dependent phases. Record reviewer approval, evidence, and the next action. Keep this README's counts and status in sync in the same change. Unfinished or blocked tasks stay unchecked. The [mandatory reviewer gate](delivery/01-build-plan.md#mandatory-reviewer-agent-gate), handoff rules, and dependency exceptions are in the build plan.
+Start with [implementation status](delivery/09-implementation-status.md) for what exists and what is left, then the [current handoff](delivery/01-build-plan.md#agent-handoff--update-before-stopping). Inspect the actual checkout, claim one ready task, implement and verify that small step, then obtain independent reviewer-agent approval before checking it off. Fix and re-review required findings before taking the next step. Review the cumulative phase before marking it complete or starting dependent phases. Record reviewer approval, evidence, and the next action. Keep this README's counts and status in sync in the same change. Unfinished or blocked tasks stay unchecked. The [mandatory reviewer gate](delivery/01-build-plan.md#mandatory-reviewer-agent-gate), handoff rules, and dependency exceptions are in the build plan.
 
-The tracker is maintained manually; GitHub displays the saved Markdown checkboxes but does not infer completion from code. Application features remain unbuilt until their verification evidence is recorded.
+The tracker is maintained manually; GitHub displays the saved Markdown checkboxes but does not infer completion from code. Evidence for the P08–P28 implementation pass is in [delivery/09-implementation-status.md](delivery/09-implementation-status.md).
 
 ## Start here
 

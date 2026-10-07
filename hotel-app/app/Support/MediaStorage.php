@@ -156,7 +156,7 @@ final class MediaStorage
         ]);
 
         return new StoredOriginal(
-            disk: (string) config('filesystems.default', 'local'),
+            disk: self::diskName(),
             storagePath: $finalRelative,
             sha256: $sha256,
             bytes: $size,
@@ -238,6 +238,13 @@ final class MediaStorage
         if ($this->diskOverride !== null) {
             return $this->diskOverride;
         }
-        return Storage::disk((string) config('filesystems.default', 'local'));
+        return Storage::disk(self::diskName());
+    }
+
+    private static function diskName(): string
+    {
+        return function_exists('app') && app()->bound('config')
+            ? (string) config('filesystems.default', 'local')
+            : 'local';
     }
 }

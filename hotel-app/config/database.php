@@ -10,7 +10,17 @@ return [
     ],
     'connections' => [
         'demo_reset' => (require __DIR__ . '/demo.php')['connection'],
-        'mysql' => [
+        // The application always uses the connection named "mysql". Production
+        // installations run MySQL (C21). DB_DRIVER=sqlite is a local/sandbox
+        // and automated-test convenience only; it must not be used on a host.
+        'mysql' => env('DB_DRIVER', 'mysql') === 'sqlite' ? [
+            'driver' => 'sqlite',
+            'database' => env('DB_DATABASE') ?: database_path('hotel.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'busy_timeout' => 5000,
+            'journal_mode' => 'WAL',
+        ] : [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),

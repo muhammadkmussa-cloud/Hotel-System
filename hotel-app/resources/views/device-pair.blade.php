@@ -1,45 +1,20 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/assets/css/tokens.css">
-    <link rel="stylesheet" href="/assets/css/global.css">
-    <title>{{ config('app.name') }} — Pair device</title>
-</head>
-<body>
-    <main id="main">
-        <h1>Pair this device</h1>
-        <p>Enter the pairing code provided by staff. Unpaired devices cannot see any private data.</p>
-        @if (session('status'))
-            <p role="status">{{ session('status') }}</p>
-        @endif
-        @if ($errors->any())
-            <div role="alert" class="state" tabindex="-1" data-error-focus>
-                <h2>Pairing failed</h2>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        <form method="post" action="/device/pair" data-single-submit>
-            @csrf
-            <div class="field">
-                <label for="code">Pairing code</label>
-                <input id="code" name="code" type="text" maxlength="64" required autocomplete="off">
-            </div>
-            <button type="submit" data-pending-label="Pairing…">Pair device</button>
-            <p data-submit-status class="visually-hidden" role="status" aria-live="polite"></p>
-        </form>
-    </main>
-    <script type="module">
-        import { initSingleSubmit } from '/assets/js/lib/single-submit.js';
-        initSingleSubmit(document.querySelector('form[data-single-submit]'));
-        document.querySelector('[data-error-focus]')?.focus();
-    </script>
-</body>
-</html>
+@extends('layouts.staff', ['title' => 'Pair device'])
+@section('mainClass', 'narrow')
+@section('content')
+<section class="card auth-card">
+    <h1>Pair this device</h1>
+    @if ($device)
+        <div class="notice notice-ok"><p>This device is paired as <b>{{ $device['name'] }}</b>. Entering a new code replaces that pairing.</p>
+            <p><a class="btn-secondary" href="/{{ match ($device['mode']) { 'tablet' => 'table', 'kiosk' => 'kiosk', 'kitchen' => 'kitchen', 'collection' => 'collection', default => '' } }}">Open this device’s screen</a></p></div>
+    @endif
+    <p class="muted">A manager creates a pairing code in <b>Admin → Devices</b>. Enter it here. Codes work once and expire after 15 minutes.</p>
+    <form method="post" action="/device/pair">@csrf
+        <div class="field">
+            <label for="code">Pairing code</label>
+            <input id="code" name="code" type="text" maxlength="64" required autocomplete="off" autocapitalize="characters" spellcheck="false" autofocus placeholder="ABCD-EFGH" class="code-input">
+        </div>
+        <button class="btn-large btn-block" data-pending-label="Pairing…">Pair device</button>
+    </form>
+    <p class="small muted">Staff? <a href="/staff/sign-in">Sign in instead</a>.</p>
+</section>
+@endsection

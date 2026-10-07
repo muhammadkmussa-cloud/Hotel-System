@@ -12,7 +12,7 @@ use Throwable;
  * Persists security audit events. Never stores passwords, session tokens,
  * secrets, or full personal data; auditing failures never block authentication.
  */
-final class SecurityAudit
+class SecurityAudit
 {
     private const ALLOWED_EVENTS = [
         'login_succeeded', 'login_failed', 'logout', 'unlock_succeeded', 'unlock_failed',

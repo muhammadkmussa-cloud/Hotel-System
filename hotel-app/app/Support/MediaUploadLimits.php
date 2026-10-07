@@ -10,7 +10,7 @@ namespace App\Support;
  * Centralises upload limits so middleware, controllers and future validation
  * share one source of truth.
  */
-final class MediaUploadLimits
+class MediaUploadLimits
 {
     /**
      * Hard ceiling for an original filename stem accepted from the client.
@@ -22,7 +22,7 @@ final class MediaUploadLimits
     /** @return positive-int */
     public function maxBytes(): int
     {
-        $value = (int) config('media.upload.max_bytes', 20 * 1024 * 1024);
+        $value = (int) self::setting('media.upload.max_bytes', 20 * 1024 * 1024);
         if ($value < 1) {
             return 20 * 1024 * 1024;
         }
@@ -33,7 +33,7 @@ final class MediaUploadLimits
     /** @return non-empty-string */
     public function fieldName(): string
     {
-        $value = (string) config('media.upload.field_name', 'file');
+        $value = (string) self::setting('media.upload.field_name', 'file');
 
         return $value === '' ? 'file' : $value;
     }
@@ -42,7 +42,7 @@ final class MediaUploadLimits
     public function acceptedMimeTypes(): array
     {
         $default = ['image/jpeg', 'image/png', 'image/webp'];
-        $configured = config('media.upload.accepted_mime_types');
+        $configured = self::setting('media.upload.accepted_mime_types');
         if (! is_array($configured) || $configured === []) {
             return $default;
         }
@@ -54,5 +54,15 @@ final class MediaUploadLimits
         }
 
         return $clean === [] ? $default : $clean;
+    }
+
+    /** Reads configuration when the application container is booted; otherwise the safe default. */
+    private static function setting(string $key, mixed $default = null): mixed
+    {
+        if (! function_exists('app') || ! app()->bound('config')) {
+            return $default;
+        }
+
+        return config($key, $default);
     }
 }

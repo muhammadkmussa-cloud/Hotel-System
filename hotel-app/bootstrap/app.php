@@ -18,6 +18,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         api: __DIR__ . '/../routes/api.php',
         apiPrefix: 'api/v1',
         commands: __DIR__ . '/../routes/console.php',
+        then: function (): void {
+            \Illuminate\Support\Facades\Route::middleware([])->group(base_path('routes/integrations.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend([RequireInstallationConfiguration::class, \App\Http\Middleware\ParseJsonInput::class]);
@@ -33,6 +36,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'principal' => \App\Http\Middleware\RequirePrincipal::class,
             'capability' => \App\Http\Middleware\RequireCapability::class,
             'media.upload' => \App\Http\Middleware\BoundMediaUpload::class,
+            'device' => \App\Http\Middleware\RequireDevice::class,
+            'guest' => \App\Http\Middleware\RequireGuest::class,
+            'staff_or_device' => \App\Http\Middleware\RequireStaffOrDevice::class,
         ]);
         $isApi = fn (Request $request): bool => $request->is('api/v1', 'api/v1/*');
         $middleware->trimStrings(except: [$isApi]);
@@ -55,5 +61,11 @@ $app->singleton(\App\Support\MediaUploadLimits::class);
 $app->singleton(\App\Support\RasterLimits::class, fn () => \App\Support\RasterLimits::fromConfig());
 $app->singleton(\App\Support\RasterValidator::class);
 $app->singleton(\App\Support\MediaStorage::class);
+$app->bind(\App\Domain\Payments\MpesaGateway::class, function () {
+    $config = (array) config('services.mpesa');
+    return in_array($config['mode'] ?? 'simulator', ['sandbox', 'production'], true)
+        ? new \App\Domain\Payments\DarajaMpesaGateway($config)
+        : new \App\Domain\Payments\SimulatedMpesaGateway();
+});
 
 return $app;

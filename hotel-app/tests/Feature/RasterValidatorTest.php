@@ -271,27 +271,18 @@ final class RasterValidatorTest extends TestCase
 
     private function minimalWebpVp8l(int $w, int $h): string
     {
-        // 32-bit LE packed: (w-1):14 | ((h-1):14 << 14) | 0 (alpha + version).
-        $bits = (($w - 1) & 0x3FFF) | ((($h - 1) & 0x3FFF) << 14);
-        $packed = pack('V', $bits);
-        $payload = "\x2F".$packed; // 1 signature + 4 packed bytes
-        // Round-trip verify.
-        $b0 = ord($payload[1]);
-        $b1 = ord($payload[2]);
-        $b2 = ord($payload[3]);
-        $b3 = ord($payload[4]);
-        $wCheck = 1 + ($b0 | (($b1 & 0x3F) << 8));
-        $hCheck = 1 + ((($b1 >> 6) & 0x03) | ($b2 << 2) | (($b3 & 0x0F) << 10));
-        if ($wCheck !== $w || $hCheck !== $h) {
-            throw new \RuntimeException("WebP fixture builder failed roundtrip for {$w}x{$h}: got {$wCheck}x{$hCheck}");
+        // A real lossless WebP (VP8L) encoded by GD, so the fixture matches
+        // what genuine encoders emit rather than a hand-packed header.
+        $image = imagecreatetruecolor($w, $h);
+        imagefilledrectangle($image, 0, 0, $w - 1, $h - 1, imagecolorallocate($image, 200, 120, 40));
+        ob_start();
+        imagewebp($image, null, IMG_WEBP_LOSSLESS);
+        $bytes = (string) ob_get_clean();
+        if (substr($bytes, 12, 4) !== 'VP8L') {
+            throw new \RuntimeException('GD did not produce a VP8L WebP fixture.');
         }
-        $chunk = 'VP8L'.pack('V', strlen($payload)).$payload;
-        if (strlen($payload) % 2 === 1) {
-            $chunk .= "\x00";
-        }
-        $body = 'WEBP'.$chunk;
-        $out = 'RIFF'.pack('V', strlen($body) - 4).$body;
-        return $out;
+
+        return $bytes;
     }
 
     private function pngChunk(string $type, string $data): string

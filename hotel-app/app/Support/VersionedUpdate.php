@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\Connection;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 
 /** SQL primitive: callers authorize the row and supply already validated, database-ready fields. */
 final class VersionedUpdate
 {
-    public static function apply(MySqlConnection $connection, string $table, string $id, int $expected, array $changes): int
+    public static function apply(Connection $connection, string $table, string $id, int $expected, array $changes): int
     {
         if (! preg_match('/\A[a-z][a-z0-9_]{0,63}\z/', $table) || ! preg_match('/\A[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\z/i', $id)
             || $expected < 1 || $expected >= PHP_INT_MAX || $changes === []) {

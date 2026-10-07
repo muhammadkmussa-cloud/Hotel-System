@@ -105,7 +105,7 @@ final class GuestBindingService
                 return ['result' => 'created', 'id' => $id];
             });
         } catch (QueryException $error) {
-            return ($error->errorInfo[1] ?? null) === 1062 ? ['result' => 'conflict'] : ['result' => 'failed'];
+            return \App\Domain\Operations\JobRunner::isDuplicate($error) ? ['result' => 'conflict'] : ['result' => 'failed'];
         } catch (Throwable) {
             return ['result' => 'failed'];
         }

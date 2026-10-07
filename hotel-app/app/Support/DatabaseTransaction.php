@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Closure;
-use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\Connection;
 use LogicException;
 use PDOException;
 
@@ -18,7 +18,7 @@ final class DatabaseTransaction
      * Reload records inside it; use durable outbox records for external effects.
      * The callback must not control transactions or execute DDL.
      */
-    public static function run(MySqlConnection $connection, Closure $work): mixed
+    public static function run(Connection $connection, Closure $work): mixed
     {
         if ($connection->transactionLevel() !== 0 || $connection->getPdo()->inTransaction()) {
             throw new LogicException('Transaction retry requires a top-level transaction.');

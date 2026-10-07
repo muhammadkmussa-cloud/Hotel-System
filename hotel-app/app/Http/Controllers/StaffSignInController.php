@@ -49,6 +49,6 @@ final class StaffSignInController
         $request->session()->put('staff_session_id', $sessionRowId);
         $audit->record('login_succeeded', (string) $staff->getKey(), $request->ip());
 
-        return redirect('/')->with('status', 'Signed in.');
+        return redirect()->intended('/staff')->with('status', 'Signed in.');
     }
 }

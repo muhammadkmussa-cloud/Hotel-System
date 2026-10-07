@@ -155,7 +155,7 @@ PHP, FILE_APPEND);
     echo "PASS browser CSRF rejects all mutation methods before handler work and binds tokens to sessions\n";
     [$status, $headers, $body] = requestHttp($origin, '/');
     assertHttp($status === 200 && str_contains(strtolower($headers), 'content-type: text/html'), 'Home did not return HTML 200.');
-    assertHttp(str_contains($body, '<main>') && str_contains($body, 'Ordering is not available yet.'), 'Home structure/status missing.');
+    assertHttp(str_contains($body, '<main') && str_contains($body, 'Staff sign in'), 'Home structure/status missing.');
     assertHttp(str_contains($body, '&lt;script&gt;') && ! str_contains($body, '<script>'), 'Installation name was not escaped.');
     assertHttp(! str_contains($body, $key), 'Page disclosed a private value.');
     echo "PASS HTML page and escaped installation name\n";
@@ -192,7 +192,7 @@ PHP, FILE_APPEND);
     assertHttp($status === 419, 'Receipt POST must require a CSRF token.');
     echo "PASS staff sign-in screen renders and rejects CSRF-less POST\n";
     $requestIds = [];
-    foreach (['/api/v1', '/api/v1/', '/api/v1/missing/deep/path', '/api/v1/missing/%3Cscript%3E', '/api/v1/health/live', '/api/v1/health/ready'] as $path) {
+    foreach (['/api/v1', '/api/v1/', '/api/v1/missing/deep/path', '/api/v1/missing/%3Cscript%3E', '/api/v1/health/missing'] as $path) {
         foreach (['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as $method) {
             [$status, $headers, $body] = requestHttp($origin, $path, $method, ['Accept: text/html', 'X-Request-ID: untrusted-id']);
             $json = json_decode($body, true);

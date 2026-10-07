@@ -29,10 +29,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testFocalPointAndAltTextAreAccepted(): void
     {
-        $service = new MediaMetadata(new class {
-            // Connection is never used when validation fails or when we only
-            // invoke the validator via reflection.
-        });
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         $clean = $this->invokeValidate($service, [
             'alt_text' => 'A plated serving of beef stew with ugali.',
@@ -51,7 +48,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testEmptyStringsNormaliseToNull(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         $clean = $this->invokeValidate($service, [
             'alt_text' => '   ',
@@ -69,7 +66,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testCropBoxRequiresAllFourValues(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertNull($this->invokeValidate($service, [
             'focal_x' => 5000,
@@ -83,7 +80,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testCropBoxIsRejectedWhenItOverflowsTheCanvas(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertNull($this->invokeValidate($service, [
             'focal_x' => 5000,
@@ -105,7 +102,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testValidCropBoxIsAccepted(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         $clean = $this->invokeValidate($service, [
             'focal_x' => 5000,
@@ -124,7 +121,7 @@ final class MediaMetadataValidationTest extends TestCase
     #[DataProvider('oversizedFields')]
     public function testOversizedTextFieldsAreRejected(string $field, int $max): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
         $changes = ['alt_text' => 'A short image.', 'focal_x' => 5000, 'focal_y' => 5000];
         $changes[$field] = str_repeat('a', $max + 1);
 
@@ -142,7 +139,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testFocalPointMustBeInsideCanvas(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertNull($this->invokeValidate($service, ['focal_x' => -1, 'focal_y' => 5000]));
         self::assertNull($this->invokeValidate($service, ['focal_x' => 5000, 'focal_y' => 10001]));
@@ -150,7 +147,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testInvalidRightsDateIsRejected(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertNull($this->invokeValidate($service, [
             'alt_text' => 'Image', 'focal_x' => 5000, 'focal_y' => 5000,
@@ -164,7 +161,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testValidRightsDateIsAccepted(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         $clean = $this->invokeValidate($service, [
             'alt_text' => 'Image', 'focal_x' => 5000, 'focal_y' => 5000,
@@ -176,7 +173,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testByteAndChecksumFieldsAreRejectedFromMetadataEditor(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         foreach (['original_sha256', 'original_bytes', 'master_width', 'master_height',
                   'mime_type', 'publication_state', 'chef_approved_at'] as $protected) {
@@ -189,7 +186,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testEmptyEditableChangeSetIsRejected(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertNull($this->invokeValidate($service, []));
     }
@@ -197,7 +194,7 @@ final class MediaMetadataValidationTest extends TestCase
     public function testUpdateMetadataRejectsBlankActor(): void
     {
         // The service should reject without touching the database connection.
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         self::assertSame('invalid_input', $service->updateMetadata('anything', '', 1, [
             'alt_text' => 'x', 'focal_x' => 5000, 'focal_y' => 5000,
@@ -206,7 +203,7 @@ final class MediaMetadataValidationTest extends TestCase
 
     public function testTransitionStateRejectsMissingAltTextForPublish(): void
     {
-        $service = new MediaMetadata(new class {});
+        $service = (new \ReflectionClass(MediaMetadata::class))->newInstanceWithoutConstructor();
 
         // With no row present, validation of missing-alt_text runs before the
         // DB lookup? Actually it runs AFTER finding the row. We prove the

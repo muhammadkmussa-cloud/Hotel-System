@@ -18,11 +18,13 @@ final class DevicePairing
 
     public function issue(string $deviceId, int $ttlMinutes): string
     {
-        $code = bin2hex(random_bytes(16));
+        // 8 unambiguous characters shown as ABCD-EFGH; only the digest is stored.
+        $raw = \App\Domain\Ids::code(8);
+        $code = substr($raw, 0, 4).'-'.substr($raw, 4);
         $this->database->connection('mysql')->table('device_pairing_codes')->insert([
             'id' => (string) Str::uuid7(),
             'device_id' => $deviceId,
-            'code_hash' => hash('sha256', $code),
+            'code_hash' => hash('sha256', self::normalise($code)),
             'expires_at' => now('UTC')->addMinutes($ttlMinutes),
             'created_at' => now('UTC'),
         ]);
@@ -30,12 +32,18 @@ final class DevicePairing
         return $code;
     }
 
+    public static function normalise(string $code): string
+    {
+        return strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $code));
+    }
+
     /**
      * @return array{status:string, deviceId?:string} status is activated|invalid_input|not_found|already_used|expired|failed
      */
     public function activate(string $code): array
     {
-        if ($code === '') {
+        $code = self::normalise($code);
+        if ($code === '' || strlen($code) > 64) {
             return ['status' => 'invalid_input'];
         }
         $connection = $this->database->connection('mysql');

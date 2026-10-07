@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('original_stem', 120)->nullable();
             // SHA-256 of the accepted original file bytes. Null until the
             // upload step records an accepted original (P08.02).
-            $table->char('original_sha256', 64)->charset('binary')->nullable();
+            $table->char('original_sha256', 64)->when(\Illuminate\Support\Facades\Schema::getConnection()->getDriverName() === 'mysql', fn ($column) => $column->charset('binary'))->nullable();
             $table->unsignedBigInteger('original_bytes')->nullable();
             // Master pixel dimensions — recorded when a raster is decoded
             // (P08.03/P08.05). Null for placeholder records with no raster.
